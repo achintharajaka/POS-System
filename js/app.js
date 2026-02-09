@@ -145,6 +145,12 @@ const app = {
         this.renderInventory();
     },
 
+    removeLogo() {
+        document.getElementById('setting-storeLogo').value = '';
+        document.getElementById('setting-logo-upload').value = '';
+        Utils.showToast("Logo removed. Click Save to apply.");
+    },
+
     // --- Modifiers Functions ---
 
     renderModifiersList() {

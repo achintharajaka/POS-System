@@ -234,8 +234,14 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store Logo
                                 (Image)</label>
-                            <input type="file" id="setting-logo-upload" accept="image/*"
-                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            <div class="flex gap-2">
+                                <input type="file" id="setting-logo-upload" accept="image/*"
+                                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                                <button type="button" onclick="app.removeLogo()"
+                                    class="px-4 py-2 bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors">
+                                    Remove
+                                </button>
+                            </div>
                             <input type="hidden" name="storeLogo" id="setting-storeLogo">
                             <p class="text-xs text-gray-500 mt-1">Recommended: Square image, max 1MB.</p>
                         </div>
