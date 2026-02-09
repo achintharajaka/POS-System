@@ -119,5 +119,10 @@ const DB = {
         const settings = await db.settings.toArray();
         const orders = await db.orders.toArray();
         return { products, categories, settings, orders };
+    },
+
+    async reset() {
+        await db.delete();
+        window.location.reload();
     }
 };

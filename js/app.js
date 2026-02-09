@@ -783,6 +783,14 @@ const app = {
             }
         };
         reader.readAsText(file);
+    },
+
+    async resetSystem() {
+        if (confirm("DANGER: This will delete ALL data (Products, Orders, Settings) and reset the system to factory defaults.\n\nAre you sure you want to continue?")) {
+            if (confirm("Last Warning: This action cannot be undone.")) {
+                await DB.reset();
+            }
+        }
     }
 };
 

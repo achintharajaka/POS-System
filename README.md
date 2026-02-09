@@ -1,4 +1,4 @@
-# Universal POS System (v3.0)
+# Universal POS System (v3.1)
 
 A fully functional, offline-capable Point of Sale system running entirely in the browser using HTML5, Tailwind CSS, Javascript, and Dexie.js (IndexedDB).
 
@@ -7,29 +7,26 @@ A fully functional, offline-capable Point of Sale system running entirely in the
 - **POS Terminal**: Fast checkout with product search, barcode scanning, and printable receipts.
 - **Inventory Management**: Add, edit, and delete products with stock tracking and **Categories**.
 - **Settings**:
-    - **General**: Store Name, Address, Logo.
-    - **Financials (New)**: **Global Order Adjustments**. Add dynamic rules for **Taxes, Fees, Discounts, or Vouchers** that apply to every order automatically.
+    - **General**: Store Name, Address, Logo, **Receipt Header/Footer Text**.
+    - **Financials**: **Global Order Adjustments** (Taxes, Fees, Discounts).
     - **Theme**: Light and Dark Mode.
-    - **Data**: Backup and Restore.
+    - **Data**: Backup, Restore, and **Factory Reset**.
 - **Data Persistence**: All data is stored locally in your browser using IndexedDB.
 
 ## How to Run
 1. **Download** the project folder.
 2. **Open** `index.html` in any modern web browser.
 
-## v3.0 Updates: Order Modifiers
-- **Dynamic Taxes**: Replaced fixed tax rate with a flexible modifier system.
-- **Discounts & Fees**: You can now add multiple automatic adjustments.
-    - Example: `VAT (+10%)`, `Service Fee (+$2.00)`, `Holiday Discount (-5%)`.
-- **Receipts**: Receipts now show a breakdown of all applied Taxes, Discounts, and Fees.
+## v3.1 Enhancements
+- **Factory Reset**: A new red button in Settings > Data Management allows you to wipe all data and reset the system to fresh install state.
+- **Receipt Header**: Fixed an issue where the custom Receipt Header text wasn't appearing on printed receipts.
+- **Full Data Export**: The Export JSON feature includes all your Inventory (Products, Stock, Categories) as well as Sales History and Settings.
 
-## How to Configure Modifiers
-1. Go to **Settings**.
-2. Look for **Global Order Adjustments**.
-3. Use the inputs to create a new rule:
-    - **Name**: e.g., "Promo Discount"
-    - **Type**: `%` (Percentage) or `Fixed` (Amount)
-    - **Action**: `Add (+)` or `Deduct (-)`
-    - **Value**: The number (e.g., `5`)
-4. Click **+** to add it.
-5. It will now apply to all future orders in the POS.
+## How to Configure Modifiers (v3)
+1. Go to **Settings** -> **Global Order Adjustments**.
+2. Add dynamic rules:
+    - **Name**: e.g., "VAT"
+    - **Type**: `%` or `Fixed`
+    - **Action**: `Add` or `Deduct`
+    - **Value**: e.g., `20`
+3. These apply automatically to every sale.

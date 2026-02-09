@@ -80,6 +80,7 @@ const Utils = {
                         <h2>${storeName}</h2>
                         <p>${address}</p>
                         <p>${date}</p>
+                        ${settings.receiptHeader ? `<p style="margin-top: 5px; font-size: 0.9em;">${settings.receiptHeader}</p>` : ''}
                     </div>
                     <div class="border-bottom"></div>
                     <table>
