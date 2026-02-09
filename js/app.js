@@ -1,4 +1,4 @@
-// app.js - Main Application Logic v2
+// app.js - Main Application Logic v3
 
 const app = {
     state: {
@@ -7,14 +7,25 @@ const app = {
         categories: [],
         settings: {},
         currentView: 'dashboard',
-        currentOrder: null // For modal
+        currentOrder: null,
+        modifiers: [] // Cache for active modifiers
     },
 
     async init() {
-        console.log("Initializing App v2...");
+        console.log("Initializing App v3...");
 
         // Load settings
         this.state.settings = await DB.getSettings();
+
+        // Ensure Modifiers exist (Migration check)
+        if (!this.state.settings.orderModifiers) {
+            const oldTax = this.state.settings.taxRate || 0; // Legacy
+            this.state.settings.orderModifiers = [{ id: 1, name: "Tax", type: "percent", rate: "add", value: parseFloat(oldTax) }];
+            await DB.updateSetting("orderModifiers", this.state.settings.orderModifiers);
+            await DB.updateSetting("maxModifierId", 1);
+        }
+        this.state.modifiers = this.state.settings.orderModifiers;
+
         this.applyTheme();
         this.updateStoreDetails();
 
@@ -35,8 +46,10 @@ const app = {
     async loadData() {
         this.state.products = await DB.getProducts();
         this.state.categories = await DB.getCategories();
-        console.log("Loaded products:", this.state.products.length);
-        this.renderCategoryList(); // Update settings list
+        this.state.settings = await DB.getSettings(); // Refresh settings/modifiers
+        this.state.modifiers = this.state.settings.orderModifiers || [];
+        this.renderCategoryList();
+        this.renderModifiersList();
     },
 
     // --- Theme & Settings ---
@@ -88,7 +101,6 @@ const app = {
             document.getElementById('setting-storeName').value = settings.storeName || '';
             document.getElementById('setting-storeAddress').value = settings.storeAddress || '';
             document.getElementById('setting-currencySymbol').value = settings.currencySymbol || '$';
-            document.getElementById('setting-taxRate').value = settings.taxRate || 0;
             document.getElementById('setting-receiptHeader').value = settings.receiptHeader || '';
             document.getElementById('setting-receiptFooter').value = settings.receiptFooter || '';
             document.getElementById('setting-storeLogo').value = settings.storeLogo || '';
@@ -124,14 +136,78 @@ const app = {
 
         await Promise.all(updates);
 
-        this.state.settings = await DB.getSettings();
+        await this.loadData();
         this.updateStoreDetails();
         Utils.showToast("Settings Saved");
 
-        // Refresh products and other views to apply currency changes
+        // Refresh views
         this.renderProducts();
         this.renderInventory();
     },
+
+    // --- Modifiers Functions ---
+
+    renderModifiersList() {
+        const list = document.getElementById('settings-modifiers-list');
+        if (!list) return;
+        list.innerHTML = '';
+
+        const { currencySymbol } = this.state.settings;
+
+        this.state.modifiers.forEach(mod => {
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-gray-100 dark:border-gray-600 last:border-0";
+            tr.innerHTML = `
+                <td class="py-2 dark:text-gray-200">${mod.name}</td>
+                <td class="py-2 dark:text-gray-400 capitalize text-xs">${mod.rate}</td>
+                <td class="py-2 font-mono dark:text-gray-300 text-sm">
+                    ${mod.rate === 'subtract' ? '-' : '+'}${mod.value}${mod.type === 'percent' ? '%' : currencySymbol}
+                </td>
+                <td class="py-2 text-right">
+                    <button type="button" onclick="app.deleteModifier(${mod.id})" class="text-red-500 hover:text-red-700 text-xs uppercase font-bold">Remove</button>
+                </td>
+            `;
+            list.appendChild(tr);
+        });
+    },
+
+    async addModifier() {
+        const name = document.getElementById('new-mod-name').value.trim();
+        const type = document.getElementById('new-mod-type').value;
+        const rate = document.getElementById('new-mod-action').value;
+        const value = parseFloat(document.getElementById('new-mod-value').value);
+
+        if (!name || isNaN(value)) {
+            Utils.showToast("Invalid Modifier Details", "error");
+            return;
+        }
+
+        const maxId = (await DB.getSettings()).maxModifierId || 0;
+        const newId = maxId + 1;
+
+        const newMod = { id: newId, name, type, rate, value };
+        const updatedModifiers = [...this.state.modifiers, newMod];
+
+        await DB.updateSetting("orderModifiers", updatedModifiers);
+        await DB.updateSetting("maxModifierId", newId);
+
+        // Clear Inputs
+        document.getElementById('new-mod-name').value = '';
+        document.getElementById('new-mod-value').value = '';
+
+        await this.loadData();
+        Utils.showToast("Modifier Added");
+    },
+
+    async deleteModifier(id) {
+        if (confirm("Remove this adjustment?")) {
+            const updatedModifiers = this.state.modifiers.filter(m => m.id !== id);
+            await DB.updateSetting("orderModifiers", updatedModifiers);
+            await this.loadData();
+            Utils.showToast("Modifier Removed");
+        }
+    },
+
 
     // --- Category Management ---
 
@@ -157,6 +233,8 @@ const app = {
     renderCategoryList() {
         // Settings List
         const list = document.getElementById('settings-category-list');
+        if (!list) return;
+
         list.innerHTML = '';
         this.state.categories.forEach(cat => {
             const li = document.createElement('li');
@@ -339,15 +417,54 @@ const app = {
         let subtotal = 0;
         this.state.cart.forEach(item => subtotal += item.price * item.qty);
 
-        const taxRate = parseFloat(this.state.settings.taxRate) || 0;
-        const tax = subtotal * (taxRate / 100);
-        const total = subtotal + tax;
         const { currencySymbol } = this.state.settings;
+        const modifiers = this.state.modifiers || [];
+
+        // Calculate Modifiers
+        let runningTotal = subtotal;
+        let modsHtml = '';
+
+        modifiers.forEach(mod => {
+            let modAmount = 0;
+            if (mod.type === 'percent') {
+                modAmount = subtotal * (mod.value / 100);
+            } else {
+                modAmount = mod.value;
+            }
+
+            if (mod.rate === 'subtract') {
+                runningTotal -= modAmount;
+                modsHtml += `<div class="flex justify-between text-green-600 dark:text-green-400 text-sm"><span>${mod.name} (${mod.type === 'percent' ? mod.value + '%' : 'Fixed'}):</span> <span>-${Utils.formatCurrency(modAmount, currencySymbol)}</span></div>`;
+            } else {
+                runningTotal += modAmount;
+                modsHtml += `<div class="flex justify-between text-gray-600 dark:text-gray-300 text-sm"><span>${mod.name} (${mod.type === 'percent' ? mod.value + '%' : 'Fixed'}):</span> <span>${Utils.formatCurrency(modAmount, currencySymbol)}</span></div>`;
+            }
+        });
+
+        if (runningTotal < 0) runningTotal = 0;
 
         document.getElementById('cart-subtotal').innerText = Utils.formatCurrency(subtotal, currencySymbol);
-        document.getElementById('cart-tax').innerText = Utils.formatCurrency(tax, currencySymbol);
-        document.getElementById('cart-tax-rate').innerText = taxRate;
-        document.getElementById('cart-total').innerText = Utils.formatCurrency(total, currencySymbol);
+
+        // Inject Dynamic Rows - Need to safely target container (Harder with current simple DOM structure)
+        // Workaround: We will reuse the tax-container area
+        const taxEl = document.getElementById('cart-tax')?.parentElement;// this is the tax row container
+        // Actually, let's just rewrite the footer portion of the cart on every render or make a container
+        // Better approach: Let renderCart handle the modifiers DOM structure.
+
+        // RE-INJECTING TOTALS BLOCK
+        // Finding parent container of subtotal
+        const subtotalEl = document.getElementById('cart-subtotal').parentElement.parentElement;
+
+        // Clear old modifiers rows if any (Custom implementation via ID or class)
+        // Easier: Re-render the "Totals" section content fully
+        subtotalEl.innerHTML = `
+            <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Subtotal:</span> <span id="cart-subtotal">${Utils.formatCurrency(subtotal, currencySymbol)}</span></div>
+            ${modsHtml}
+            <div class="flex justify-between text-xl font-bold text-gray-800 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-600"><span>Total:</span> <span id="cart-total">${Utils.formatCurrency(runningTotal, currencySymbol)}</span></div>
+            
+            <button onclick="app.checkout()" class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay Now</button>
+            <button onclick="app.clearCart()" class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors mt-2">Clear Cart</button>
+        `;
     },
 
     async checkout() {
@@ -357,15 +474,36 @@ const app = {
         }
 
         const subtotal = this.state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const taxRate = parseFloat(this.state.settings.taxRate) || 0;
-        const tax = subtotal * (taxRate / 100);
-        const total = subtotal + tax;
+
+        // Calculate Modifiers Snapshot
+        const orderModifiers = [];
+        let runningTotal = subtotal;
+
+        this.state.modifiers.forEach(mod => {
+            let amount = 0;
+            if (mod.type === 'percent') {
+                amount = subtotal * (mod.value / 100);
+            } else {
+                amount = mod.value;
+            }
+
+            if (mod.rate === 'subtract') runningTotal -= amount;
+            else runningTotal += amount;
+
+            orderModifiers.push({
+                name: mod.name,
+                amount: amount,
+                rate: mod.rate
+            });
+        });
+
+        if (runningTotal < 0) runningTotal = 0;
 
         const order = {
             timestamp: Date.now(),
             subtotal: subtotal,
-            tax: tax,
-            total: total,
+            modifiers: orderModifiers, // Save snapshot
+            total: runningTotal,
             items: [...this.state.cart],
             paymentMethod: 'cash'
         };
@@ -381,7 +519,7 @@ const app = {
             }
         }
 
-        // Print Receipt (New requirements: Time & Date added in utils)
+        // Print Receipt
         const receiptWindow = window.open('', '', 'width=340,height=600');
         receiptWindow.document.write(Utils.generateReceipt(
             this.state.settings.storeName,
@@ -520,7 +658,6 @@ const app = {
         const tbody = document.getElementById('dashboard-history-body');
         tbody.innerHTML = '';
 
-        // Show last 50 orders max for performance if list is huge
         orders.slice(0, 50).forEach(order => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
@@ -539,7 +676,7 @@ const app = {
     },
 
     async viewOrder(id) {
-        const orders = await DB.getOrders(); // Cache efficient? Maybe fetch single if needed
+        const orders = await DB.getOrders();
         const order = orders.find(o => o.id === id);
         if (!order) return;
 
@@ -559,6 +696,19 @@ const app = {
             </div>
         `).join('');
 
+        // Modifiers HTML
+        let modifiersHtml = '';
+        if (order.modifiers) {
+            order.modifiers.forEach(mod => {
+                const sign = mod.rate === 'subtract' ? '-' : '+';
+                const color = mod.rate === 'subtract' ? 'text-green-600' : 'text-gray-600 dark:text-gray-400';
+                modifiersHtml += `<div class="flex justify-between ${color}"><span>${mod.name}</span><span>${sign}${Utils.formatCurrency(mod.amount, currencySymbol)}</span></div>`;
+            });
+        } else if (order.tax) { // Legacy support
+            modifiersHtml += `<div class="flex justify-between text-gray-600 dark:text-gray-400"><span>Tax</span><span>+${Utils.formatCurrency(order.tax, currencySymbol)}</span></div>`;
+        }
+
+
         content.innerHTML = `
             <div class="mb-4">
                 <p><strong>Order ID:</strong> #${order.id}</p>
@@ -569,7 +719,7 @@ const app = {
             </div>
             <div class="border-t dark:border-gray-700 pt-2 space-y-1">
                 <div class="flex justify-between"><span>Subtotal</span><span>${Utils.formatCurrency(order.subtotal, currencySymbol)}</span></div>
-                <div class="flex justify-between"><span>Tax</span><span>${Utils.formatCurrency(order.tax, currencySymbol)}</span></div>
+                ${modifiersHtml}
                 <div class="flex justify-between font-bold text-lg mt-2"><span>Total</span><span>${Utils.formatCurrency(order.total, currencySymbol)}</span></div>
             </div>
         `;

@@ -48,6 +48,17 @@ const Utils = {
             </tr>
         `).join('');
 
+        let modifiersHtml = '';
+        if (order.modifiers) {
+            order.modifiers.forEach(mod => {
+                const sign = mod.rate === 'subtract' ? '-' : '';
+                modifiersHtml += `<tr><td>${mod.name}</td><td class="text-right">${sign}${Utils.formatCurrency(mod.amount, settings.currencySymbol)}</td></tr>`;
+            });
+        } else if (order.tax) {
+            // Legacy
+            modifiersHtml += `<tr><td>Tax</td><td class="text-right">${Utils.formatCurrency(order.tax, settings.currencySymbol)}</td></tr>`;
+        }
+
         return `
             <html>
                 <head>
@@ -77,7 +88,7 @@ const Utils = {
                     <div class="border-top py-2">
                         <table>
                             <tr><td>Subtotal</td><td class="text-right">${Utils.formatCurrency(order.subtotal, settings.currencySymbol)}</td></tr>
-                            <tr><td>Tax (${settings.taxRate}%)</td><td class="text-right">${Utils.formatCurrency(order.tax, settings.currencySymbol)}</td></tr>
+                            ${modifiersHtml}
                             <tr><td style="font-weight: bold;">TOTAL</td><td class="text-right" style="font-weight: bold;">${Utils.formatCurrency(order.total, settings.currencySymbol)}</td></tr>
                         </table>
                     </div>

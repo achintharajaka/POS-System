@@ -15,10 +15,17 @@ db.on("populate", () => {
         { key: "storeName", value: "My POS Store" },
         { key: "storeAddress", value: "123 Main St" },
         { key: "currencySymbol", value: "$" },
-        { key: "taxRate", value: 10 },
         { key: "receiptHeader", value: "Thank you for shopping!" },
-        { key: "receiptFooter", value: "Visit us again." }
+        { key: "receiptFooter", value: "Visit us again." },
+        // New Modifiers System (Migrating from simple taxRate)
+        { key: "maxModifierId", value: 1 }
     ]);
+
+    // Default Modifier (10% Tax)
+    db.settings.put({
+        key: "orderModifiers",
+        value: [{ id: 1, name: "Tax", type: "percent", rate: "add", value: 10 }]
+    });
 
     db.categories.bulkAdd([
         { name: "General" },
