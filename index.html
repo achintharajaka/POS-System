@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced POS System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Dexie.js for IndexedDB -->
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 h-screen overflow-hidden flex flex-col font-sans">
+    
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <!-- Top Navigation -->
+    <nav class="bg-white shadow-md z-10">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">P</div>
+                <h1 class="text-xl font-bold text-gray-800" id="store-name">My Store</h1>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="app.navigate('dashboard')" class="text-gray-600 hover:text-blue-600 font-medium transition-colors" id="nav-dashboard">Dashboard</button>
+                <button onclick="app.navigate('pos')" class="text-gray-600 hover:text-blue-600 font-medium transition-colors" id="nav-pos">POS Terminal</button>
+                <button onclick="app.navigate('inventory')" class="text-gray-600 hover:text-blue-600 font-medium transition-colors" id="nav-inventory">Inventory</button>
+                <button onclick="app.navigate('settings')" class="text-gray-600 hover:text-blue-600 font-medium transition-colors" id="nav-settings">Settings</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 container mx-auto p-4 overflow-hidden relative">
+        
+        <!-- Dashboard View -->
+        <div id="view-dashboard" class="view-section h-full overflow-y-auto hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Stats Cards will be injected here -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-gray-500 text-sm font-medium">Daily Sales</h3>
+                    <p class="text-3xl font-bold text-gray-800 mt-2" id="dash-daily-sales">$0.00</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-gray-500 text-sm font-medium">Total Orders</h3>
+                    <p class="text-3xl font-bold text-gray-800 mt-2" id="dash-total-orders">0</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-gray-500 text-sm font-medium">Low Stock Items</h3>
+                    <p class="text-3xl font-bold text-red-500 mt-2" id="dash-low-stock">0</p>
+                </div>
+            </div>
+             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold mb-4">Quick Actions</h3>
+                 <button onclick="app.exportData()" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700">Export Data</button>
+                 <input type="file" id="import-file" class="hidden" onchange="app.importData(this)">
+                 <button onclick="document.getElementById('import-file').click()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 ml-2">Import Data</button>
+            </div>
+        </div>
+
+        <!-- POS View -->
+        <div id="view-pos" class="view-section h-full hidden flex flex-col md:flex-row gap-4">
+            <!-- Left: Products Grid -->
+            <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                <div class="p-4 border-b border-gray-100 flex gap-2">
+                    <input type="text" id="pos-search" placeholder="Search products or scan barcode..." class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="pos-category-filter" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div id="pos-products-grid" class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1">
+                    <!-- Products injected here -->
+                </div>
+            </div>
+
+            <!-- Right: Cart -->
+            <div class="w-full md:w-96 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                <div class="p-4 border-b border-gray-100 bg-gray-50">
+                    <h3 class="font-bold text-lg">Current Order</h3>
+                </div>
+                <div id="pos-cart-items" class="flex-1 overflow-y-auto p-4 space-y-2">
+                    <!-- Cart items injected here -->
+                     <div class="text-center text-gray-400 mt-10">Cart is empty</div>
+                </div>
+                <div class="p-4 border-t border-gray-100 bg-gray-50 space-y-2">
+                    <div class="flex justify-between text-gray-600"><span>Subtotal:</span> <span id="cart-subtotal">$0.00</span></div>
+                    <div class="flex justify-between text-gray-600"><span>Tax (<span id="cart-tax-rate">0</span>%):</span> <span id="cart-tax">$0.00</span></div>
+                    <div class="flex justify-between text-xl font-bold text-gray-800 pt-2 border-t border-gray-200"><span>Total:</span> <span id="cart-total">$0.00</span></div>
+                    
+                    <button onclick="app.checkout()" class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay Now</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory View -->
+        <div id="view-inventory" class="view-section h-full overflow-y-auto hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Inventory Management</h2>
+                <button onclick="app.openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                    <span>+ Add Product</span>
+                </button>
+            </div>
+
+             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-gray-600 font-medium border-b border-gray-100">
+                        <tr>
+                            <th class="p-4">Product Name</th>
+                            <th class="p-4">Barcode</th>
+                            <th class="p-4">Price</th>
+                            <th class="p-4">Stock</th>
+                            <th class="p-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-table-body" class="divide-y divide-gray-100">
+                        <!-- Rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="view-settings" class="view-section h-full overflow-y-auto hidden">
+             <h2 class="text-2xl font-bold mb-6 text-gray-800">Settings</h2>
+             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-2xl">
+                <form id="settings-form" onsubmit="app.saveSettings(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                        <input type="text" name="storeName" id="setting-storeName" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Store Address</label>
+                        <input type="text" name="storeAddress" id="setting-storeAddress" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Currency Symbol</label>
+                            <input type="text" name="currencySymbol" id="setting-currencySymbol" class="w-full px-4 py-2 border rounded-lg" placeholder="$">
+                        </div>
+                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                            <input type="number" step="0.01" name="taxRate" id="setting-taxRate" class="w-full px-4 py-2 border rounded-lg" placeholder="0">
+                        </div>
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Receipt Header Text</label>
+                        <textarea name="receiptHeader" id="setting-receiptHeader" class="w-full px-4 py-2 border rounded-lg" rows="2"></textarea>
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Receipt Footer Text</label>
+                        <textarea name="receiptFooter" id="setting-receiptFooter" class="w-full px-4 py-2 border rounded-lg" rows="2"></textarea>
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Save Settings</button>
+                    </div>
+                </form>
+             </div>
+        </div>
+
+    </main>
+
+    <!-- Product Modal -->
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <h3 class="text-xl font-bold mb-4" id="modal-title">Add Product</h3>
+            <form id="product-form" onsubmit="app.saveProduct(event)">
+                <input type="hidden" id="prod-id">
+                <div class="space-y-3">
+                    <div>
+                         <label class="block text-sm font-medium text-gray-700">Name</label>
+                         <input type="text" id="prod-name" required class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                     <div>
+                         <label class="block text-sm font-medium text-gray-700">Barcode</label>
+                         <input type="text" id="prod-barcode" class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                     <div class="grid grid-cols-2 gap-3">
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700">Price</label>
+                             <input type="number" step="0.01" id="prod-price" required class="w-full px-3 py-2 border rounded-lg">
+                        </div>
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700">Cost Price</label>
+                             <input type="number" step="0.01" id="prod-costPrice" class="w-full px-3 py-2 border rounded-lg">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                             <label class="block text-sm font-medium text-gray-700">Stock</label>
+                             <input type="number" id="prod-stock" required class="w-full px-3 py-2 border rounded-lg">
+                        </div>
+                         <div>
+                             <label class="block text-sm font-medium text-gray-700">Category</label>
+                             <select id="prod-category" class="w-full px-3 py-2 border rounded-lg">
+                                 <!-- Categories populated dynamically -->
+                             </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="app.closeProductModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
