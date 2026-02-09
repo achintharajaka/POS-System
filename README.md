@@ -1,32 +1,32 @@
-# Universal POS System
+# Universal POS System (v2.0)
 
 A fully functional, offline-capable Point of Sale system running entirely in the browser using HTML5, Tailwind CSS, Javascript, and Dexie.js (IndexedDB).
 
 ## Features
-- **Dashboard**: View daily sales, total orders, and low stock alerts.
-- **POS Terminal**: Fast checkout with product search, barcode scanning (via keyboard input), and printable receipts.
-- **Inventory Management**: Add, edit, and delete products with stock tracking.
-- **Settings**: Customize store name, address, currency symbol, tax rate, and receipt details.
-- **Data Persistence**: All data is stored locally in your browser using IndexedDB. No server required.
-- **Backup/Restore**: Export your data to JSON and import it on another device.
+- **Dashboard**: View daily sales, total orders, low stock alerts, and **Recent Transaction History**.
+- **POS Terminal**: Fast checkout with product search, barcode scanning, and printable receipts.
+- **Inventory Management**: Add, edit, and delete products with stock tracking and **Customizable Categories**.
+- **Settings**:
+    - **General**: Store Name, Address, **Logo Upload**.
+    - **Financials**: Currency Symbol, Tax Rate.
+    - **Theme**: Toggle between **Light and Dark Mode**.
+    - **Data**: Backup (Export JSON) and Restore (Import JSON).
+- **Data Persistence**: All data is stored locally in your browser using IndexedDB.
 
 ## How to Run
 1. **Download** the project folder.
 2. **Open** `index.html` in any modern web browser (Chrome, Edge, Firefox).
-   - *Note: An internet connection is required for the first run to load Tailwind CSS and Dexie.js from the CDN. After that, if the browser caches them, it can work offline, but for true offline usage, you would need to download functionality.*
+   - *Note: Internet required for first run (Tailwind/Dexie CDN).*
 
-## Technologies Used
-- **HTML5**: Semantic structure.
-- **Tailwind CSS**: Utility-first styling.
-- **Vanilla JavaScript**: Core logic and state management.
-- **Dexie.js**: Wrapper for IndexedDB for easy database management.
+## v2.0 Updates
+- **Dark Mode**: Switch themes via the sun/moon icon in the top right.
+- **Store Logo**: Upload your custom logo in Settings -> General. It will appear on the receipt.
+- **Categories**: Create and delete custom product categories in Settings.
+- **Order History**: View all past orders in the Dashboard. Click "View" to see details or reprint receipts. Delete old records if needed.
+- **Receipts**: Now includes time of purchase and store logo.
 
-## How to Test
-1. **Inventory**: Go to the Inventory tab and click "Add Product". Enter details (e.g., Name: Apple, Price: 1.00, Stock: 100).
-2. **Settings**: Go to Settings and configure your Currency ($/€) and Tax Rate.
-3. **POS**:
-    - Go to POS Terminal.
-    - Click on the product you added to add it to the cart.
-    - Adjust quantity or remove items.
-    - Click "Pay Now" to complete the transaction and generate a receipt.
-4. **Dashboard**: Check the Dashboard to see updated Sales figures.
+## How to Test New Features
+1. **Theme**: Click the Moon icon in the top right to switch to Dark Mode.
+2. **Logo**: Go to Settings, upload an image file. Click Save. It should appear next to the store name.
+3. **Categories**: Go to Settings -> Category Management. Type "Snacks" and click Add. Go to Inventory -> Add Product, and select "Snacks" as the category.
+4. **History**: Make a sale. Go to Dashboard. See the sale in the "Recent Transactions" table. Click "View".

@@ -32,9 +32,15 @@ const Utils = {
         }, 3000);
     },
 
-    generateReceipt(storeName, address, order, settings) {
+    generateReceipt(storeName, address, order, settings, logo = null) {
         // Simple HTML string generation for receipt
         const date = new Date(order.timestamp).toLocaleString();
+
+        let logoHtml = '';
+        if (logo) {
+            logoHtml = `<div class="text-center mb-2"><img src="${logo}" style="max-height: 50px; max-width: 100%;"></div>`;
+        }
+
         let itemsHtml = order.items.map(item => `
             <tr>
                 <td style="padding: 5px 0;">${item.name} <br> <span style="font-size: 0.8em; color: #666;">${item.qty} x ${Utils.formatCurrency(item.price, settings.currencySymbol)}</span></td>
@@ -47,16 +53,18 @@ const Utils = {
                 <head>
                     <title>Receipt</title>
                     <style>
-                        body { font-family: monospace; width: 300px; margin: 0 auto; }
+                        body { font-family: monospace; width: 300px; margin: 0 auto; color: #000; }
                         table { width: 100%; border-collapse: collapse; }
                         .text-center { text-align: center; }
                         .text-right { text-align: right; }
                         .border-top { border-top: 1px dashed #000; }
                         .border-bottom { border-bottom: 1px dashed #000; }
                         .py-2 { padding-top: 10px; padding-bottom: 10px; }
+                        .mb-2 { margin-bottom: 10px; }
                     </style>
                 </head>
                 <body>
+                    ${logoHtml}
                     <div class="text-center">
                         <h2>${storeName}</h2>
                         <p>${address}</p>

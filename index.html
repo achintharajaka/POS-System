@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,11 @@
     <link rel="stylesheet" href="css/styles.css">
     <!-- Dexie.js for IndexedDB -->
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -21,86 +25,153 @@
         }
     </script>
 </head>
-<body class="bg-gray-100 h-screen overflow-hidden flex flex-col font-sans">
-    
+
+<body
+    class="bg-gray-100 dark:bg-gray-900 h-screen overflow-hidden flex flex-col font-sans transition-colors duration-200">
+
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
 
     <!-- Top Navigation -->
-    <nav class="bg-white shadow-md z-10">
+    <nav class="bg-white dark:bg-gray-800 shadow-md z-10">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">P</div>
-                <h1 class="text-xl font-bold text-gray-800" id="store-name">My Store</h1>
+                <div id="nav-logo-container"
+                    class="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center bg-blue-600 text-white font-bold text-xl">
+                    <span id="default-logo-text">P</span>
+                    <img id="nav-logo-img" src="" alt="Logo" class="w-full h-full object-cover hidden">
+                </div>
+                <h1 class="text-xl font-bold text-gray-800 dark:text-white" id="store-name">My Store</h1>
             </div>
-            <div class="flex gap-4">
-                <button onclick="app.navigate('dashboard')" class="text-gray-600 hover:text-blue-600 font-medium transition-colors" id="nav-dashboard">Dashboard</button>
-                <button onclick="app.navigate('pos')" class="text-gray-600 hover:text-blue-600 font-medium transition-colors" id="nav-pos">POS Terminal</button>
-                <button onclick="app.navigate('inventory')" class="text-gray-600 hover:text-blue-600 font-medium transition-colors" id="nav-inventory">Inventory</button>
-                <button onclick="app.navigate('settings')" class="text-gray-600 hover:text-blue-600 font-medium transition-colors" id="nav-settings">Settings</button>
+            <div class="flex items-center gap-4">
+                <button onclick="app.navigate('dashboard')"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    id="nav-dashboard">Dashboard</button>
+                <button onclick="app.navigate('pos')"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    id="nav-pos">POS Terminal</button>
+                <button onclick="app.navigate('inventory')"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    id="nav-inventory">Inventory</button>
+                <button onclick="app.navigate('settings')"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    id="nav-settings">Settings</button>
+
+                <!-- Theme Toggle -->
+                <button onclick="app.toggleTheme()"
+                    class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                    title="Toggle Theme">
+                    <svg id="theme-icon-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+                        </path>
+                    </svg>
+                    <svg id="theme-icon-sun" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                        </path>
+                    </svg>
+                </button>
             </div>
         </div>
     </nav>
 
     <!-- Main Content Area -->
     <main class="flex-1 container mx-auto p-4 overflow-hidden relative">
-        
+
         <!-- Dashboard View -->
         <div id="view-dashboard" class="view-section h-full overflow-y-auto hidden">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800">Dashboard</h2>
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Dashboard</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- Stats Cards will be injected here -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-gray-500 text-sm font-medium">Daily Sales</h3>
-                    <p class="text-3xl font-bold text-gray-800 mt-2" id="dash-daily-sales">$0.00</p>
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Daily Sales</h3>
+                    <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" id="dash-daily-sales">$0.00</p>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-gray-500 text-sm font-medium">Total Orders</h3>
-                    <p class="text-3xl font-bold text-gray-800 mt-2" id="dash-total-orders">0</p>
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Orders</h3>
+                    <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" id="dash-total-orders">0</p>
                 </div>
-                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-gray-500 text-sm font-medium">Low Stock Items</h3>
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Low Stock Items</h3>
                     <p class="text-3xl font-bold text-red-500 mt-2" id="dash-low-stock">0</p>
                 </div>
             </div>
-             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-4">Quick Actions</h3>
-                 <button onclick="app.exportData()" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700">Export Data</button>
-                 <input type="file" id="import-file" class="hidden" onchange="app.importData(this)">
-                 <button onclick="document.getElementById('import-file').click()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 ml-2">Import Data</button>
+
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
+                <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">Recent Transactions</h3>
+                    <button onclick="app.renderDashboard()"
+                        class="text-blue-600 text-sm hover:underline">Refresh</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead
+                            class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium border-b border-gray-100 dark:border-gray-600">
+                            <tr>
+                                <th class="p-4">ID</th>
+                                <th class="p-4">Date</th>
+                                <th class="p-4">Items</th>
+                                <th class="p-4">Total</th>
+                                <th class="p-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboard-history-body"
+                            class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                            <!-- Injected -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- POS View -->
         <div id="view-pos" class="view-section h-full hidden flex flex-col md:flex-row gap-4">
             <!-- Left: Products Grid -->
-            <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-gray-100 flex gap-2">
-                    <input type="text" id="pos-search" placeholder="Search products or scan barcode..." class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <select id="pos-category-filter" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div
+                class="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
+                <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex gap-2">
+                    <input type="text" id="pos-search" placeholder="Search products or scan barcode..."
+                        class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="pos-category-filter"
+                        class="px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Categories</option>
                     </select>
                 </div>
-                <div id="pos-products-grid" class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1">
+                <div id="pos-products-grid"
+                    class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-900">
                     <!-- Products injected here -->
                 </div>
             </div>
 
             <!-- Right: Cart -->
-            <div class="w-full md:w-96 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-gray-100 bg-gray-50">
-                    <h3 class="font-bold text-lg">Current Order</h3>
+            <div
+                class="w-full md:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
+                <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                    <h3 class="font-bold text-lg text-gray-800 dark:text-white">Current Order</h3>
                 </div>
                 <div id="pos-cart-items" class="flex-1 overflow-y-auto p-4 space-y-2">
                     <!-- Cart items injected here -->
-                     <div class="text-center text-gray-400 mt-10">Cart is empty</div>
                 </div>
-                <div class="p-4 border-t border-gray-100 bg-gray-50 space-y-2">
-                    <div class="flex justify-between text-gray-600"><span>Subtotal:</span> <span id="cart-subtotal">$0.00</span></div>
-                    <div class="flex justify-between text-gray-600"><span>Tax (<span id="cart-tax-rate">0</span>%):</span> <span id="cart-tax">$0.00</span></div>
-                    <div class="flex justify-between text-xl font-bold text-gray-800 pt-2 border-t border-gray-200"><span>Total:</span> <span id="cart-total">$0.00</span></div>
-                    
-                    <button onclick="app.checkout()" class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay Now</button>
+                <div class="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 space-y-2">
+                    <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Subtotal:</span> <span
+                            id="cart-subtotal">$0.00</span></div>
+                    <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Tax (<span
+                                id="cart-tax-rate">0</span>%):</span> <span id="cart-tax">$0.00</span></div>
+                    <div
+                        class="flex justify-between text-xl font-bold text-gray-800 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-600">
+                        <span>Total:</span> <span id="cart-total">$0.00</span></div>
+
+                    <button onclick="app.checkout()"
+                        class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay
+                        Now</button>
+                    <button onclick="app.clearCart()"
+                        class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors">Clear
+                        Cart</button>
                 </div>
             </div>
         </div>
@@ -108,15 +179,18 @@
         <!-- Inventory View -->
         <div id="view-inventory" class="view-section h-full overflow-y-auto hidden">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Inventory Management</h2>
-                <button onclick="app.openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Inventory Management</h2>
+                <button onclick="app.openProductModal()"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
                     <span>+ Add Product</span>
                 </button>
             </div>
 
-             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <table class="w-full text-left">
-                    <thead class="bg-gray-50 text-gray-600 font-medium border-b border-gray-100">
+                    <thead
+                        class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium border-b border-gray-100 dark:border-gray-600">
                         <tr>
                             <th class="p-4">Product Name</th>
                             <th class="p-4">Barcode</th>
@@ -125,7 +199,8 @@
                             <th class="p-4">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="inventory-table-body" class="divide-y divide-gray-100">
+                    <tbody id="inventory-table-body"
+                        class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
                         <!-- Rows injected here -->
                     </tbody>
                 </table>
@@ -134,87 +209,196 @@
 
         <!-- Settings View -->
         <div id="view-settings" class="view-section h-full overflow-y-auto hidden">
-             <h2 class="text-2xl font-bold mb-6 text-gray-800">Settings</h2>
-             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-2xl">
-                <form id="settings-form" onsubmit="app.saveSettings(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
-                        <input type="text" name="storeName" id="setting-storeName" class="w-full px-4 py-2 border rounded-lg">
-                    </div>
-                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Store Address</label>
-                        <input type="text" name="storeAddress" id="setting-storeAddress" class="w-full px-4 py-2 border rounded-lg">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Settings</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- General Settings -->
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                        General Configuration</h3>
+                    <form id="settings-form" onsubmit="app.saveSettings(event)" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Currency Symbol</label>
-                            <input type="text" name="currencySymbol" id="setting-currencySymbol" class="w-full px-4 py-2 border rounded-lg" placeholder="$">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store
+                                Name</label>
+                            <input type="text" name="storeName" id="setting-storeName"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                         </div>
-                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
-                            <input type="number" step="0.01" name="taxRate" id="setting-taxRate" class="w-full px-4 py-2 border rounded-lg" placeholder="0">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store
+                                Address</label>
+                            <input type="text" name="storeAddress" id="setting-storeAddress"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store Logo
+                                (Image)</label>
+                            <input type="file" id="setting-logo-upload" accept="image/*"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            <input type="hidden" name="storeLogo" id="setting-storeLogo">
+                            <p class="text-xs text-gray-500 mt-1">Recommended: Square image, max 1MB.</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency
+                                    Symbol</label>
+                                <input type="text" name="currencySymbol" id="setting-currencySymbol"
+                                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                                    placeholder="$">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tax Rate
+                                    (%)</label>
+                                <input type="number" step="0.01" name="taxRate" id="setting-taxRate"
+                                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                                    placeholder="0">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Receipt
+                                Header Text</label>
+                            <textarea name="receiptHeader" id="setting-receiptHeader"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                                rows="2"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Receipt
+                                Footer Text</label>
+                            <textarea name="receiptFooter" id="setting-receiptFooter"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                                rows="2"></textarea>
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit"
+                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Save General
+                                Settings</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Category & Data Management -->
+                <div class="space-y-6">
+                    <!-- Categories -->
+                    <div
+                        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <h3
+                            class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                            Category Management</h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="new-category-name" placeholder="New Category Name"
+                                class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            <button onclick="app.addCategory()"
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Add</button>
+                        </div>
+                        <ul id="settings-category-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                            <!-- Injected -->
+                        </ul>
+                    </div>
+
+                    <!-- Data Management -->
+                    <div
+                        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <h3
+                            class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                            Data Management</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Backup your store data or restore from
+                            a previous backup.</p>
+                        <div class="flex flex-col gap-3">
+                            <button onclick="app.exportData()"
+                                class="bg-gray-800 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center">Export
+                                Data (JSON)</button>
+                            <div class="relative">
+                                <input type="file" id="import-file" class="hidden" onchange="app.importData(this)">
+                                <button onclick="document.getElementById('import-file').click()"
+                                    class="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-center">Import
+                                    Data (JSON)</button>
+                            </div>
                         </div>
                     </div>
-                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Receipt Header Text</label>
-                        <textarea name="receiptHeader" id="setting-receiptHeader" class="w-full px-4 py-2 border rounded-lg" rows="2"></textarea>
-                    </div>
-                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Receipt Footer Text</label>
-                        <textarea name="receiptFooter" id="setting-receiptFooter" class="w-full px-4 py-2 border rounded-lg" rows="2"></textarea>
-                    </div>
-                    <div class="pt-4">
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Save Settings</button>
-                    </div>
-                </form>
-             </div>
+                </div>
+            </div>
         </div>
 
     </main>
 
     <!-- Product Modal -->
-    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
-            <h3 class="text-xl font-bold mb-4" id="modal-title">Add Product</h3>
+    <div id="product-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold dark:text-white" id="modal-title">Add Product</h3>
+                <button onclick="app.closeProductModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">&times;</button>
+            </div>
             <form id="product-form" onsubmit="app.saveProduct(event)">
                 <input type="hidden" id="prod-id">
                 <div class="space-y-3">
                     <div>
-                         <label class="block text-sm font-medium text-gray-700">Name</label>
-                         <input type="text" id="prod-name" required class="w-full px-3 py-2 border rounded-lg">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                        <input type="text" id="prod-name" required
+                            class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                     </div>
-                     <div>
-                         <label class="block text-sm font-medium text-gray-700">Barcode</label>
-                         <input type="text" id="prod-barcode" class="w-full px-3 py-2 border rounded-lg">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Barcode</label>
+                        <input type="text" id="prod-barcode"
+                            class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                     </div>
-                     <div class="grid grid-cols-2 gap-3">
-                         <div>
-                             <label class="block text-sm font-medium text-gray-700">Price</label>
-                             <input type="number" step="0.01" id="prod-price" required class="w-full px-3 py-2 border rounded-lg">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Price</label>
+                            <input type="number" step="0.01" id="prod-price" required
+                                class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                         </div>
-                         <div>
-                             <label class="block text-sm font-medium text-gray-700">Cost Price</label>
-                             <input type="number" step="0.01" id="prod-costPrice" class="w-full px-3 py-2 border rounded-lg">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cost Price</label>
+                            <input type="number" step="0.01" id="prod-costPrice"
+                                class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                             <label class="block text-sm font-medium text-gray-700">Stock</label>
-                             <input type="number" id="prod-stock" required class="w-full px-3 py-2 border rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Stock</label>
+                            <input type="number" id="prod-stock" required
+                                class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                         </div>
-                         <div>
-                             <label class="block text-sm font-medium text-gray-700">Category</label>
-                             <select id="prod-category" class="w-full px-3 py-2 border rounded-lg">
-                                 <!-- Categories populated dynamically -->
-                             </select>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                            <select id="prod-category"
+                                class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                                <!-- Categories populated dynamically -->
+                            </select>
                         </div>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" onclick="app.closeProductModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                    <button type="button" onclick="app.closeProductModal()"
+                        class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="order-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-lg p-6 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
+                <h3 class="text-xl font-bold dark:text-white">Order Details</h3>
+                <button onclick="app.closeOrderModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">&times;</button>
+            </div>
+            <div id="order-modal-content" class="flex-1 overflow-y-auto mb-4 text-gray-800 dark:text-gray-200">
+                <!-- Content injected -->
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button onclick="app.printOrder()"
+                    class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Print
+                    / PDF</button>
+                <button onclick="app.closeOrderModal()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Close</button>
+            </div>
         </div>
     </div>
 
@@ -223,4 +407,5 @@
     <script src="js/utils.js"></script>
     <script src="js/app.js"></script>
 </body>
+
 </html>

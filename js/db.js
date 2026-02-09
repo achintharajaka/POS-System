@@ -19,7 +19,7 @@ db.on("populate", () => {
         { key: "receiptHeader", value: "Thank you for shopping!" },
         { key: "receiptFooter", value: "Visit us again." }
     ]);
-    
+
     db.categories.bulkAdd([
         { name: "General" },
         { name: "Food" },
@@ -54,7 +54,7 @@ const DB = {
     async deleteProduct(id) {
         return await db.products.delete(id);
     },
-    
+
     // Categories
     async getCategories() {
         return await db.categories.toArray();
@@ -78,19 +78,33 @@ const DB = {
     async updateSetting(key, value) {
         return await db.settings.put({ key, value });
     },
+
+    // Categories CRUD
+    async addCategory(name) {
+        return await db.categories.add({ name });
+    },
+    async deleteCategory(id) {
+        // Optional conflict check: check if products use this category
+        return await db.categories.delete(id);
+    },
+
+    async deleteOrder(id) {
+        return await db.orders.delete(id);
+    },
+
     async importData(jsonData) {
         // Clear existing
         await db.products.clear();
         await db.categories.clear();
         await db.settings.clear();
         await db.orders.clear(); // Optional: maybe we don't want to clear working orders?
-        
+
         // Load new
         await db.products.bulkAdd(jsonData.products);
         await db.categories.bulkAdd(jsonData.categories);
         await db.settings.bulkAdd(jsonData.settings);
         // We usually don't import orders for restore unless full backup
-        if(jsonData.orders) await db.orders.bulkAdd(jsonData.orders);
+        if (jsonData.orders) await db.orders.bulkAdd(jsonData.orders);
     },
     async exportData() {
         const products = await db.products.toArray();
