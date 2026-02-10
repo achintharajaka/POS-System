@@ -6,8 +6,10 @@ A fully functional, offline-capable Point of Sale system running entirely in the
 - **Dashboard**: View daily sales, total orders, low stock alerts, and **Recent Transaction History**.
 - **POS Terminal**: Fast checkout with product search, barcode scanning, and printable receipts.
 - **Inventory Management**: Add, edit, and delete products with stock tracking and **Categories**.
+- **Reports**: Track **Profit & Loss**, Revenue, Cost of Goods Sold (COGS), and Expenses with visual charts.
 - **Settings**:
     - **General**: Store Name, Address, Logo, **Receipt Header/Footer Text**.
+    - **Receipt Customization**: Toggle display of Logo, Address, Date, and configure custom text.
     - **Financials**: **Global Order Adjustments** (Taxes, Fees, Discounts).
     - **Theme**: Light and Dark Mode.
     - **Data**: Backup, Restore, and **Factory Reset**.
@@ -17,10 +19,11 @@ A fully functional, offline-capable Point of Sale system running entirely in the
 1. **Download** the project folder.
 2. **Open** `index.html` in any modern web browser.
 
-## v3.1 Enhancements
+## Recent Enhancements
+- **Profit & Loss**: New financial reporting tools to track business health, including expense management and net profit calculations.
+- **Receipt Customization**: Full control over receipt appearance, including visibility toggles for logo, address, and date.
 - **Factory Reset**: A new red button in Settings > Data Management allows you to wipe all data and reset the system to fresh install state.
-- **Receipt Header**: Fixed an issue where the custom Receipt Header text wasn't appearing on printed receipts.
-- **Full Data Export**: The Export JSON feature includes all your Inventory (Products, Stock, Categories) as well as Sales History and Settings.
+- **Full Data Export**: The Export JSON feature includes all your Inventory (Products, Stock, Categories) as well as Sales History, Expenses, and Settings.
 
 ## How to Configure Modifiers
 1. Go to **Settings** -> **Global Order Adjustments**.

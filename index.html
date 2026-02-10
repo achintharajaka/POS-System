@@ -56,6 +56,9 @@
                 <button onclick="app.navigate('settings')"
                     class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
                     id="nav-settings">Settings</button>
+                <button onclick="app.navigate('reports')"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    id="nav-reports">Reports</button>
 
                 <!-- Theme Toggle -->
                 <button onclick="app.toggleTheme()"
@@ -94,8 +97,8 @@
                     <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Orders</h3>
                     <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" id="dash-total-orders">0</p>
                 </div>
-                <div
-                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div onclick="app.filterInventory('low_stock')"
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                     <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Low Stock Items</h3>
                     <p class="text-3xl font-bold text-red-500 mt-2" id="dash-low-stock">0</p>
                 </div>
@@ -179,12 +182,20 @@
 
         <!-- Inventory View -->
         <div id="view-inventory" class="view-section h-full overflow-y-auto hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Inventory Management</h2>
-                <button onclick="app.openProductModal()"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-                    <span>+ Add Product</span>
-                </button>
+            <div class="flex flex-col gap-4 mb-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Inventory Management</h2>
+                    <button onclick="app.openProductModal()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                        <span>+ Add Product</span>
+                    </button>
+                </div>
+                <div id="inventory-filter-banner"
+                    class="hidden bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg flex justify-between items-center">
+                    <span>Showing <strong>Low Stock</strong> items only.</span>
+                    <button onclick="app.renderInventory()"
+                        class="text-sm underline hover:text-red-900 dark:hover:text-white">Clear Filter</button>
+                </div>
             </div>
 
             <div
@@ -205,6 +216,207 @@
                         <!-- Rows injected here -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Reports View -->
+        <div id="view-reports" class="view-section h-full overflow-y-auto hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Profit & Loss Statement</h2>
+
+            <!-- Financial Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Revenue</h3>
+                    <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" id="report-revenue">$0.00</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Cost of Goods Sold</h3>
+                    <p class="text-3xl font-bold text-red-500 mt-2" id="report-cogs">$0.00</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Expenses</h3>
+                    <p class="text-3xl font-bold text-orange-500 mt-2" id="report-expenses">$0.00</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Net Profit</h3>
+                    <p class="text-3xl font-bold text-green-600 mt-2" id="report-net-profit">$0.00</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Expense Management -->
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                        Record Expense</h3>
+                    <form onsubmit="app.addExpense(event)" class="space-y-4">
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                            <input type="text" id="expense-desc" required
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+                                <input type="number" step="0.01" id="expense-amount" required
+                                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                                <input type="date" id="expense-date" required
+                                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            </div>
+                        </div>
+                        <button type="submit"
+                            class="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">Add
+                            Expense</button>
+                    </form>
+                </div>
+
+                <!-- Recent Expenses -->
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white">Recent Expenses</h3>
+                    <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
+                                <tr>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Description</th>
+                                    <th class="p-4">Amount</th>
+                                    <th class="p-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses-list-body"
+                                class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                                <!-- Injected -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Management (New) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Record Revenue -->
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                        Record Extra Revenue</h3>
+                    <form onsubmit="app.addIncome(event)" class="space-y-4">
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                            <input type="text" id="income-desc" required
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                                placeholder="e.g. Service Fee, Bonus">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+                                <input type="number" step="0.01" id="income-amount" required
+                                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                                <input type="date" id="income-date" required
+                                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            </div>
+                        </div>
+                        <button type="submit"
+                            class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Add
+                            Revenue</button>
+                    </form>
+                </div>
+
+                <!-- Recent Revenue -->
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white">Recent Extra Revenue</h3>
+                    <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
+                                <tr>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Description</th>
+                                    <th class="p-4">Amount</th>
+                                    <th class="p-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="income-list-body"
+                                class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                                <!-- Injected -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Profit History Section -->
+            <div class="grid grid-cols-1 gap-6 mb-8">
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white">Order Profit History</h3>
+                    <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
+                                <tr>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Order ID</th>
+                                    <th class="p-4">Revenue</th>
+                                    <th class="p-4">COGS</th>
+                                    <th class="p-4">Gross Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profits-list-body"
+                                class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                                <!-- Injected -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Area -->
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
+                <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">Financial Overview</h3>
+                <div class="h-64">
+                    <canvas id="profit-loss-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Order Profits -->
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
+                <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white">Order Profit Analysis</h3>
+                <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
+                            <tr>
+                                <th class="p-4">Date</th>
+                                <th class="p-4">Order ID</th>
+                                <th class="p-4">Revenue</th>
+                                <th class="p-4">COGS</th>
+                                <th class="p-4">Gross Profit</th>
+                                <th class="p-4">Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-profits-body"
+                            class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                            <!-- Injected -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -299,6 +511,27 @@
                             </div>
                         </div>
 
+                        <div class="pt-4 border-t dark:border-gray-700 mt-4">
+                            <h4 class="font-bold text-gray-800 dark:text-white mb-2">Receipt Configuration</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox" name="receiptShowLogo" id="setting-receiptShowLogo"
+                                        class="rounded text-blue-600 focus:ring-blue-500">
+                                    Show Store Logo
+                                </label>
+                                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox" name="receiptShowAddress" id="setting-receiptShowAddress"
+                                        class="rounded text-blue-600 focus:ring-blue-500">
+                                    Show Store Address
+                                </label>
+                                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox" name="receiptShowDate" id="setting-receiptShowDate"
+                                        class="rounded text-blue-600 focus:ring-blue-500">
+                                    Show Date & Time
+                                </label>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Receipt
                                 Header Text</label>
@@ -313,10 +546,14 @@
                                 class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
                                 rows="2"></textarea>
                         </div>
-                        <div class="pt-4">
+
+                        <div class="pt-4 flex gap-3">
                             <button type="submit"
-                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Save General
+                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Save
                                 Settings</button>
+                            <button type="button" onclick="app.previewReceipt()"
+                                class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Preview
+                                Receipt</button>
                         </div>
                     </form>
                 </div>
@@ -418,12 +655,33 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" onclick="app.closeProductModal()"
-                        class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
-                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Image
+                            (Optional)</label>
+                        <div class="flex items-center gap-4 mt-1">
+                            <div
+                                class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 flex items-center justify-center">
+                                <img id="prod-image-preview" src="" alt="Preview"
+                                    class="w-full h-full object-cover hidden">
+                                <span id="prod-image-placeholder" class="text-xs text-gray-400">No Image</span>
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" id="prod-image-input" accept="image/*"
+                                    class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-300">
+                                <p class="text-xs text-gray-500 mt-1">Max size: 500KB</p>
+                                <input type="hidden" id="prod-image-base64">
+                            </div>
+                            <button type="button" onclick="app.removeProductImage()"
+                                class="text-red-500 hover:text-red-700 text-sm font-medium px-2">Remove</button>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" onclick="app.closeProductModal()"
+                            class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                    </div>
             </form>
         </div>
     </div>

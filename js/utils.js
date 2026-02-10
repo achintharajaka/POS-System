@@ -37,8 +37,18 @@ const Utils = {
         const date = new Date(order.timestamp).toLocaleString();
 
         let logoHtml = '';
-        if (logo) {
+        if (logo && settings.receiptShowLogo) {
             logoHtml = `<div class="text-center mb-2"><img src="${logo}" style="max-height: 50px; max-width: 100%;"></div>`;
+        }
+
+        let addressHtml = '';
+        if (settings.receiptShowAddress) {
+            addressHtml = `<p>${address}</p>`;
+        }
+
+        let dateHtml = '';
+        if (settings.receiptShowDate) {
+            dateHtml = `<p>${date}</p>`;
         }
 
         let itemsHtml = order.items.map(item => `
@@ -78,8 +88,8 @@ const Utils = {
                     ${logoHtml}
                     <div class="text-center">
                         <h2>${storeName}</h2>
-                        <p>${address}</p>
-                        <p>${date}</p>
+                        ${addressHtml}
+                        ${dateHtml}
                         ${settings.receiptHeader ? `<p style="margin-top: 5px; font-size: 0.9em;">${settings.receiptHeader}</p>` : ''}
                     </div>
                     <div class="border-bottom"></div>

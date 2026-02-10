@@ -6,9 +6,12 @@ const app = {
         products: [],
         categories: [],
         settings: {},
+        expenses: [],
+        income: [],
         currentView: 'dashboard',
         currentOrder: null,
-        modifiers: [] // Cache for active modifiers
+        modifiers: [], // Cache for active modifiers
+        chart: null
     },
 
     async init() {
@@ -41,12 +44,17 @@ const app = {
 
         // Setup Logo Upload Listener
         document.getElementById('setting-logo-upload').addEventListener('change', (e) => this.handleLogoUpload(e));
+
+        // Setup Product Image Upload Listener
+        document.getElementById('prod-image-input').addEventListener('change', (e) => this.handleProductImageUpload(e));
     },
 
     async loadData() {
         this.state.products = await DB.getProducts();
         this.state.categories = await DB.getCategories();
         this.state.settings = await DB.getSettings(); // Refresh settings/modifiers
+        this.state.expenses = await DB.getExpenses();
+        this.state.income = await DB.getIncome();
         this.state.modifiers = this.state.settings.orderModifiers || [];
         this.renderCategoryList();
         this.renderModifiersList();
@@ -104,6 +112,11 @@ const app = {
             document.getElementById('setting-receiptHeader').value = settings.receiptHeader || '';
             document.getElementById('setting-receiptFooter').value = settings.receiptFooter || '';
             document.getElementById('setting-storeLogo').value = settings.storeLogo || '';
+
+            // Checkboxes
+            document.getElementById('setting-receiptShowLogo').checked = settings.receiptShowLogo !== false; // Default true
+            document.getElementById('setting-receiptShowAddress').checked = settings.receiptShowAddress !== false;
+            document.getElementById('setting-receiptShowDate').checked = settings.receiptShowDate !== false;
         }
     },
 
@@ -131,8 +144,16 @@ const app = {
 
         const updates = [];
         for (let [key, value] of formData.entries()) {
-            updates.push(DB.updateSetting(key, value));
+            // Skip checkboxes here, handle explicitly
+            if (!key.startsWith('receiptShow')) {
+                updates.push(DB.updateSetting(key, value));
+            }
         }
+
+        // Handle Checkboxes explicitly
+        updates.push(DB.updateSetting('receiptShowLogo', document.getElementById('setting-receiptShowLogo').checked));
+        updates.push(DB.updateSetting('receiptShowAddress', document.getElementById('setting-receiptShowAddress').checked));
+        updates.push(DB.updateSetting('receiptShowDate', document.getElementById('setting-receiptShowDate').checked));
 
         await Promise.all(updates);
 
@@ -143,6 +164,45 @@ const app = {
         // Refresh views
         this.renderProducts();
         this.renderInventory();
+    },
+
+    previewReceipt() {
+        const dummyOrder = {
+            timestamp: Date.now(),
+            subtotal: 25.00,
+            total: 27.50,
+            items: [
+                { name: "Sample Product A", qty: 2, price: 10.00 },
+                { name: "Sample Product B", qty: 1, price: 5.00 }
+            ],
+            modifiers: [
+                { name: "Tax", rate: "add", amount: 2.50 }
+            ]
+        };
+
+        // Get current form values for preview (without saving)
+        const previewSettings = {
+            ...this.state.settings,
+            storeName: document.getElementById('setting-storeName').value,
+            storeAddress: document.getElementById('setting-storeAddress').value,
+            receiptHeader: document.getElementById('setting-receiptHeader').value,
+            receiptFooter: document.getElementById('setting-receiptFooter').value,
+            receiptShowLogo: document.getElementById('setting-receiptShowLogo').checked,
+            receiptShowAddress: document.getElementById('setting-receiptShowAddress').checked,
+            receiptShowDate: document.getElementById('setting-receiptShowDate').checked,
+            currencySymbol: document.getElementById('setting-currencySymbol').value
+        };
+
+        const logo = document.getElementById('setting-storeLogo').value;
+
+        const receiptWindow = window.open('', '', 'width=340,height=600');
+        receiptWindow.document.write(Utils.generateReceipt(
+            previewSettings.storeName,
+            previewSettings.storeAddress,
+            dummyOrder,
+            previewSettings,
+            logo
+        ));
     },
 
     removeLogo() {
@@ -263,7 +323,15 @@ const app = {
 
         if (viewId === 'dashboard') this.renderDashboard();
         if (viewId === 'pos') this.renderPOS();
+        if (viewId === 'dashboard') this.renderDashboard();
+        if (viewId === 'pos') this.renderPOS();
         if (viewId === 'inventory') this.renderInventory();
+        if (viewId === 'reports') this.renderProfitLoss();
+    },
+
+    filterInventory(type) {
+        this.navigate('inventory');
+        this.renderInventory(type);
     },
 
     // --- POS Functions ---
@@ -299,11 +367,21 @@ const app = {
             card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm";
             card.onclick = () => this.addToCart(prod);
 
-            card.innerHTML = `
+            card.onclick = () => this.addToCart(prod);
+
+            let imageHtml = `
                 <div class="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 mb-2">
                     ${prod.name.charAt(0).toUpperCase()}
                 </div>
-                <h4 class="font-bold text-gray-800 dark:text-gray-200 line-clamp-2">${prod.name}</h4>
+            `;
+
+            if (prod.image) {
+                imageHtml = `<img src="${prod.image}" class="h-24 w-full object-cover rounded-lg mb-2" alt="${prod.name}">`;
+            }
+
+            card.innerHTML = `
+                ${imageHtml}
+                <h4 class="font-bold text-gray-800 dark:text-gray-200 line-clamp-2 text-sm">${prod.name}</h4>
                 <p class="text-blue-600 dark:text-blue-400 font-bold mt-1">${Utils.formatCurrency(prod.price, currencySymbol)}</p>
                 <div class="text-xs text-gray-400 mt-1">Stock: ${prod.stock}</div>
             `;
@@ -401,10 +479,19 @@ const app = {
         this.state.cart.forEach(item => {
             const div = document.createElement('div');
             div.className = "flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded-lg";
+
+            let imgHtml = '';
+            if (item.image) {
+                imgHtml = `<img src="${item.image}" class="w-10 h-10 object-cover rounded mr-2">`;
+            }
+
             div.innerHTML = `
-                <div class="flex-1">
-                    <h5 class="font-bold text-sm text-gray-800 dark:text-white">${item.name}</h5>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">${Utils.formatCurrency(item.price, currencySymbol)} x ${item.qty}</p>
+                <div class="flex items-center flex-1">
+                    ${imgHtml}
+                    <div>
+                        <h5 class="font-bold text-sm text-gray-800 dark:text-white line-clamp-1">${item.name}</h5>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">${Utils.formatCurrency(item.price, currencySymbol)} x ${item.qty}</p>
+                    </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="app.updateCartQty(${item.id}, -1)" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500">-</button>
@@ -545,17 +632,43 @@ const app = {
 
     // --- Inventory Functions ---
 
-    renderInventory() {
+    renderInventory(filter = null) {
         const tbody = document.getElementById('inventory-table-body');
+        const banner = document.getElementById('inventory-filter-banner');
         tbody.innerHTML = '';
 
+        if (filter === 'low_stock') {
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+
         const { currencySymbol } = this.state.settings;
+
+        let products = this.state.products;
+        if (filter === 'low_stock') {
+            products = products.filter(p => p.stock < 5);
+        }
+
+        if (products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 dark:text-gray-400">No items found.</td></tr>';
+            return;
+        }
 
         this.state.products.forEach(prod => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
+
+            let imgContent = '<div class="w-8 h-8 bg-gray-200 rounded-full"></div>';
+            if (prod.image) {
+                imgContent = `<img src="${prod.image}" class="w-8 h-8 object-cover rounded-full">`;
+            }
+
             tr.innerHTML = `
-                <td class="p-4 font-medium dark:text-white">${prod.name}</td>
+                <td class="p-4 flex items-center gap-3 dark:text-white">
+                    ${imgContent}
+                    <span class="font-medium">${prod.name}</span>
+                </td>
                 <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">${prod.barcode || '-'}</td>
                 <td class="p-4 dark:text-white">${Utils.formatCurrency(prod.price, currencySymbol)}</td>
                 <td class="p-4 ${prod.stock < 5 ? 'text-red-500 font-bold' : 'dark:text-white'}">${prod.stock}</td>
@@ -572,6 +685,19 @@ const app = {
         const modal = document.getElementById('product-modal');
         const form = document.getElementById('product-form');
         const title = document.getElementById('modal-title');
+
+        // Image elements
+        const preview = document.getElementById('prod-image-preview');
+        const placeholder = document.getElementById('prod-image-placeholder');
+        const base64Input = document.getElementById('prod-image-base64');
+        const fileInput = document.getElementById('prod-image-input');
+
+        // Reset Image state
+        preview.src = '';
+        preview.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        base64Input.value = '';
+        fileInput.value = '';
 
         // Ensure categories are refreshed
         const categorySelect = document.getElementById('prod-category');
@@ -591,6 +717,14 @@ const app = {
             document.getElementById('prod-costPrice').value = prod.costPrice;
             document.getElementById('prod-stock').value = prod.stock;
             document.getElementById('prod-category').value = prod.categoryId;
+
+            if (prod.image) {
+                preview.src = prod.image;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                base64Input.value = prod.image;
+            }
+
         } else {
             title.innerText = "Add Product";
             form.reset();
@@ -598,6 +732,42 @@ const app = {
         }
 
         modal.classList.remove('hidden');
+    },
+
+    handleProductImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 500 * 1024) { // 500KB limit
+                Utils.showToast("Image too large (Max 500KB)", "error");
+                event.target.value = ''; // clear input
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target.result;
+                document.getElementById('prod-image-base64').value = base64;
+
+                const preview = document.getElementById('prod-image-preview');
+                const placeholder = document.getElementById('prod-image-placeholder');
+
+                preview.src = base64;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    },
+
+    removeProductImage() {
+        document.getElementById('prod-image-base64').value = '';
+        document.getElementById('prod-image-input').value = '';
+
+        const preview = document.getElementById('prod-image-preview');
+        const placeholder = document.getElementById('prod-image-placeholder');
+
+        preview.src = '';
+        preview.classList.add('hidden');
+        placeholder.classList.remove('hidden');
     },
 
     closeProductModal() {
@@ -612,9 +782,10 @@ const app = {
             name: document.getElementById('prod-name').value,
             barcode: document.getElementById('prod-barcode').value,
             price: parseFloat(document.getElementById('prod-price').value),
-            costPrice: parseFloat(document.getElementById('prod-costPrice').value),
+            costPrice: parseFloat(document.getElementById('prod-costPrice').value) || 0,
             stock: parseInt(document.getElementById('prod-stock').value),
-            categoryId: parseInt(document.getElementById('prod-category').value)
+            categoryId: parseInt(document.getElementById('prod-category').value),
+            image: document.getElementById('prod-image-base64').value
         };
 
         if (product.price < 0) {
@@ -694,9 +865,12 @@ const app = {
 
         let itemsHtml = order.items.map(item => `
             <div class="flex justify-between py-2 border-b dark:border-gray-700">
-                <div>
-                    <span class="font-bold">${item.name}</span>
-                    <div class="text-xs text-gray-500">${item.qty} x ${Utils.formatCurrency(item.price, currencySymbol)}</div>
+                <div class="flex items-center gap-2">
+                    ${item.image ? `<img src="${item.image}" class="w-10 h-10 rounded object-cover">` : ''}
+                    <div>
+                        <span class="font-bold block">${item.name}</span>
+                        <div class="text-xs text-gray-500">${item.qty} x ${Utils.formatCurrency(item.price, currencySymbol)}</div>
+                    </div>
                 </div>
                 <span>${Utils.formatCurrency(item.price * item.qty, currencySymbol)}</span>
             </div>
@@ -797,6 +971,315 @@ const app = {
                 await DB.reset();
             }
         }
+    },
+
+    // --- Profit & Loss Functions ---
+
+    async renderProfitLoss() {
+        this.renderExpensesList();
+        this.renderIncomeList(); // New
+        this.renderProfitsList();
+
+        const orders = await DB.getOrders();
+        const expenses = this.state.expenses;
+        const income = this.state.income;
+
+        // Calculate Metrics
+        let orderRevenue = 0;
+        let cogs = 0;
+
+        orders.forEach(order => {
+            orderRevenue += order.total;
+            order.items.forEach(item => {
+                const cost = parseFloat(item.costPrice) || 0;
+                cogs += cost * item.qty;
+            });
+        });
+
+        const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        const totalIncome = income.reduce((sum, inc) => sum + inc.amount, 0);
+
+        const totalRevenue = orderRevenue + totalIncome;
+        const netProfit = totalRevenue - cogs - totalExpenses;
+
+        const { currencySymbol } = this.state.settings;
+
+        document.getElementById('report-revenue').innerText = Utils.formatCurrency(totalRevenue, currencySymbol);
+        document.getElementById('report-cogs').innerText = Utils.formatCurrency(cogs, currencySymbol);
+        document.getElementById('report-expenses').innerText = Utils.formatCurrency(totalExpenses, currencySymbol);
+
+        const netEl = document.getElementById('report-net-profit');
+        netEl.innerText = Utils.formatCurrency(netProfit, currencySymbol);
+        netEl.className = `text-3xl font-bold mt-2 ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+
+        this.renderChart(orders, expenses, income);
+        this.renderOrderProfits(orders);
+    },
+
+    renderIncomeList() {
+        const tbody = document.getElementById('income-list-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const { currencySymbol } = this.state.settings;
+
+        this.state.income.slice(0, 50).forEach(inc => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
+            tr.innerHTML = `
+                <td class="p-4 dark:text-gray-300">${Utils.formatDate(inc.date)}</td>
+                <td class="p-4 font-medium dark:text-white">${inc.description}</td>
+                <td class="p-4 font-bold text-green-600">${Utils.formatCurrency(inc.amount, currencySymbol)}</td>
+                <td class="p-4">
+                    <button onclick="app.deleteIncome(${inc.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    },
+
+    renderOrderProfits(orders) {
+        const tbody = document.getElementById('report-profits-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const { currencySymbol } = this.state.settings;
+
+        // Sort by id desc (newest first)
+        const sortedOrders = [...orders].sort((a, b) => b.id - a.id);
+
+        sortedOrders.slice(0, 50).forEach(order => {
+            let orderRevenue = order.total;
+            let orderCogs = 0;
+
+            order.items.forEach(item => {
+                const cost = parseFloat(item.costPrice) || 0;
+                orderCogs += cost * item.qty;
+            });
+
+            const grossProfit = orderRevenue - orderCogs;
+            const margin = orderRevenue > 0 ? ((grossProfit / orderRevenue) * 100).toFixed(1) : 0;
+
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
+            tr.innerHTML = `
+                <td class="p-4 dark:text-gray-300">${Utils.formatDate(order.timestamp)}</td>
+                <td class="p-4 font-mono text-sm dark:text-gray-400">#${order.id}</td>
+                <td class="p-4 font-medium dark:text-white">${Utils.formatCurrency(orderRevenue, currencySymbol)}</td>
+                <td class="p-4 text-red-400">${Utils.formatCurrency(orderCogs, currencySymbol)}</td>
+                <td class="p-4 font-bold ${grossProfit >= 0 ? 'text-green-600' : 'text-red-600'}">${Utils.formatCurrency(grossProfit, currencySymbol)}</td>
+                <td class="p-4 text-sm dark:text-gray-400">${margin}%</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    },
+
+    renderExpensesList() {
+        const tbody = document.getElementById('expenses-list-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const { currencySymbol } = this.state.settings;
+
+        this.state.expenses.slice(0, 50).forEach(exp => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
+            tr.innerHTML = `
+                <td class="p-4 dark:text-gray-300">${Utils.formatDate(exp.date)}</td>
+                <td class="p-4 font-medium dark:text-white">${exp.description}</td>
+                <td class="p-4 font-bold dark:text-white">${Utils.formatCurrency(exp.amount, currencySymbol)}</td>
+                <td class="p-4">
+                    <button onclick="app.deleteExpense(${exp.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    },
+
+    async renderProfitsList() {
+        const tbody = document.getElementById('profits-list-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const { currencySymbol } = this.state.settings;
+
+        const orders = await DB.getOrders();
+
+        // Sort by id desc (newest first) and take first 50
+        const sortedOrders = [...orders].sort((a, b) => b.id - a.id).slice(0, 50);
+
+        sortedOrders.forEach(order => {
+            let orderRevenue = order.total;
+            let orderCogs = 0;
+
+            order.items.forEach(item => {
+                const cost = parseFloat(item.costPrice) || 0;
+                orderCogs += cost * item.qty;
+            });
+
+            const grossProfit = orderRevenue - orderCogs;
+
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
+            tr.innerHTML = `
+                <td class="p-4 dark:text-gray-300">${Utils.formatDate(order.timestamp)}</td>
+                <td class="p-4 font-mono text-sm dark:text-gray-400">#${order.id}</td>
+                <td class="p-4 font-medium dark:text-white">${Utils.formatCurrency(orderRevenue, currencySymbol)}</td>
+                <td class="p-4 text-red-400">${Utils.formatCurrency(orderCogs, currencySymbol)}</td>
+                <td class="p-4 font-bold ${grossProfit >= 0 ? 'text-green-600' : 'text-red-600'}">${Utils.formatCurrency(grossProfit, currencySymbol)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    },
+
+    async addExpense(event) {
+        event.preventDefault();
+        const description = document.getElementById('expense-desc').value;
+        const amount = parseFloat(document.getElementById('expense-amount').value);
+        const dateInput = document.getElementById('expense-date').value;
+
+        if (!description || isNaN(amount) || !dateInput) {
+            Utils.showToast("Please fill all fields", "error");
+            return;
+        }
+
+        const expense = {
+            description,
+            amount,
+            date: new Date(dateInput).getTime(),
+            category: 'General'
+        };
+
+        await DB.addExpense(expense);
+        event.target.reset(); // Reset form
+        await this.loadData();
+        this.renderProfitLoss();
+        Utils.showToast("Expense Added");
+    },
+
+    async deleteExpense(id) {
+        if (confirm("Delete this expense?")) {
+            await DB.deleteExpense(id);
+            await this.loadData();
+            this.renderProfitLoss();
+            Utils.showToast("Expense Deleted");
+        }
+    },
+
+    async addIncome(event) {
+        event.preventDefault();
+        const description = document.getElementById('income-desc').value;
+        const amount = parseFloat(document.getElementById('income-amount').value);
+        const dateInput = document.getElementById('income-date').value;
+
+        if (!description || isNaN(amount) || !dateInput) {
+            Utils.showToast("Please fill all fields", "error");
+            return;
+        }
+
+        const income = {
+            description,
+            amount,
+            date: new Date(dateInput).getTime(),
+            category: 'General'
+        };
+
+        await DB.addIncome(income);
+        event.target.reset(); // Reset form
+        await this.loadData();
+        this.renderProfitLoss();
+        Utils.showToast("Income Added");
+    },
+
+    async deleteIncome(id) {
+        if (confirm("Delete this income record?")) {
+            await DB.deleteIncome(id);
+            await this.loadData();
+            this.renderProfitLoss();
+            Utils.showToast("Income Deleted");
+        }
+    },
+
+    renderChart(orders, expenses, income) {
+        const ctx = document.getElementById('profit-loss-chart');
+        if (!ctx) return;
+
+        const dataMap = {};
+
+        // Helper to normalize date
+        const getKey = (ts) => new Date(ts).toISOString().split('T')[0];
+
+        orders.forEach(o => {
+            const key = getKey(o.timestamp);
+            if (!dataMap[key]) dataMap[key] = { revenue: 0, expense: 0 };
+            dataMap[key].revenue += o.total;
+
+            // Add COGS to expenses for the chart
+            o.items.forEach(item => {
+                const cost = parseFloat(item.costPrice) || 0;
+                dataMap[key].expense += (cost * item.qty);
+            });
+        });
+
+        expenses.forEach(e => {
+            const key = getKey(e.date);
+            if (!dataMap[key]) dataMap[key] = { revenue: 0, expense: 0 };
+            dataMap[key].expense += e.amount;
+        });
+
+        income.forEach(inc => {
+            const key = getKey(inc.date);
+            if (!dataMap[key]) dataMap[key] = { revenue: 0, expense: 0 };
+            dataMap[key].revenue += inc.amount;
+        });
+
+        const labels = Object.keys(dataMap).sort();
+        const revenueData = labels.map(l => dataMap[l].revenue);
+        const expenseData = labels.map(l => dataMap[l].expense);
+
+        if (this.state.chart) {
+            this.state.chart.destroy();
+        }
+
+        // Check for dark mode for chart styling
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? '#374151' : '#e5e7eb';
+        const textColor = isDark ? '#9ca3af' : '#4b5563';
+
+        this.state.chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Revenue',
+                        data: revenueData,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Expenses',
+                        data: expenseData,
+                        backgroundColor: '#f97316',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: { color: textColor }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: textColor } }
+                }
+            }
+        });
     }
 };
 

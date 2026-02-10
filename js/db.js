@@ -6,7 +6,9 @@ db.version(1).stores({
     products: '++id, name, barcode, price, costPrice, stock, categoryId',
     categories: '++id, name',
     orders: '++id, timestamp, total, tax, items, paymentMethod',
-    settings: 'key' // Key-value store
+    settings: 'key', // Key-value store
+    expenses: '++id, description, amount, date, category',
+    income: '++id, description, amount, date, category'
 });
 
 // Seed default settings if not exists
@@ -17,6 +19,9 @@ db.on("populate", () => {
         { key: "currencySymbol", value: "$" },
         { key: "receiptHeader", value: "Thank you for shopping!" },
         { key: "receiptFooter", value: "Visit us again." },
+        { key: "receiptShowLogo", value: true },
+        { key: "receiptShowAddress", value: true },
+        { key: "receiptShowDate", value: true },
         // New Modifiers System (Migrating from simple taxRate)
         { key: "maxModifierId", value: 1 }
     ]);
@@ -75,6 +80,28 @@ const DB = {
         return await db.orders.orderBy('timestamp').reverse().toArray();
     },
 
+    // Expenses
+    async addExpense(expense) {
+        return await db.expenses.add(expense);
+    },
+    async getExpenses() {
+        return await db.expenses.orderBy('date').reverse().toArray();
+    },
+    async deleteExpense(id) {
+        return await db.expenses.delete(id);
+    },
+
+    // Income (Extra Revenue)
+    async addIncome(income) {
+        return await db.income.add(income);
+    },
+    async getIncome() {
+        return await db.income.orderBy('date').reverse().toArray();
+    },
+    async deleteIncome(id) {
+        return await db.income.delete(id);
+    },
+
     // Settings
     async getSettings() {
         const all = await db.settings.toArray();
@@ -105,6 +132,8 @@ const DB = {
         await db.categories.clear();
         await db.settings.clear();
         await db.orders.clear(); // Optional: maybe we don't want to clear working orders?
+        await db.expenses.clear();
+        await db.income.clear();
 
         // Load new
         await db.products.bulkAdd(jsonData.products);
@@ -112,13 +141,17 @@ const DB = {
         await db.settings.bulkAdd(jsonData.settings);
         // We usually don't import orders for restore unless full backup
         if (jsonData.orders) await db.orders.bulkAdd(jsonData.orders);
+        if (jsonData.expenses) await db.expenses.bulkAdd(jsonData.expenses);
+        if (jsonData.income) await db.income.bulkAdd(jsonData.income);
     },
     async exportData() {
         const products = await db.products.toArray();
         const categories = await db.categories.toArray();
         const settings = await db.settings.toArray();
         const orders = await db.orders.toArray();
-        return { products, categories, settings, orders };
+        const expenses = await db.expenses.toArray();
+        const income = await db.income.toArray();
+        return { products, categories, settings, orders, expenses, income };
     },
 
     async reset() {
