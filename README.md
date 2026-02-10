@@ -1,4 +1,4 @@
-# Universal POS System (v3.1)
+# Universal POS System
 
 A fully functional, offline-capable Point of Sale system running entirely in the browser using HTML5, Tailwind CSS, Javascript, and Dexie.js (IndexedDB).
 
