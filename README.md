@@ -22,7 +22,7 @@ A fully functional, offline-capable Point of Sale system running entirely in the
 - **Receipt Header**: Fixed an issue where the custom Receipt Header text wasn't appearing on printed receipts.
 - **Full Data Export**: The Export JSON feature includes all your Inventory (Products, Stock, Categories) as well as Sales History and Settings.
 
-## How to Configure Modifiers (v3)
+## How to Configure Modifiers
 1. Go to **Settings** -> **Global Order Adjustments**.
 2. Add dynamic rules:
     - **Name**: e.g., "VAT"
