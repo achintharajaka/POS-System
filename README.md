@@ -32,7 +32,7 @@ The system uses `IndexedDB` for storage.
 | :--- | :--- | :--- |
 | **products** | `++id, name, barcode, price, costPrice, stock, categoryId` | Inventory items. Supports image (base64). |
 | **categories** | `++id, name` | Product categories. |
-| **orders** | `++id, timestamp, total, tax, items, paymentMethod` | Sales logs. `items` is an array of objects. |
+| **orders** | `++id, timestamp, total, subtotal, modifiers, items, paymentMethod` | Sales logs. `modifiers` is a snapshot of applied adjustments (tax, discount, etc). |
 | **expenses** | `++id, description, amount, date, category` | Manual expense entries. |
 | **income** | `++id, description, amount, date` | Manual revenue entries. |
 | **settings** | `key` | Key-value store for app configuration. |

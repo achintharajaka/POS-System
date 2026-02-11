@@ -42,7 +42,7 @@ Before making sales, you need products!
 4.  Click **Save**.
 
 ### Managing Stock
-- **Low Stock:** If an item's stock drops below 5, it will be highlighted in Red in the inventory list and appear in the "Low Stock Items" alert on the Dashboard.
+- **Low Stock Filter:** If an item's stock drops below 5, it will be highlighted in Red. Click the **Low Stock Items** card on the Dashboard to filter the inventory view to only these items.
 - **Editing:** Click "Edit" on any item to update its price, stock, or image.
 - **Deleting:** Click "Delete" to remove an item permanently.
 
@@ -62,8 +62,8 @@ This is where you'll spend most of your time.
     - Click **X** to remove an item.
 3.  **Checkout:**
     - Click **Pay Now**.
-    - **Discount:** Enter a percentage discount if applicable.
-    - **Payment Method:** Choose Cash, Card, or Online.
+    - **Taxes & Discounts:** Any global adjustments (configured in Settings) will be applied automatically.
+    - **Payment Method:** Click the icon button for **Cash**, **Card**, or **Online**. 
     - Click **Complete Order**.
 4.  **Receipt:** A receipt will automatically generate for printing.
 

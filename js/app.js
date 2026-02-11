@@ -11,7 +11,8 @@ const app = {
         currentView: 'dashboard',
         currentOrder: null,
         modifiers: [], // Cache for active modifiers
-        chart: null
+        chart: null,
+        paymentMethod: 'cash'
     },
 
     async init() {
@@ -514,6 +515,11 @@ const app = {
         this.updateTotals();
     },
 
+    setPaymentMethod(method) {
+        this.state.paymentMethod = method;
+        this.renderCart();
+    },
+
     updateTotals() {
         let subtotal = 0;
         this.state.cart.forEach(item => subtotal += item.price * item.qty);
@@ -563,6 +569,29 @@ const app = {
             ${modsHtml}
             <div class="flex justify-between text-xl font-bold text-gray-800 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-600"><span>Total:</span> <span id="cart-total">${Utils.formatCurrency(runningTotal, currencySymbol)}</span></div>
             
+            <div class="mt-4 mb-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="app.setPaymentMethod('cash')" class="flex flex-col items-center justify-center p-2 rounded-lg border ${this.state.paymentMethod === 'cash' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span class="text-xs font-medium">Cash</span>
+                    </button>
+                    <button onclick="app.setPaymentMethod('card')" class="flex flex-col items-center justify-center p-2 rounded-lg border ${this.state.paymentMethod === 'card' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <span class="text-xs font-medium">Card</span>
+                    </button>
+                    <button onclick="app.setPaymentMethod('online')" class="flex flex-col items-center justify-center p-2 rounded-lg border ${this.state.paymentMethod === 'online' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        </svg>
+                        <span class="text-xs font-medium">Online</span>
+                    </button>
+                </div>
+            </div>
             <button onclick="app.checkout()" class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay Now</button>
             <button onclick="app.clearCart()" class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors mt-2">Clear Cart</button>
         `;
@@ -606,7 +635,7 @@ const app = {
             modifiers: orderModifiers, // Save snapshot
             total: runningTotal,
             items: [...this.state.cart],
-            paymentMethod: 'cash'
+            paymentMethod: this.state.paymentMethod
         };
 
         await DB.saveOrder(order);
@@ -664,7 +693,7 @@ const app = {
             return;
         }
 
-        this.state.products.forEach(prod => {
+        products.forEach(prod => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
 
