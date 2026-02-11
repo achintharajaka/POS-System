@@ -117,6 +117,8 @@ const app = {
             document.getElementById('setting-receiptShowLogo').checked = settings.receiptShowLogo !== false; // Default true
             document.getElementById('setting-receiptShowAddress').checked = settings.receiptShowAddress !== false;
             document.getElementById('setting-receiptShowDate').checked = settings.receiptShowDate !== false;
+            document.getElementById('setting-receiptShowQrCode').checked = settings.receiptShowQrCode === true;
+            document.getElementById('setting-receiptQrCodeUrl').value = settings.receiptQrCodeUrl || '';
         }
     },
 
@@ -154,6 +156,8 @@ const app = {
         updates.push(DB.updateSetting('receiptShowLogo', document.getElementById('setting-receiptShowLogo').checked));
         updates.push(DB.updateSetting('receiptShowAddress', document.getElementById('setting-receiptShowAddress').checked));
         updates.push(DB.updateSetting('receiptShowDate', document.getElementById('setting-receiptShowDate').checked));
+        updates.push(DB.updateSetting('receiptShowQrCode', document.getElementById('setting-receiptShowQrCode').checked));
+        updates.push(DB.updateSetting('receiptQrCodeUrl', document.getElementById('setting-receiptQrCodeUrl').value));
 
         await Promise.all(updates);
 
@@ -190,6 +194,8 @@ const app = {
             receiptShowLogo: document.getElementById('setting-receiptShowLogo').checked,
             receiptShowAddress: document.getElementById('setting-receiptShowAddress').checked,
             receiptShowDate: document.getElementById('setting-receiptShowDate').checked,
+            receiptShowQrCode: document.getElementById('setting-receiptShowQrCode').checked,
+            receiptQrCodeUrl: document.getElementById('setting-receiptQrCodeUrl').value,
             currencySymbol: document.getElementById('setting-currencySymbol').value
         };
 
@@ -201,8 +207,10 @@ const app = {
             previewSettings.storeAddress,
             dummyOrder,
             previewSettings,
+            previewSettings,
             logo
         ));
+        receiptWindow.document.close();
     },
 
     removeLogo() {
@@ -621,6 +629,7 @@ const app = {
             this.state.settings,
             this.state.settings.storeLogo
         ));
+        receiptWindow.document.close();
 
         this.state.cart = [];
         this.renderCart();

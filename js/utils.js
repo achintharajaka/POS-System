@@ -69,6 +69,16 @@ const Utils = {
             modifiersHtml += `<tr><td>Tax</td><td class="text-right">${Utils.formatCurrency(order.tax, settings.currencySymbol)}</td></tr>`;
         }
 
+        let qrCodeScript = '';
+        let qrCodeContainer = '';
+
+        if (settings.receiptShowQrCode && settings.receiptQrCodeUrl) {
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${encodeURIComponent(settings.receiptQrCodeUrl)}`;
+            qrCodeContainer = `<div class="text-center py-2"><img src="${qrApiUrl}" alt="QR Code" style="width: 128px; height: 128px;"></div>`;
+        }
+
+        qrCodeScript = `<script>window.onload = function() { setTimeout(() => window.print(), 500); };</script>`;
+
         return `
             <html>
                 <head>
@@ -103,10 +113,11 @@ const Utils = {
                             <tr><td style="font-weight: bold;">TOTAL</td><td class="text-right" style="font-weight: bold;">${Utils.formatCurrency(order.total, settings.currencySymbol)}</td></tr>
                         </table>
                     </div>
+                    ${qrCodeContainer}
                     <div class="text-center py-2">
                         <p>${settings.receiptFooter || "Thank you!"}</p>
                     </div>
-                    <script>window.print();</script>
+                    ${qrCodeScript}
                 </body>
             </html>
         `;
