@@ -44,24 +44,20 @@
                 <h1 class="text-xl font-bold text-gray-800 dark:text-white" id="store-name">My Store</h1>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="app.navigate('dashboard')"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
-                    id="nav-dashboard">Dashboard</button>
-                <button onclick="app.navigate('pos')"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
-                    id="nav-pos">POS Terminal</button>
-                <button onclick="app.navigate('inventory')"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
-                    id="nav-inventory">Inventory</button>
-                <button onclick="app.navigate('settings')"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
-                    id="nav-settings">Settings</button>
-                <button onclick="app.navigate('reports')"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
-                    id="nav-reports">Reports</button>
+                <button id="nav-dashboard"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Dashboard</button>
+                <button id="nav-pos"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">POS
+                    Terminal</button>
+                <button id="nav-inventory"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Inventory</button>
+                <button id="nav-settings"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Settings</button>
+                <button id="nav-reports"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Reports</button>
 
                 <!-- Theme Toggle -->
-                <button onclick="app.toggleTheme()"
+                <button id="theme-toggle-btn"
                     class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
                     title="Toggle Theme">
                     <svg id="theme-icon-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
@@ -97,7 +93,7 @@
                     <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Orders</h3>
                     <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" id="dash-total-orders">0</p>
                 </div>
-                <div onclick="app.filterInventory('low_stock')"
+                <div id="dash-low-stock-card"
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                     <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Low Stock Items</h3>
                     <p class="text-3xl font-bold text-red-500 mt-2" id="dash-low-stock">0</p>
@@ -108,8 +104,7 @@
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
                 <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 dark:text-white">Recent Transactions</h3>
-                    <button onclick="app.renderDashboard()"
-                        class="text-blue-600 text-sm hover:underline">Refresh</button>
+                    <button id="dash-refresh-btn" class="text-blue-600 text-sm hover:underline">Refresh</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -170,10 +165,10 @@
                         <span>Total:</span> <span id="cart-total">$0.00</span>
                     </div>
 
-                    <button onclick="app.checkout()"
+                    <button id="pos-checkout-btn"
                         class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay
                         Now</button>
-                    <button onclick="app.clearCart()"
+                    <button id="pos-clear-cart-btn"
                         class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors">Clear
                         Cart</button>
                 </div>
@@ -185,7 +180,7 @@
             <div class="flex flex-col gap-4 mb-6">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Inventory Management</h2>
-                    <button onclick="app.openProductModal()"
+                    <button id="inv-add-product-btn"
                         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
                         <span>+ Add Product</span>
                     </button>
@@ -193,7 +188,7 @@
                 <div id="inventory-filter-banner"
                     class="hidden bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg flex justify-between items-center">
                     <span>Showing <strong>Low Stock</strong> items only.</span>
-                    <button onclick="app.renderInventory()"
+                    <button id="inv-clear-filter-btn"
                         class="text-sm underline hover:text-red-900 dark:hover:text-white">Clear Filter</button>
                 </div>
             </div>
@@ -253,7 +248,7 @@
                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                     <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
                         Record Expense</h3>
-                    <form onsubmit="app.addExpense(event)" class="space-y-4">
+                    <form id="expense-form" class="space-y-4">
                         <div>
                             <label
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
@@ -310,7 +305,7 @@
                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                     <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
                         Record Extra Revenue</h3>
-                    <form onsubmit="app.addIncome(event)" class="space-y-4">
+                    <form id="income-form" class="space-y-4">
                         <div>
                             <label
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
@@ -430,7 +425,7 @@
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                     <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
                         General Configuration</h3>
-                    <form id="settings-form" onsubmit="app.saveSettings(event)" class="space-y-4">
+                    <form id="settings-form" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store
                                 Name</label>
@@ -449,7 +444,7 @@
                             <div class="flex gap-2">
                                 <input type="file" id="setting-logo-upload" accept="image/*"
                                     class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
-                                <button type="button" onclick="app.removeLogo()"
+                                <button type="button" id="setting-remove-logo-btn"
                                     class="px-4 py-2 bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors">
                                     Remove
                                 </button>
@@ -504,7 +499,7 @@
                                     <div class="flex gap-1">
                                         <input type="number" step="0.01" id="new-mod-value" placeholder="Val"
                                             class="w-16 px-2 py-1 border dark:border-gray-500 dark:bg-gray-600 dark:text-white rounded text-sm">
-                                        <button type="button" onclick="app.addModifier()"
+                                        <button type="button" id="setting-add-modifier-btn"
                                             class="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-sm flex-1">+</button>
                                     </div>
                                 </div>
@@ -535,7 +530,8 @@
                                     Show QR Code
                                 </label>
                                 <div id="qr-code-url-container" class="mt-2">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">QR Code
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">QR
+                                        Code
                                         URL/Text</label>
                                     <input type="text" name="receiptQrCodeUrl" id="setting-receiptQrCodeUrl"
                                         class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
@@ -563,7 +559,7 @@
                             <button type="submit"
                                 class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Save
                                 Settings</button>
-                            <button type="button" onclick="app.previewReceipt()"
+                            <button type="button" id="setting-preview-receipt-btn"
                                 class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Preview
                                 Receipt</button>
                         </div>
@@ -581,7 +577,7 @@
                         <div class="flex gap-2 mb-4">
                             <input type="text" id="new-category-name" placeholder="New Category Name"
                                 class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
-                            <button onclick="app.addCategory()"
+                            <button id="setting-add-category-btn"
                                 class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Add</button>
                         </div>
                         <ul id="settings-category-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
@@ -598,16 +594,16 @@
                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Backup your store data or restore from
                             a previous backup.</p>
                         <div class="flex flex-col gap-3">
-                            <button onclick="app.exportData()"
+                            <button id="setting-export-btn"
                                 class="bg-gray-800 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center">Export
                                 Data (JSON)</button>
                             <div class="relative">
-                                <input type="file" id="import-file" class="hidden" onchange="app.importData(this)">
+                                <input type="file" id="import-file" class="hidden">
                                 <button onclick="document.getElementById('import-file').click()"
                                     class="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-center">Import
                                     Data (JSON)</button>
                             </div>
-                            <button onclick="app.resetSystem()"
+                            <button id="setting-reset-btn"
                                 class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-center mt-2">Reset
                                 System (Factory Reset)</button>
                         </div>
@@ -624,10 +620,10 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-md p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold dark:text-white" id="modal-title">Add Product</h3>
-                <button onclick="app.closeProductModal()"
+                <button id="prod-modal-close-x"
                     class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">&times;</button>
             </div>
-            <form id="product-form" onsubmit="app.saveProduct(event)">
+            <form id="product-form">
                 <input type="hidden" id="prod-id">
                 <div class="space-y-3">
                     <div>
@@ -684,12 +680,12 @@
                                 <p class="text-xs text-gray-500 mt-1">Max size: 500KB</p>
                                 <input type="hidden" id="prod-image-base64">
                             </div>
-                            <button type="button" onclick="app.removeProductImage()"
+                            <button type="button" id="prod-remove-img-btn"
                                 class="text-red-500 hover:text-red-700 text-sm font-medium px-2">Remove</button>
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end gap-3">
-                        <button type="button" onclick="app.closeProductModal()"
+                        <button type="button" id="prod-modal-cancel-btn"
                             class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
                         <button type="submit"
                             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
@@ -704,25 +700,35 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-lg p-6 flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
                 <h3 class="text-xl font-bold dark:text-white">Order Details</h3>
-                <button onclick="app.closeOrderModal()"
+                <button id="order-modal-close-x"
                     class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">&times;</button>
             </div>
             <div id="order-modal-content" class="flex-1 overflow-y-auto mb-4 text-gray-800 dark:text-gray-200">
                 <!-- Content injected -->
             </div>
             <div class="flex justify-end gap-3 pt-2">
-                <button onclick="app.printOrder()"
+                <button id="order-modal-print-btn"
                     class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Print
                     / PDF</button>
-                <button onclick="app.closeOrderModal()"
+                <button id="order-modal-close-btn"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/db.js"></script>
+    <!-- Global Scripts (Order Matters) -->
+    <script src="js/constants.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/db.js"></script>
+
+    <!-- Modules -->
+    <script src="js/modules/pos.js"></script>
+    <script src="js/modules/inventory.js"></script>
+    <script src="js/modules/dashboard.js"></script>
+    <script src="js/modules/reports.js"></script>
+    <script src="js/modules/settings.js"></script>
+
+    <!-- Main App -->
     <script src="js/app.js"></script>
 </body>
 

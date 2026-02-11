@@ -1,6 +1,7 @@
-// utils.js - Formatting and Helpers
+// Utils (Global)
+// Depends on: constants.js
 
-const Utils = {
+window.Utils = {
     formatCurrency(amount, symbol = "$") {
         return `${symbol}${parseFloat(amount).toFixed(2)}`;
     },
@@ -9,8 +10,18 @@ const Utils = {
         return new Date(timestamp).toLocaleString();
     },
 
+    // Input Sanitization
+    sanitize(str) {
+        if (!str) return '';
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    },
+
     showToast(message, type = "success") {
-        const container = document.getElementById("toast-container");
+        const container = document.getElementById(DOM.APP.TOAST_CONTAINER);
+        if (!container) return; // Guard against missing container
+
         const toast = document.createElement("div");
 
         let colors = type === "success" ? "bg-green-500" : "bg-red-500";
@@ -43,7 +54,7 @@ const Utils = {
 
         let addressHtml = '';
         if (settings.receiptShowAddress) {
-            addressHtml = `<p>${address}</p>`;
+            addressHtml = `<p>${this.sanitize(address)}</p>`;
         }
 
         let dateHtml = '';
@@ -53,7 +64,7 @@ const Utils = {
 
         let itemsHtml = order.items.map(item => `
             <tr>
-                <td style="padding: 5px 0;">${item.name} <br> <span style="font-size: 0.8em; color: #666;">${item.qty} x ${Utils.formatCurrency(item.price, settings.currencySymbol)}</span></td>
+                <td style="padding: 5px 0;">${this.sanitize(item.name)} <br> <span style="font-size: 0.8em; color: #666;">${item.qty} x ${Utils.formatCurrency(item.price, settings.currencySymbol)}</span></td>
                 <td style="text-align: right; vertical-align: top; padding: 5px 0;">${Utils.formatCurrency(item.price * item.qty, settings.currencySymbol)}</td>
             </tr>
         `).join('');
@@ -62,7 +73,7 @@ const Utils = {
         if (order.modifiers) {
             order.modifiers.forEach(mod => {
                 const sign = mod.rate === 'subtract' ? '-' : '';
-                modifiersHtml += `<tr><td>${mod.name}</td><td class="text-right">${sign}${Utils.formatCurrency(mod.amount, settings.currencySymbol)}</td></tr>`;
+                modifiersHtml += `<tr><td>${this.sanitize(mod.name)}</td><td class="text-right">${sign}${Utils.formatCurrency(mod.amount, settings.currencySymbol)}</td></tr>`;
             });
         } else if (order.tax) {
             // Legacy
@@ -97,10 +108,14 @@ const Utils = {
                 <body>
                     ${logoHtml}
                     <div class="text-center">
-                        <h2>${storeName}</h2>
+                        <h2>${this.sanitize(storeName)}</h2>
                         ${addressHtml}
                         ${dateHtml}
-                        ${settings.receiptHeader ? `<p style="margin-top: 5px; font-size: 0.9em;">${settings.receiptHeader}</p>` : ''}
+                        ${settings.receiptHeader ? `<p style="margin-top: 5px; font-size: 0.9em;">${this.sanitize(settings.receiptHeader)}</p>` : ''}
+                    </div>
+                    <div class="border-bottom"></div>
+                    <div class="text-center py-2" style="font-size: 0.9em;">
+                        <strong>Payment Method:</strong> ${(order.paymentMethod || 'Cash').toUpperCase()}
                     </div>
                     <div class="border-bottom"></div>
                     <table>
@@ -115,11 +130,44 @@ const Utils = {
                     </div>
                     ${qrCodeContainer}
                     <div class="text-center py-2">
-                        <p>${settings.receiptFooter || "Thank you!"}</p>
+                        <p>${this.sanitize(settings.receiptFooter || "Thank you!")}</p>
                     </div>
                     ${qrCodeScript}
                 </body>
             </html>
         `;
+    },
+    // --- Debug / Error Logging ---
+    logs: [],
+
+    logError(type, error) {
+        const timestamp = new Date().toISOString();
+        const msg = typeof error === 'object' ? (error.stack || error.message) : error;
+        const entry = `[${timestamp}] [${type}] ${msg}`;
+        console.error(entry);
+        this.logs.push(entry);
+        try { sessionStorage.setItem('pos_debug_logs', JSON.stringify(this.logs)); } catch (e) { }
+    },
+
+    downloadDebugReport() {
+        const report = ["POS System Debug Report", "=======================", ...this.logs].join('\n');
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `debug_report_${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        this.showToast("Debug Report Downloaded");
     }
 };
+
+// Global Error Listeners
+window.addEventListener('error', (event) => {
+    window.Utils.logError('Uncaught Exception', event.error || event.message);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    window.Utils.logError('Unhandled Rejection', event.reason);
+});

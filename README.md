@@ -4,10 +4,10 @@
 This Point of Sale (POS) system is a lightweight, offline-first web application designed for small businesses. It handles inventory management, sales processing, and financial reporting entirely within the browser using modern web technologies.
 
 ## 2. Architecture
-The application follows a generic Single Page Application (SPA) architecture.
+The application follows a modular, client-side architecture using standard JavaScript (Global Scripts).
 
 ### Tech Stack
-- **Core:** Vanilla JavaScript (ES6+). No heavy frameworks (React/Vue/Angular) were used to minimize complexity and build size.
+- **Core:** Vanilla JavaScript (ES6+). Modularized logic for maintainability.
 - **UI/Styling:** Tailwind CSS (via CDN) for rapid, utility-first styling.
 - **Database:** `Dexie.js` (Wrapper for IndexedDB) for robust, persistent client-side storage.
 - **Visualization:** `Chart.js` for financial reporting charts.
@@ -18,9 +18,16 @@ The application follows a generic Single Page Application (SPA) architecture.
 /
 ├── index.html          # Main entry point, contains all Views and Modals
 ├── js/
-│   ├── app.js          # Core Application Logic (State, Event Handling, UI Rendering)
-│   ├── db.js           # Database Schema and Data Access Layer (Dexie.js)
-│   └── utils.js        # Helper functions (Formatting, Toast, Receipt Gen)
+│   ├── app.js          # Main Entry Point / Controller (Initializes modules)
+│   ├── db.js           # Database Schema and Data Access Layer
+│   ├── utils.js        # Helper functions & Global Error Logger
+│   ├── constants.js    # Centralized DOM element IDs and constants
+│   └── modules/        # Feature-specific modules
+│       ├── dashboard.js
+│       ├── inventory.js
+│       ├── pos.js
+│       ├── reports.js
+│       └── settings.js
 ├── README.md           # Technical Documentation
 └── UserGuide.md        # End-User Manual
 ```
@@ -47,7 +54,7 @@ The system uses `IndexedDB` for storage.
 ### B. Point of Sale (POS)
 - **Cart Logic:** In-memory array (`state.cart`).
 - **Stock Deduction:** Upon checkout, stock is deducted atomically from the `products` store.
-- **Receipts:** Generated on-the-fly using `Utils.generateReceipt()` which creates a printable HTML window.
+- **Receipts:** Generated on-the-fly using `Utils.generateReceipt()` which creates a printable HTML window. Past order receipts can be reviewed from the Dashboard by clicking "View" on any order in the transaction history.
 
 ### C. Financial Reporting
 - **Profit Calculation:**

@@ -15,6 +15,7 @@ Welcome to the Point of Sale (POS) System! This guide will help you understand h
 
 When you open the application, you will see the **Dashboard**. This is your command center.
 - **Top Cards:** Show you a quick summary of today's sales, total revenue, expenses, and low stock warnings.
+- **Recent Transactions:** View your order history. Click **View** on any order to open its receipt in a popup window for review or printing. Click **Delete** to permanently remove an order record.
 - **Navigation Menu:** On the left (or top on mobile), use this to switch between different views:
     - **Dashboard:** Overview.
     - **POS:** The checkout terminal.
@@ -66,6 +67,7 @@ This is where you'll spend most of your time.
     - **Payment Method:** Click the icon button for **Cash**, **Card**, or **Online**. 
     - Click **Complete Order**.
 4.  **Receipt:** A receipt will automatically generate for printing.
+5.  **Review Past Orders:** Go to the **Dashboard** and click **View** next to any order in the Recent Transactions table to open its receipt in a popup window.
 
 ---
 
@@ -99,3 +101,17 @@ Track how your business is doing.
     - **Export Data:** Download a backup of your entire database. **Do this regularly!**
     - **Import Data:** Restore from a backup file.
     - **Clear Data:** WIPE everything. Use with caution.
+
+---
+
+## 6. Troubleshooting & Debugging
+
+If you encounter any issues or the system behaves unexpectedly:
+
+1.  **Direct Execution:** Note that this system runs directly from your files. Simply double-click `index.html` to start.
+2.  **Debug Report:** The system automatically logs errors in the background. If you need to report a bug:
+    - Open your browser's **Developer Console** (usually by pressing `F12` or `Ctrl+Shift+I`).
+    - Go to the **Console** tab.
+    - Type `Utils.downloadDebugReport()` and press **Enter**.
+    - This will download a `debug_report.txt` file which you can share with support to help identify the problem.
+3.  **WIP:** A dedicated button for downloading this report is being added to the Settings page in a future update.

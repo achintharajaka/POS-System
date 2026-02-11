@@ -1,11 +1,12 @@
-// db.js - Dexie Database Configuration
+// DB Module (Global)
+// Depends on: utils.js (loaded before this)
 
 const db = new Dexie("POSDatabase");
 
 db.version(1).stores({
     products: '++id, name, barcode, price, costPrice, stock, categoryId',
     categories: '++id, name',
-    orders: '++id, timestamp, total, tax, items, paymentMethod',
+    orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod',
     settings: 'key', // Key-value store
     expenses: '++id, description, amount, date, category',
     income: '++id, description, amount, date, category'
@@ -50,112 +51,122 @@ db.on("populate", () => {
 
 db.open().catch(err => {
     console.error("Failed to open db: " + (err.stack || err));
+    // We can't use Utils here easily if Utils depends on DB, but Utils is mostly formatting/toast.
+    // Ideally pass this error to UI via main app or utils
 });
 
-const DB = {
+window.DB = {
     // Products
     async getProducts() {
-        return await db.products.toArray();
+        try { return await db.products.toArray(); } catch (e) { console.error(e); throw e; }
     },
     async addProduct(product) {
-        return await db.products.add(product);
+        try { return await db.products.add(product); } catch (e) { console.error(e); throw e; }
     },
     async updateProduct(id, updates) {
-        return await db.products.update(id, updates);
+        try { return await db.products.update(id, updates); } catch (e) { console.error(e); throw e; }
     },
     async deleteProduct(id) {
-        return await db.products.delete(id);
+        try { return await db.products.delete(id); } catch (e) { console.error(e); throw e; }
     },
 
     // Categories
     async getCategories() {
-        return await db.categories.toArray();
+        try { return await db.categories.toArray(); } catch (e) { console.error(e); throw e; }
     },
 
     // Orders
     async saveOrder(order) {
-        return await db.orders.add(order);
+        try { return await db.orders.add(order); } catch (e) { console.error(e); throw e; }
     },
     async getOrders() {
-        return await db.orders.orderBy('timestamp').reverse().toArray();
+        try { return await db.orders.orderBy('timestamp').reverse().toArray(); } catch (e) { console.error(e); throw e; }
     },
 
     // Expenses
     async addExpense(expense) {
-        return await db.expenses.add(expense);
+        try { return await db.expenses.add(expense); } catch (e) { console.error(e); throw e; }
     },
     async getExpenses() {
-        return await db.expenses.orderBy('date').reverse().toArray();
+        try { return await db.expenses.orderBy('date').reverse().toArray(); } catch (e) { console.error(e); throw e; }
     },
     async deleteExpense(id) {
-        return await db.expenses.delete(id);
+        try { return await db.expenses.delete(id); } catch (e) { console.error(e); throw e; }
     },
 
     // Income (Extra Revenue)
     async addIncome(income) {
-        return await db.income.add(income);
+        try { return await db.income.add(income); } catch (e) { console.error(e); throw e; }
     },
     async getIncome() {
-        return await db.income.orderBy('date').reverse().toArray();
+        try { return await db.income.orderBy('date').reverse().toArray(); } catch (e) { console.error(e); throw e; }
     },
     async deleteIncome(id) {
-        return await db.income.delete(id);
+        try { return await db.income.delete(id); } catch (e) { console.error(e); throw e; }
     },
 
     // Settings
     async getSettings() {
-        const all = await db.settings.toArray();
-        const settings = {};
-        all.forEach(s => settings[s.key] = s.value);
-        return settings;
+        try {
+            const all = await db.settings.toArray();
+            const settings = {};
+            all.forEach(s => settings[s.key] = s.value);
+            return settings;
+        } catch (e) { console.error(e); throw e; }
     },
     async updateSetting(key, value) {
-        return await db.settings.put({ key, value });
+        try { return await db.settings.put({ key, value }); } catch (e) { console.error(e); throw e; }
     },
 
     // Categories CRUD
     async addCategory(name) {
-        return await db.categories.add({ name });
+        try { return await db.categories.add({ name }); } catch (e) { console.error(e); throw e; }
     },
     async deleteCategory(id) {
         // Optional conflict check: check if products use this category
-        return await db.categories.delete(id);
+        try { return await db.categories.delete(id); } catch (e) { console.error(e); throw e; }
     },
 
     async deleteOrder(id) {
-        return await db.orders.delete(id);
+        try { return await db.orders.delete(id); } catch (e) { console.error(e); throw e; }
     },
 
     async importData(jsonData) {
-        // Clear existing
-        await db.products.clear();
-        await db.categories.clear();
-        await db.settings.clear();
-        await db.orders.clear(); // Optional: maybe we don't want to clear working orders?
-        await db.expenses.clear();
-        await db.income.clear();
+        try {
+            // Clear existing
+            await db.products.clear();
+            await db.categories.clear();
+            await db.settings.clear();
+            await db.orders.clear(); // Optional: maybe we don't want to clear working orders?
+            await db.expenses.clear();
+            await db.income.clear();
 
-        // Load new
-        await db.products.bulkAdd(jsonData.products);
-        await db.categories.bulkAdd(jsonData.categories);
-        await db.settings.bulkAdd(jsonData.settings);
-        // We usually don't import orders for restore unless full backup
-        if (jsonData.orders) await db.orders.bulkAdd(jsonData.orders);
-        if (jsonData.expenses) await db.expenses.bulkAdd(jsonData.expenses);
-        if (jsonData.income) await db.income.bulkAdd(jsonData.income);
+            // Load new
+            await db.products.bulkAdd(jsonData.products);
+            await db.categories.bulkAdd(jsonData.categories);
+            await db.settings.bulkAdd(jsonData.settings);
+            // We usually don't import orders for restore unless full backup
+            if (jsonData.orders) await db.orders.bulkAdd(jsonData.orders);
+            if (jsonData.expenses) await db.expenses.bulkAdd(jsonData.expenses);
+            if (jsonData.income) await db.income.bulkAdd(jsonData.income);
+        } catch (e) { console.error(e); throw e; }
     },
     async exportData() {
-        const products = await db.products.toArray();
-        const categories = await db.categories.toArray();
-        const settings = await db.settings.toArray();
-        const orders = await db.orders.toArray();
-        const expenses = await db.expenses.toArray();
-        const income = await db.income.toArray();
-        return { products, categories, settings, orders, expenses, income };
+        try {
+            const products = await db.products.toArray();
+            const categories = await db.categories.toArray();
+            const settings = await db.settings.toArray();
+            const orders = await db.orders.toArray();
+            const expenses = await db.expenses.toArray();
+            const income = await db.income.toArray();
+            return { products, categories, settings, orders, expenses, income };
+        } catch (e) { console.error(e); throw e; }
     },
 
     async reset() {
-        await db.delete();
-        window.location.reload();
+        try {
+            await db.delete();
+            window.location.reload();
+        } catch (e) { console.error(e); throw e; }
     }
 };

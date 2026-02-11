@@ -1,0 +1,319 @@
+// POS Module
+// Depends on: db.js, utils.js, constants.js
+
+window.POS = {
+    renderPOS() {
+        this.renderProducts();
+        this.renderCart();
+    },
+
+    populateCategoryFilter() {
+        const select = document.getElementById(DOM.POS.CATEGORY_FILTER);
+        if (!select) return;
+        select.innerHTML = '<option value="">All Categories</option>';
+        this.state.categories.forEach(cat => {
+            select.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
+        });
+
+        const prodSelect = document.getElementById(DOM.MODALS.PRODUCT.INPUT_CATEGORY);
+        if (prodSelect) {
+            prodSelect.innerHTML = '';
+            this.state.categories.forEach(cat => {
+                prodSelect.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
+            });
+        }
+    },
+
+    renderProducts(filteredProducts = null) {
+        const grid = document.getElementById(DOM.POS.PRODUCTS_GRID);
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const products = filteredProducts || this.state.products;
+        const { currencySymbol } = this.state.settings;
+
+        products.forEach(prod => {
+            const card = document.createElement('div');
+            card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm";
+            card.onclick = () => this.addToCart(prod);
+
+            let imageHtml = `
+                <div class="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 mb-2">
+                    ${prod.name.charAt(0).toUpperCase()}
+                </div>
+            `;
+
+            if (prod.image) {
+                imageHtml = `<img src="${prod.image}" class="h-24 w-full object-cover rounded-lg mb-2" alt="${Utils.sanitize(prod.name)}">`;
+            }
+
+            card.innerHTML = `
+                ${imageHtml}
+                <h4 class="font-bold text-gray-800 dark:text-gray-200 line-clamp-2 text-sm">${Utils.sanitize(prod.name)}</h4>
+                <p class="text-blue-600 dark:text-blue-400 font-bold mt-1">${Utils.formatCurrency(prod.price, currencySymbol)}</p>
+                <div class="text-xs text-gray-400 mt-1">Stock: ${prod.stock}</div>
+            `;
+            grid.appendChild(card);
+        });
+    },
+
+    filterProducts(searchTerm, categoryId) {
+        let results = this.state.products;
+
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            results = results.filter(p =>
+                p.name.toLowerCase().includes(term) ||
+                (p.barcode && p.barcode.includes(term))
+            );
+        }
+
+        if (categoryId) {
+            results = results.filter(p => p.categoryId == categoryId);
+        }
+
+        this.renderProducts(results);
+
+        // Auto-add if exact barcode match
+        if (searchTerm && results.length === 1 && results[0].barcode === searchTerm) {
+            this.addToCart(results[0]);
+            document.getElementById(DOM.POS.SEARCH).value = '';
+            this.renderProducts(this.state.products); // Reset view
+        }
+    },
+
+    addToCart(product) {
+        if (product.stock <= 0) {
+            Utils.showToast("Out of Stock!", "error");
+            return;
+        }
+
+        const existingItem = this.state.cart.find(item => item.id === product.id);
+
+        if (existingItem) {
+            if (existingItem.qty >= product.stock) {
+                Utils.showToast("Max stock reached!", "error");
+                return;
+            }
+            existingItem.qty++;
+        } else {
+            this.state.cart.push({ ...product, qty: 1 });
+        }
+
+        this.renderCart();
+        Utils.showToast("Added to Cart");
+    },
+
+    removeFromCart(productId) {
+        this.state.cart = this.state.cart.filter(item => item.id !== productId);
+        this.renderCart();
+    },
+
+    updateCartQty(productId, change) {
+        const item = this.state.cart.find(i => i.id === productId);
+        if (!item) return;
+
+        const newQty = item.qty + change;
+
+        if (newQty <= 0) {
+            this.removeFromCart(productId);
+        } else if (newQty > item.stock) {
+            Utils.showToast("Exceeds available stock!", "error");
+        } else {
+            item.qty = newQty;
+            this.renderCart();
+        }
+    },
+
+    clearCart() {
+        if (confirm("Clear current cart?")) {
+            this.state.cart = [];
+            this.renderCart();
+        }
+    },
+
+    setPaymentMethod(method) {
+        this.state.paymentMethod = method;
+        this.renderCart();
+    },
+
+    renderCart() {
+        const container = document.getElementById(DOM.POS.CART_ITEMS);
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (this.state.cart.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 mt-10">Cart is empty</div>';
+            this.updateTotals();
+            return;
+        }
+
+        const { currencySymbol } = this.state.settings;
+
+        this.state.cart.forEach(item => {
+            const div = document.createElement('div');
+            div.className = "flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded-lg";
+
+            let imgHtml = '';
+            if (item.image) {
+                imgHtml = `<img src="${item.image}" class="w-10 h-10 object-cover rounded mr-2">`;
+            }
+
+            div.innerHTML = `
+                <div class="flex items-center flex-1">
+                    ${imgHtml}
+                    <div>
+                        <h5 class="font-bold text-sm text-gray-800 dark:text-white line-clamp-1">${Utils.sanitize(item.name)}</h5>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">${Utils.formatCurrency(item.price, currencySymbol)} x ${item.qty}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="app.updateCartQty(${item.id}, -1)" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500">-</button>
+                    <span class="font-bold text-sm w-4 text-center dark:text-white">${item.qty}</span>
+                    <button onclick="app.updateCartQty(${item.id}, 1)" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500">+</button>
+                    <button onclick="app.removeFromCart(${item.id})" class="ml-2 text-red-500 hover:text-red-700">&times;</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        this.updateTotals();
+    },
+
+    updateTotals() {
+        let subtotal = 0;
+        this.state.cart.forEach(item => subtotal += item.price * item.qty);
+
+        const { currencySymbol } = this.state.settings;
+        const modifiers = this.state.modifiers || [];
+
+        // Calculate Modifiers
+        let runningTotal = subtotal;
+        let modsHtml = '';
+
+        modifiers.forEach(mod => {
+            let modAmount = 0;
+            if (mod.type === 'percent') {
+                modAmount = subtotal * (mod.value / 100);
+            } else {
+                modAmount = mod.value;
+            }
+
+            if (mod.rate === 'subtract') {
+                runningTotal -= modAmount;
+                modsHtml += `<div class="flex justify-between text-green-600 dark:text-green-400 text-sm"><span>${Utils.sanitize(mod.name)} (${mod.type === 'percent' ? mod.value + '%' : 'Fixed'}):</span> <span>-${Utils.formatCurrency(modAmount, currencySymbol)}</span></div>`;
+            } else {
+                runningTotal += modAmount;
+                modsHtml += `<div class="flex justify-between text-gray-600 dark:text-gray-300 text-sm"><span>${Utils.sanitize(mod.name)} (${mod.type === 'percent' ? mod.value + '%' : 'Fixed'}):</span> <span>${Utils.formatCurrency(modAmount, currencySymbol)}</span></div>`;
+            }
+        });
+
+        if (runningTotal < 0) runningTotal = 0;
+
+        const subtotalEl = document.getElementById(DOM.POS.CART_SUBTOTAL);
+        if (subtotalEl) {
+            const parent = subtotalEl.parentElement.parentElement;
+            parent.innerHTML = `
+                <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Subtotal:</span> <span id="${DOM.POS.CART_SUBTOTAL}">${Utils.formatCurrency(subtotal, currencySymbol)}</span></div>
+                ${modsHtml}
+                <div class="flex justify-between text-xl font-bold text-gray-800 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-600"><span>Total:</span> <span id="${DOM.POS.CART_TOTAL}">${Utils.formatCurrency(runningTotal, currencySymbol)}</span></div>
+                
+                <div class="mt-4 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="app.setPaymentMethod('cash')" class="flex flex-col items-center justify-center p-2 rounded-lg border ${this.state.paymentMethod === 'cash' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <span class="text-xs font-medium">Cash</span>
+                        </button>
+                        <button onclick="app.setPaymentMethod('card')" class="flex flex-col items-center justify-center p-2 rounded-lg border ${this.state.paymentMethod === 'card' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            <span class="text-xs font-medium">Card</span>
+                        </button>
+                        <button onclick="app.setPaymentMethod('online')" class="flex flex-col items-center justify-center p-2 rounded-lg border ${this.state.paymentMethod === 'online' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                            </svg>
+                            <span class="text-xs font-medium">Online</span>
+                        </button>
+                    </div>
+                </div>
+                <button onclick="app.checkout()" class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay Now</button>
+                <button onclick="app.clearCart()" class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors mt-2">Clear Cart</button>
+            `;
+        }
+    },
+
+    async checkout() {
+        if (this.state.cart.length === 0) {
+            Utils.showToast("Cart is empty!", "error");
+            return;
+        }
+
+        const subtotal = this.state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+        // Calculate Modifiers Snapshot
+        const orderModifiers = [];
+        let runningTotal = subtotal;
+
+        this.state.modifiers.forEach(mod => {
+            let amount = 0;
+            if (mod.type === 'percent') {
+                amount = subtotal * (mod.value / 100);
+            } else {
+                amount = mod.value;
+            }
+
+            if (mod.rate === 'subtract') runningTotal -= amount;
+            else runningTotal += amount;
+
+            orderModifiers.push({
+                name: mod.name,
+                amount: amount,
+                rate: mod.rate
+            });
+        });
+
+        if (runningTotal < 0) runningTotal = 0;
+
+        const order = {
+            timestamp: Date.now(),
+            subtotal: subtotal,
+            modifiers: orderModifiers, // Save snapshot
+            total: runningTotal,
+            items: [...this.state.cart],
+            paymentMethod: this.state.paymentMethod
+        };
+
+        await DB.saveOrder(order);
+
+        // Update Stock
+        for (const item of this.state.cart) {
+            const product = this.state.products.find(p => p.id === item.id);
+            if (product) {
+                product.stock -= item.qty;
+                await DB.updateProduct(product.id, { stock: product.stock });
+            }
+        }
+
+        // Print Receipt
+        const receiptWindow = window.open('', '', 'width=340,height=600');
+        receiptWindow.document.write(Utils.generateReceipt(
+            this.state.settings.storeName,
+            this.state.settings.storeAddress,
+            order,
+            this.state.settings,
+            this.state.settings.storeLogo
+        ));
+        receiptWindow.document.close();
+
+        this.state.cart = [];
+        this.renderCart();
+        await this.loadData();
+        this.renderProducts();
+        Utils.showToast("Order Completed!");
+    }
+};

@@ -1,0 +1,129 @@
+// Global Constants
+window.DOM = {
+    APP: {
+        THEME_ICON_MOON: 'theme-icon-moon',
+        THEME_ICON_SUN: 'theme-icon-sun',
+        THEME_TOGGLE_BTN: 'theme-toggle-btn',
+        TOAST_CONTAINER: 'toast-container'
+    },
+    NAV: {
+        STORE_NAME: 'store-name',
+        DEFAULT_LOGO_TEXT: 'default-logo-text',
+        LOGO_IMG: 'nav-logo-img',
+        DASHBOARD: 'nav-dashboard',
+        POS: 'nav-pos',
+        INVENTORY: 'nav-inventory',
+        SETTINGS: 'nav-settings',
+        REPORTS: 'nav-reports'
+    },
+    VIEWS: {
+        ALL_SECTIONS: '.view-section',
+        DASHBOARD: 'view-dashboard',
+        POS: 'view-pos',
+        INVENTORY: 'view-inventory',
+        REPORTS: 'view-reports',
+        SETTINGS: 'view-settings'
+    },
+    DASHBOARD: {
+        DAILY_SALES: 'dash-daily-sales',
+        TOTAL_ORDERS: 'dash-total-orders',
+        LOW_STOCK: 'dash-low-stock',
+        LOW_STOCK_CARD: 'dash-low-stock-card',
+        RECENT_TXN_BODY: 'dashboard-history-body',
+        REFRESH_BTN: 'dash-refresh-btn'
+    },
+    POS: {
+        SEARCH: 'pos-search',
+        CATEGORY_FILTER: 'pos-category-filter',
+        PRODUCTS_GRID: 'pos-products-grid',
+        CART_ITEMS: 'pos-cart-items',
+        CART_SUBTOTAL: 'cart-subtotal',
+        CART_TAX_RATE: 'cart-tax-rate',
+        CART_TAX: 'cart-tax',
+        CART_TOTAL: 'cart-total',
+        CHECKOUT_BTN: 'pos-checkout-btn',
+        CLEAR_CART_BTN: 'pos-clear-cart-btn'
+    },
+    INVENTORY: {
+        TABLE_BODY: 'inventory-table-body',
+        FILTER_BANNER: 'inventory-filter-banner',
+        ADD_PRODUCT_BTN: 'inv-add-product-btn',
+        CLEAR_FILTER_BTN: 'inv-clear-filter-btn'
+    },
+    REPORTS: {
+        REVENUE: 'report-revenue',
+        COGS: 'report-cogs',
+        EXPENSES: 'report-expenses',
+        NET_PROFIT: 'report-net-profit',
+        EXPENSE_FORM: 'expense-form',
+        EXPENSE_DESC: 'expense-desc',
+        EXPENSE_AMOUNT: 'expense-amount',
+        EXPENSE_DATE: 'expense-date',
+        EXPENSES_BODY: 'expenses-list-body',
+        INCOME_FORM: 'income-form',
+        INCOME_DESC: 'income-desc',
+        INCOME_AMOUNT: 'income-amount',
+        INCOME_DATE: 'income-date',
+        INCOME_BODY: 'income-list-body',
+        PROFITS_BODY: 'profits-list-body',
+        DETAILED_PROFITS_BODY: 'report-profits-body',
+        CHART: 'profit-loss-chart'
+    },
+    SETTINGS: {
+        FORM: 'settings-form',
+        STORE_NAME: 'setting-storeName',
+        STORE_ADDRESS: 'setting-storeAddress',
+        CURRENCY_SYMBOL: 'setting-currencySymbol',
+        RECEIPT_HEADER: 'setting-receiptHeader',
+        RECEIPT_FOOTER: 'setting-receiptFooter',
+        STORE_LOGO_HIDDEN: 'setting-storeLogo',
+        RECEIPT_SHOW_LOGO: 'setting-receiptShowLogo',
+        RECEIPT_SHOW_ADDRESS: 'setting-receiptShowAddress',
+        RECEIPT_SHOW_DATE: 'setting-receiptShowDate',
+        RECEIPT_SHOW_QR: 'setting-receiptShowQrCode',
+        RECEIPT_QR_URL: 'setting-receiptQrCodeUrl',
+        LOGO_UPLOAD: 'setting-logo-upload',
+        CATEGORY_LIST: 'settings-category-list',
+        MODIFIERS_LIST: 'settings-modifiers-list',
+        NEW_MOD_NAME: 'new-mod-name',
+        NEW_MOD_TYPE: 'new-mod-type',
+        NEW_MOD_ACTION: 'new-mod-action',
+        NEW_MOD_VALUE: 'new-mod-value',
+        NEW_CAT_NAME: 'new-category-name',
+        REMOVE_LOGO_BTN: 'setting-remove-logo-btn',
+        ADD_MODIFIER_BTN: 'setting-add-modifier-btn',
+        PREVIEW_RECEIPT_BTN: 'setting-preview-receipt-btn',
+        ADD_CATEGORY_BTN: 'setting-add-category-btn',
+        EXPORT_BTN: 'setting-export-btn',
+        IMPORT_FILE: 'import-file',
+        RESET_BTN: 'setting-reset-btn'
+    },
+    MODALS: {
+        PRODUCT: {
+            ID: 'product-modal',
+            FORM: 'product-form',
+            TITLE: 'modal-title',
+            INPUT_ID: 'prod-id',
+            INPUT_NAME: 'prod-name',
+            INPUT_BARCODE: 'prod-barcode',
+            INPUT_PRICE: 'prod-price',
+            INPUT_COST: 'prod-costPrice',
+            INPUT_STOCK: 'prod-stock',
+            INPUT_CATEGORY: 'prod-category',
+            IMAGE_PREVIEW: 'prod-image-preview',
+            IMAGE_PLACEHOLDER: 'prod-image-placeholder',
+            IMAGE_INPUT: 'prod-image-input',
+            IMAGE_BASE64: 'prod-image-base64',
+            REMOVE_IMG_BTN: 'prod-remove-img-btn',
+            CANCEL_BTN: 'prod-modal-cancel-btn',
+            CLOSE_X: 'prod-modal-close-x'
+        },
+        ORDER: {
+            ID: 'order-modal',
+            CONTENT: 'order-modal-content',
+            CLOSE_X: 'order-modal-close-x',
+            PRINT_BTN: 'order-modal-print-btn',
+            CLOSE_BTN: 'order-modal-close-btn'
+        }
+    }
+};

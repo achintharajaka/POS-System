@@ -108,17 +108,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 - Useful for accountability and security
 
 ---
-
-## 🔧 Improvements to Existing Code
-
-### A. Critical Bug Fixes
-
-| Issue | Location | Detail |
-|:---|:---|:---|
-| **Inventory filter bug** | `app.js:667` | After filtering for `low_stock`, the render loop still uses `this.state.products` (all products) instead of the filtered `products` variable |
-| **Payment method hardcoded** | `app.js:609` | Always saves `'cash'` — ignores user selection |
-| **Duplicate CSS** | `styles.css` | `.no-scrollbar` rules are duplicated (lines 8–18 and 38–49) |
-
 ### B. Architecture & Code Quality
 
 | Improvement | Detail |
