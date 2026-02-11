@@ -793,6 +793,16 @@ const app = {
             return;
         }
 
+        // Check for duplicate barcode
+        if (product.barcode) {
+            const existing = this.state.products.find(p => p.barcode === product.barcode);
+            // If exists AND (we are adding new OR editing different product)
+            if (existing && (!id || existing.id != id)) {
+                Utils.showToast(`Barcode "${product.barcode}" already exists!`, "error");
+                return;
+            }
+        }
+
         if (id) {
             await DB.updateProduct(parseInt(id), product);
             Utils.showToast("Product Updated");

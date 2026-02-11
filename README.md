@@ -1,35 +1,65 @@
-# Universal POS System
+# POS System - Technical Documentation
 
-A fully functional, offline-capable Point of Sale system running entirely in the browser using HTML5, Tailwind CSS, Javascript, and Dexie.js (IndexedDB).
+## 1. System Overview
+This Point of Sale (POS) system is a lightweight, offline-first web application designed for small businesses. It handles inventory management, sales processing, and financial reporting entirely within the browser using modern web technologies.
 
-## Features
-- **Dashboard**: View daily sales, total orders, low stock alerts, and **Recent Transaction History**.
-- **POS Terminal**: Fast checkout with product search, barcode scanning, and printable receipts.
-- **Inventory Management**: Add, edit, and delete products with stock tracking and **Categories**.
-- **Reports**: Track **Profit & Loss**, Revenue, Cost of Goods Sold (COGS), and Expenses with visual charts.
-- **Settings**:
-    - **General**: Store Name, Address, Logo, **Receipt Header/Footer Text**.
-    - **Receipt Customization**: Toggle display of Logo, Address, Date, and configure custom text.
-    - **Financials**: **Global Order Adjustments** (Taxes, Fees, Discounts).
-    - **Theme**: Light and Dark Mode.
-    - **Data**: Backup, Restore, and **Factory Reset**.
-- **Data Persistence**: All data is stored locally in your browser using IndexedDB.
+## 2. Architecture
+The application follows a generic Single Page Application (SPA) architecture.
 
-## How to Run
-1. **Download** the project folder.
-2. **Open** `index.html` in any modern web browser.
+### Tech Stack
+- **Core:** Vanilla JavaScript (ES6+). No heavy frameworks (React/Vue/Angular) were used to minimize complexity and build size.
+- **UI/Styling:** Tailwind CSS (via CDN) for rapid, utility-first styling.
+- **Database:** `Dexie.js` (Wrapper for IndexedDB) for robust, persistent client-side storage.
+- **Visualization:** `Chart.js` for financial reporting charts.
+- **Icons:** FontAwesome (via CDN).
 
-## Recent Enhancements
-- **Profit & Loss**: New financial reporting tools to track business health, including expense management and net profit calculations.
-- **Receipt Customization**: Full control over receipt appearance, including visibility toggles for logo, address, and date.
-- **Factory Reset**: A new red button in Settings > Data Management allows you to wipe all data and reset the system to fresh install state.
-- **Full Data Export**: The Export JSON feature includes all your Inventory (Products, Stock, Categories) as well as Sales History, Expenses, and Settings.
+### File Structure
+```
+/
+├── index.html          # Main entry point, contains all Views and Modals
+├── js/
+│   ├── app.js          # Core Application Logic (State, Event Handling, UI Rendering)
+│   ├── db.js           # Database Schema and Data Access Layer (Dexie.js)
+│   └── utils.js        # Helper functions (Formatting, Toast, Receipt Gen)
+├── README.md           # Technical Documentation
+└── UserGuide.md        # End-User Manual
+```
 
-## How to Configure Modifiers
-1. Go to **Settings** -> **Global Order Adjustments**.
-2. Add dynamic rules:
-    - **Name**: e.g., "VAT"
-    - **Type**: `%` or `Fixed`
-    - **Action**: `Add` or `Deduct`
-    - **Value**: e.g., `20`
-3. These apply automatically to every sale.
+## 3. Database Schema (Dexie.js)
+The system uses `IndexedDB` for storage.
+
+| Store | Schema | Description |
+| :--- | :--- | :--- |
+| **products** | `++id, name, barcode, price, costPrice, stock, categoryId` | Inventory items. Supports image (base64). |
+| **categories** | `++id, name` | Product categories. |
+| **orders** | `++id, timestamp, total, tax, items, paymentMethod` | Sales logs. `items` is an array of objects. |
+| **expenses** | `++id, description, amount, date, category` | Manual expense entries. |
+| **income** | `++id, description, amount, date` | Manual revenue entries. |
+| **settings** | `key` | Key-value store for app configuration. |
+
+## 4. Key Features & Implementation Details
+
+### A. Inventory Management
+- **CRUD Operations:** Managed in `app.js` requesting `db.js`.
+- **Image Support:** Images are converted to Base64 strings and stored directly in the `products` store. Size limited to 500KB.
+- **Validation:** Logic ensures `stock` cannot be negative and `barcode` must be unique across the inventory.
+
+### B. Point of Sale (POS)
+- **Cart Logic:** In-memory array (`state.cart`).
+- **Stock Deduction:** Upon checkout, stock is deducted atomically from the `products` store.
+- **Receipts:** Generated on-the-fly using `Utils.generateReceipt()` which creates a printable HTML window.
+
+### C. Financial Reporting
+- **Profit Calculation:**
+    - `Gross Profit` (per order) = `Total Price` - `Total Cost Price`.
+    - `Net Profit` (Overall) = `Total Revenue` (Sales + Extra Income) - `Total COGS` - `Total Expenses`.
+- **Charts:** Renders a Bar chart comparing Revenue vs Expenses (COGS + Manual Expenses).
+
+### D. Data Management
+- **Import/Export:** The system exports the entire IndexedDB contents as a JSON file for backup/migration.
+
+## 5. Setup & Deployment
+Since this is a static web application:
+1.  **Local:** Simply open `index.html` in any modern web browser (Chrome/Edge/Firefox).
+2.  **Server:** Upload the files to any static host (GitHub Pages, Netlify, Vercel, or Apache/Nginx).
+3.  **Requirements:** Internet connection is only initially required to load key libraries (Tailwind, Dexie, Chart.js) from CDNs. For offline support, these libraries would need to be downloaded locally.
