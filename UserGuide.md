@@ -94,7 +94,7 @@ Track how your business is doing.
 ## 5. Settings & Data
 
 - **Store Profile:** specific your Store Name, Address, and Currency Symbol.
-- **Receipt Settings:** Customize what appears on the receipt (Logo, Header, Footer).
+- **Receipt Settings:** Customize what appears on the receipt (Logo, Header, Footer, QR Code URL).
 - **Data Management:**
     - **Export Data:** Download a backup of your entire database. **Do this regularly!**
     - **Import Data:** Restore from a backup file.
