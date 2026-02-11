@@ -34,3 +34,19 @@
         width: 100%;
     }
 }
+
+.loader {
+    border-top-color: #3b82f6;
+    -webkit-animation: spinner 1.5s linear infinite;
+    animation: spinner 1.5s linear infinite;
+}
+
+@keyframes spinner {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

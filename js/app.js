@@ -82,20 +82,24 @@ const App = {
     },
 
     // --- Theme ---
+    // --- Theme ---
     applyTheme() {
         const theme = localStorage.getItem('pos_theme') || 'light';
         const html = document.querySelector('html');
         const iconMoon = document.getElementById(DOM.APP.THEME_ICON_MOON);
         const iconSun = document.getElementById(DOM.APP.THEME_ICON_SUN);
+        const mobileStatus = document.getElementById('mobile-theme-status');
 
         if (theme === 'dark') {
             html.classList.add('dark');
             if (iconMoon) iconMoon.classList.remove('hidden');
             if (iconSun) iconSun.classList.add('hidden');
+            if (mobileStatus) mobileStatus.innerText = 'Dark';
         } else {
             html.classList.remove('dark');
             if (iconMoon) iconMoon.classList.add('hidden');
             if (iconSun) iconSun.classList.remove('hidden');
+            if (mobileStatus) mobileStatus.innerText = 'Light';
         }
     },
 
@@ -171,6 +175,25 @@ const App = {
         bindClick(DOM.NAV.SETTINGS, () => this.navigate('settings'));
         bindClick(DOM.NAV.REPORTS, () => this.navigate('reports'));
         bindClick(DOM.APP.THEME_TOGGLE_BTN, () => this.toggleTheme());
+        bindClick('mobile-theme-toggle-btn', () => this.toggleTheme());
+
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Close menu when clicking a link
+            document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const view = e.target.dataset.nav;
+                    if (view) this.navigate(view);
+                    mobileMenu.classList.add('hidden');
+                });
+            });
+        }
 
         // --- Dashboard ---
         bindClick(DOM.DASHBOARD.LOW_STOCK_CARD, () => this.filterInventory('low_stock'));
@@ -191,6 +214,14 @@ const App = {
         // --- Inventory ---
         bindClick(DOM.INVENTORY.ADD_PRODUCT_BTN, () => this.openProductModal());
         bindClick(DOM.INVENTORY.CLEAR_FILTER_BTN, () => this.renderInventory());
+
+        const invSearchInput = document.getElementById('inv-search-input');
+        if (invSearchInput) {
+            invSearchInput.addEventListener('input', () => {
+                this.state.inventoryPage = 1; // Reset to first page on search
+                this.renderInventory();
+            });
+        }
 
         // --- Reports ---
         bindSubmit(DOM.REPORTS.EXPENSE_FORM, (e) => this.addExpense(e));

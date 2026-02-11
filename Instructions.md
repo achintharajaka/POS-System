@@ -108,16 +108,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 - Useful for accountability and security
 
 ---
-### B. Architecture & Code Quality
-
-| Improvement | Detail |
-|:---|:---|
-| **Split `app.js`** | 1300+ lines in one file — split into modules: `pos.js`, `inventory.js`, `dashboard.js`, `reports.js`, `settings.js` |
-| **Use ES Modules** | Replace global `app` object with proper `import/export` syntax |
-| **Extract DOM IDs** | Hardcoded string IDs everywhere — centralize into a constants file |
-| **Error handling** | Many `async` functions lack `try/catch` — a DB failure would silently break the UI |
-| **Input sanitization** | No XSS protection — product names or descriptions with `<script>` tags could inject HTML |
-
 ### C. UX / UI Improvements
 
 | Improvement | Detail |

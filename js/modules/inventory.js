@@ -2,13 +2,22 @@
 // Depends on: db.js, utils.js, constants.js
 
 window.Inventory = {
-    renderInventory(filter = null) {
+    renderInventory() {
         const tbody = document.getElementById(DOM.INVENTORY.TABLE_BODY);
         const banner = document.getElementById(DOM.INVENTORY.FILTER_BANNER);
+        const searchInput = document.getElementById('inv-search-input'); // Direct ID for now
+
         if (!tbody) return;
         tbody.innerHTML = '';
 
-        if (filter === 'low_stock') {
+        // Get State
+        const page = this.state.inventoryPage || 1;
+        const perPage = 10;
+        const query = (searchInput ? searchInput.value : '').toLowerCase();
+        const lowStockFilter = this.state.inventoryFilter === 'low_stock';
+
+        // Filter
+        if (lowStockFilter) {
             banner.classList.remove('hidden');
         } else {
             banner.classList.add('hidden');
@@ -17,16 +26,43 @@ window.Inventory = {
         const { currencySymbol } = this.state.settings;
 
         let products = this.state.products;
-        if (filter === 'low_stock') {
+        if (lowStockFilter) {
             products = products.filter(p => p.stock < 5);
         }
 
+        if (query) {
+            products = products.filter(p =>
+                p.name.toLowerCase().includes(query) ||
+                (p.barcode && p.barcode.toLowerCase().includes(query))
+            );
+        }
+
+        // Empty State
         if (products.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 dark:text-gray-400">No items found.</td></tr>';
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="p-8 text-center text-gray-500 dark:text-gray-400">
+                        <div class="flex flex-col items-center justify-center">
+                            <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            <p>No products found.</p>
+                        </div>
+                    </td>
+                </tr>`;
+            this.updateInventoryPagination(0, 0, 1);
             return;
         }
 
-        products.forEach(prod => {
+        // Pagination
+        const totalPages = Math.ceil(products.length / perPage);
+        const safePage = Math.min(Math.max(1, page), totalPages);
+        this.state.inventoryPage = safePage;
+
+        const start = (safePage - 1) * perPage;
+        const pagedProducts = products.slice(start, start + perPage);
+
+        pagedProducts.forEach(prod => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
 
@@ -50,12 +86,40 @@ window.Inventory = {
             `;
             tbody.appendChild(tr);
         });
+
+        this.updateInventoryPagination(products.length, totalPages, safePage);
+    },
+
+    updateInventoryPagination(totalItems, totalPages, currentPage) {
+        const pageInfo = document.getElementById('inv-page-info');
+        const prevBtn = document.getElementById('inv-prev-btn');
+        const nextBtn = document.getElementById('inv-next-btn');
+
+        if (pageInfo) pageInfo.textContent = totalItems === 0 ? "No items" : `Page ${currentPage} of ${totalPages} (${totalItems} items)`;
+
+        if (prevBtn) {
+            prevBtn.disabled = currentPage <= 1;
+            prevBtn.onclick = () => {
+                this.state.inventoryPage = currentPage - 1;
+                this.renderInventory();
+            };
+        }
+
+        if (nextBtn) {
+            nextBtn.disabled = currentPage >= totalPages;
+            nextBtn.onclick = () => {
+                this.state.inventoryPage = currentPage + 1;
+                this.renderInventory();
+            };
+        }
     },
 
     openProductModal(productId = null) {
         const modal = document.getElementById(DOM.MODALS.PRODUCT.ID);
         const form = document.getElementById(DOM.MODALS.PRODUCT.FORM);
         const title = document.getElementById(DOM.MODALS.PRODUCT.TITLE);
+
+        Utils.clearFormErrors(form); // Clear errors
 
         // Image elements
         const preview = document.getElementById(DOM.MODALS.PRODUCT.IMAGE_PREVIEW);
@@ -147,29 +211,57 @@ window.Inventory = {
 
     async saveProduct(event) {
         event.preventDefault();
+        const form = event.target;
+        Utils.clearFormErrors(form);
 
-        const id = document.getElementById(DOM.MODALS.PRODUCT.INPUT_ID).value;
+        const idInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_ID);
+        const nameInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_NAME);
+        const priceInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_PRICE);
+        const stockInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_STOCK);
+        const barcodeInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_BARCODE);
+
+        const id = idInput.value;
+        const name = nameInput.value.trim();
+        const price = parseFloat(priceInput.value);
+        const stock = parseInt(stockInput.value);
+        const barcode = barcodeInput.value.trim();
+
+        // Validation based on fields
+        let isValid = true;
+
+        if (!name) {
+            Utils.showFormError(nameInput, "Product name is required");
+            isValid = false;
+        }
+
+        if (isNaN(price) || price < 0) {
+            Utils.showFormError(priceInput, "Valid price is required");
+            isValid = false;
+        }
+
+        if (isNaN(stock)) {
+            Utils.showFormError(stockInput, "Valid stock quantity is required");
+            isValid = false;
+        }
+
+        if (!isValid) return;
+
         const product = {
-            name: document.getElementById(DOM.MODALS.PRODUCT.INPUT_NAME).value.trim(),
-            barcode: document.getElementById(DOM.MODALS.PRODUCT.INPUT_BARCODE).value.trim(),
-            price: parseFloat(document.getElementById(DOM.MODALS.PRODUCT.INPUT_PRICE).value),
+            name,
+            barcode,
+            price,
             costPrice: parseFloat(document.getElementById(DOM.MODALS.PRODUCT.INPUT_COST).value) || 0,
-            stock: parseInt(document.getElementById(DOM.MODALS.PRODUCT.INPUT_STOCK).value),
+            stock,
             categoryId: parseInt(document.getElementById(DOM.MODALS.PRODUCT.INPUT_CATEGORY).value),
             image: document.getElementById(DOM.MODALS.PRODUCT.IMAGE_BASE64).value
         };
-
-        if (product.price < 0) {
-            Utils.showToast("Price cannot be negative", "error");
-            return;
-        }
 
         // Check for duplicate barcode
         if (product.barcode) {
             const existing = this.state.products.find(p => p.barcode === product.barcode);
             // If exists AND (we are adding new OR editing different product)
             if (existing && (!id || existing.id != id)) {
-                Utils.showToast(`Barcode "${product.barcode}" already exists!`, "error");
+                Utils.showFormError(barcodeInput, "Barcode already exists");
                 return;
             }
         }
@@ -184,11 +276,12 @@ window.Inventory = {
 
         this.closeProductModal();
         await this.loadData();
-        this.renderInventory(); // Refresh view
+        // renderInventory included in loadData flow usually if state updated, but here we manually refresh
+        this.renderInventory();
     },
 
     async deleteProduct(id) {
-        if (confirm("Are you sure you want to delete this product?")) {
+        if (await Utils.confirm("Delete Product", "Are you sure you want to delete this product?")) {
             await DB.deleteProduct(id);
             await this.loadData();
             this.renderInventory();

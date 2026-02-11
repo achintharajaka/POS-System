@@ -160,6 +160,82 @@ window.Utils = {
         a.click();
         document.body.removeChild(a);
         this.showToast("Debug Report Downloaded");
+    },
+
+    // --- UI Helpers ---
+    confirm(title, message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirm-modal');
+            const titleEl = document.getElementById('confirm-title');
+            const msgEl = document.getElementById('confirm-message');
+            const okBtn = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+            if (!modal) {
+                // Fallback if modal missing
+                resolve(window.confirm(`${title}\n\n${message}`));
+                return;
+            }
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+            modal.classList.remove('hidden');
+
+            // Clone buttons to remove old listeners
+            const newOk = okBtn.cloneNode(true);
+            const newCancel = cancelBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newOk, okBtn);
+            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+            newOk.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                resolve(true);
+            });
+
+            newCancel.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                resolve(false);
+            });
+        });
+    },
+
+    showLoading() {
+        const el = document.getElementById('loading-overlay');
+        if (el) el.classList.remove('hidden');
+    },
+
+    hideLoading() {
+        const el = document.getElementById('loading-overlay');
+        if (el) el.classList.add('hidden');
+    },
+
+    showFormError(input, message) {
+        if (!input) return;
+        // Remove existing error
+        this.removeFormError(input);
+
+        input.classList.add('border-red-500', 'focus:ring-red-500');
+        input.classList.remove('border-gray-300', 'focus:ring-blue-500');
+
+        const errorMsg = document.createElement('p');
+        errorMsg.className = "text-red-500 text-xs mt-1 form-error-msg";
+        errorMsg.textContent = message;
+        input.parentNode.appendChild(errorMsg);
+    },
+
+    removeFormError(input) {
+        if (!input) return;
+        input.classList.remove('border-red-500', 'focus:ring-red-500');
+        const next = input.nextElementSibling;
+        if (next && next.classList.contains('form-error-msg')) {
+            next.remove();
+        }
+    },
+
+    clearFormErrors(form) {
+        if (!form) return;
+        const inputs = form.querySelectorAll('.border-red-500');
+        inputs.forEach(input => this.removeFormError(input));
     }
 };
 
