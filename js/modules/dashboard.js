@@ -5,13 +5,18 @@ window.Dashboard = {
     async renderDashboard() {
         Utils.showLoading();
         try {
-            const orders = await DB.getOrders();
-
             // Stats
-            const today = new Date().setHours(0, 0, 0, 0);
-            const todayOrders = orders.filter(o => o.timestamp >= today);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Parallel fetch for stats and table
+            const [todayOrders, lowStock, pagedResult] = await Promise.all([
+                DB.getOrdersSince(today.getTime()),
+                DB.getLowStockCount(),
+                DB.getOrders(this.state.dashboardPage || 1, 10)
+            ]);
+
             const dailySales = todayOrders.reduce((sum, o) => sum + o.total, 0);
-            const lowStock = this.state.products.filter(p => p.stock < 5).length;
             const { currencySymbol } = this.state.settings;
 
             document.getElementById(DOM.DASHBOARD.DAILY_SALES).innerText = Utils.formatCurrency(dailySales, currencySymbol);
@@ -22,8 +27,11 @@ window.Dashboard = {
             const tbody = document.getElementById(DOM.DASHBOARD.RECENT_TXN_BODY);
             tbody.innerHTML = '';
 
-            // Sort by Date Descending
-            orders.sort((a, b) => b.timestamp - a.timestamp);
+            const orders = pagedResult.data; // Current page data
+            const totalItems = pagedResult.total;
+            const page = this.state.dashboardPage || 1;
+            const perPage = 10;
+            const totalPages = Math.ceil(totalItems / perPage);
 
             if (orders.length === 0) {
                 tbody.innerHTML = `
@@ -36,17 +44,7 @@ window.Dashboard = {
                 return;
             }
 
-            // Pagination logic
-            const page = this.state.dashboardPage || 1;
-            const perPage = 10;
-            const totalPages = Math.ceil(orders.length / perPage);
-            const safePage = Math.min(Math.max(1, page), totalPages);
-            this.state.dashboardPage = safePage;
-
-            const start = (safePage - 1) * perPage;
-            const pagedOrders = orders.slice(start, start + perPage);
-
-            pagedOrders.forEach(order => {
+            orders.forEach(order => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
                 tr.innerHTML = `
@@ -65,7 +63,7 @@ window.Dashboard = {
             });
 
             // Update Pagination Controls
-            this.updateDashboardPagination(orders.length, totalPages, safePage);
+            this.updateDashboardPagination(totalItems, totalPages, page);
 
             // Event delegation for action buttons
             tbody.onclick = (e) => {
@@ -123,6 +121,17 @@ window.Dashboard = {
 
             this.state.currentOrder = order;
 
+            // Pre-generate QR code data URI for offline support
+            let qrCodeDataUri = null;
+            if (this.state.settings.receiptShowQrCode && this.state.settings.receiptQrCodeUrl) {
+                try {
+                    qrCodeDataUri = await Utils.generateQRCode(this.state.settings.receiptQrCodeUrl);
+                } catch (e) {
+                    console.error("Failed to generate QR Code", e);
+                }
+            }
+            const settingsWithQr = { ...this.state.settings, receiptQrCodeDataUri: qrCodeDataUri };
+
             // Open receipt in a popup window for review
             const receiptWindow = window.open('', '', 'width=400,height=700');
             if (!receiptWindow) {
@@ -134,7 +143,7 @@ window.Dashboard = {
                 this.state.settings.storeName,
                 this.state.settings.storeAddress,
                 order,
-                this.state.settings,
+                settingsWithQr,
                 this.state.settings.storeLogo
             );
 
@@ -163,14 +172,26 @@ window.Dashboard = {
         }
     },
 
-    printOrder() {
+    async printOrder() {
         if (!this.state.currentOrder) return;
+
+        // Pre-generate QR code data URI for offline support
+        let qrCodeDataUri = null;
+        if (this.state.settings.receiptShowQrCode && this.state.settings.receiptQrCodeUrl) {
+            try {
+                qrCodeDataUri = await Utils.generateQRCode(this.state.settings.receiptQrCodeUrl);
+            } catch (e) {
+                console.error("Failed to generate QR Code", e);
+            }
+        }
+        const settingsWithQr = { ...this.state.settings, receiptQrCodeDataUri: qrCodeDataUri };
+
         const receiptWindow = window.open('', '', 'width=340,height=600');
         receiptWindow.document.write(Utils.generateReceipt(
             this.state.settings.storeName,
             this.state.settings.storeAddress,
             this.state.currentOrder,
-            this.state.settings,
+            settingsWithQr,
             this.state.settings.storeLogo
         ));
         receiptWindow.document.close();

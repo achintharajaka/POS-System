@@ -10,6 +10,94 @@ window.Utils = {
         return new Date(timestamp).toLocaleString();
     },
 
+    // Image Compression
+    async compressImage(file, maxWidth = 800, quality = 0.7) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = (error) => reject(error);
+            };
+            reader.onerror = (error) => reject(error);
+        });
+    },
+
+    // QR Code Generation (Local)
+    generateQRCode(text) {
+        return new Promise((resolve, reject) => {
+            try {
+                if (typeof QRCode === 'undefined') {
+                    // Fallback to load script if not present (though we added it to index.html)
+                    this.loadScript('js/lib/qrcode.js').then(() => {
+                        this.generateQRCode(text).then(resolve).catch(reject);
+                    }).catch(err => reject("QRCode lib not found"));
+                    return;
+                }
+
+                const div = document.createElement('div');
+                const qr = new QRCode(div, {
+                    text: text,
+                    width: 128,
+                    height: 128,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                // Wait for rendering
+                setTimeout(() => {
+                    const canvas = div.querySelector('canvas');
+                    const img = div.querySelector('img');
+
+                    if (canvas) {
+                        resolve(canvas.toDataURL("image/png"));
+                    } else if (img && img.src) {
+                        resolve(img.src);
+                    } else {
+                        reject("Failed to render QR Code");
+                    }
+                }, 100);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    },
+
+    // Dynamic Script Loading
+    loadScript(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) {
+                resolve();
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.body.appendChild(script);
+        });
+    },
+
     // Input Sanitization
     sanitize(str) {
         if (!str) return '';
@@ -83,9 +171,15 @@ window.Utils = {
         let qrCodeScript = '';
         let qrCodeContainer = '';
 
-        if (settings.receiptShowQrCode && settings.receiptQrCodeUrl) {
-            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${encodeURIComponent(settings.receiptQrCodeUrl)}`;
-            qrCodeContainer = `<div class="text-center py-2"><img src="${qrApiUrl}" alt="QR Code" style="width: 128px; height: 128px;"></div>`;
+
+        if (settings.receiptQrCodeDataUri) {
+            qrCodeContainer = `<div class="text-center py-2"><img src="${settings.receiptQrCodeDataUri}" alt="QR Code" style="width: 128px; height: 128px;"></div>`;
+        } else if (settings.receiptShowQrCode && settings.receiptQrCodeUrl) {
+            // Fallback (Should be handled by caller now, but keeping for backward compat)
+            // const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${encodeURIComponent(settings.receiptQrCodeUrl)}`;
+            // qrCodeContainer = `<div class="text-center py-2"><img src="${qrApiUrl}" alt="QR Code" style="width: 128px; height: 128px;"></div>`;
+            // Disable external fallback for offline safety
+            qrCodeContainer = '';
         }
 
         qrCodeScript = `<script>window.onload = function() { setTimeout(() => window.print(), 500); };</script>`;

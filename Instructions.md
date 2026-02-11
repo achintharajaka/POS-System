@@ -109,16 +109,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 
 ---
 
-### D. Performance
-
-| Improvement | Detail |
-|:---|:---|
-| **Self-host libraries** | Tailwind, Dexie, Chart.js, FontAwesome all from CDN — bundle locally for true offline support |
-| **Image compression** | Product images stored as raw Base64 — add client-side compression before storing |
-| **Lazy loading** | Load report charts and order history only when the view is active |
-| **IndexedDB pagination** | `getOrders()` and `getProducts()` load _all_ records into memory — use `.limit()` and `.offset()` |
-
----
 
 ## Summary: Top 5 Recommendations
 

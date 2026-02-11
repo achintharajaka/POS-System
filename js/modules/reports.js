@@ -38,6 +38,10 @@ window.Reports = {
         netEl.innerText = Utils.formatCurrency(netProfit, currencySymbol);
         netEl.className = `text-3xl font-bold mt-2 ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
 
+        if (typeof Chart === 'undefined') {
+            await Utils.loadScript('js/lib/chart.js');
+        }
+
         this.renderChart(orders, expenses, income);
         this.renderOrderProfits(orders);
     },

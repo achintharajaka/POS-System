@@ -19,6 +19,13 @@ const App = {
     async init() {
         console.log("Initializing App v3 (Modular)...");
 
+        // Mixin all modules eagerly (loaded via script tags in index.html)
+        if (window.Dashboard) Object.assign(App, window.Dashboard);
+        if (window.POS) Object.assign(App, window.POS);
+        if (window.Inventory) Object.assign(App, window.Inventory);
+        if (window.Reports) Object.assign(App, window.Reports);
+        if (window.Settings) Object.assign(App, window.Settings);
+
         try {
             // Load settings
             this.state.settings = await DB.getSettings();
@@ -51,11 +58,11 @@ const App = {
     },
 
     async loadData() {
-        this.state.products = await DB.getProducts();
+        // this.state.products = await DB.getProducts(); // Removed for pagination
         this.state.categories = await DB.getCategories();
         this.state.settings = await DB.getSettings();
-        this.state.expenses = await DB.getExpenses();
-        this.state.income = await DB.getIncome();
+        // this.state.expenses = await DB.getExpenses(); // Removed for pagination
+        // this.state.income = await DB.getIncome(); // Removed for pagination
         this.state.modifiers = this.state.settings.orderModifiers || [];
 
         // Refresh active views if needed
@@ -63,21 +70,29 @@ const App = {
         if (this.renderModifiersList) this.renderModifiersList();
     },
 
-    navigate(viewId) {
-        this.state.currentView = viewId;
-        document.querySelectorAll(DOM.VIEWS.ALL_SECTIONS).forEach(el => el.classList.add('hidden'));
-        const view = document.getElementById(`view-${viewId}`);
-        if (view) view.classList.remove('hidden');
+    async navigate(viewId) {
+        Utils.showLoading();
+        try {
+            this.state.currentView = viewId;
+            document.querySelectorAll(DOM.VIEWS.ALL_SECTIONS).forEach(el => el.classList.add('hidden'));
+            const view = document.getElementById(`view-${viewId}`);
+            if (view) view.classList.remove('hidden');
 
-        // Trigger render for the view
-        if (viewId === 'dashboard') this.renderDashboard();
-        if (viewId === 'pos') this.renderPOS();
-        if (viewId === 'inventory') this.renderInventory();
-        if (viewId === 'reports') this.renderProfitLoss();
-        if (viewId === 'settings') {
-            this.updateStoreDetails();
-            this.renderCategoryList();
-            this.renderModifiersList();
+            // Trigger render for the view
+            if (viewId === 'dashboard' && this.renderDashboard) await this.renderDashboard();
+            if (viewId === 'pos' && this.renderPOS) this.renderPOS();
+            if (viewId === 'inventory' && this.renderInventory) this.renderInventory();
+            if (viewId === 'reports' && this.renderProfitLoss) await this.renderProfitLoss();
+            if (viewId === 'settings') {
+                this.updateStoreDetails();
+                if (this.renderCategoryList) this.renderCategoryList();
+                if (this.renderModifiersList) this.renderModifiersList();
+            }
+        } catch (e) {
+            console.error(e);
+            Utils.showToast("Failed to load view", "error");
+        } finally {
+            Utils.hideLoading();
         }
     },
 
@@ -152,9 +167,11 @@ const App = {
         }
     },
 
-    filterInventory(type) {
-        this.navigate('inventory');
-        this.renderInventory(type);
+    async filterInventory(type) {
+        // Set filter BEFORE navigating so renderInventory() inside navigate()
+        // already picks up the correct filter — avoids double-render duplication.
+        this.state.inventoryFilter = type;
+        await this.navigate('inventory');
     },
 
     setupEventListeners() {
@@ -265,12 +282,12 @@ const App = {
     }
 };
 
-// Mixin Modules
-Object.assign(App, window.POS);
-Object.assign(App, window.Inventory);
-Object.assign(App, window.Dashboard);
-Object.assign(App, window.Reports);
-Object.assign(App, window.Settings);
+// Mixin Modules (Removed for Lazy Loading)
+// Object.assign(App, window.POS);
+// Object.assign(App, window.Inventory);
+// Object.assign(App, window.Dashboard);
+// Object.assign(App, window.Reports);
+// Object.assign(App, window.Settings);
 
 // Expose to window for legacy onclick support
 window.app = App;

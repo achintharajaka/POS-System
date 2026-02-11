@@ -2,7 +2,7 @@
 // Depends on: db.js, utils.js, constants.js
 
 window.POS = {
-    renderPOS() {
+    async renderPOS() {
         this.renderProducts();
         this.renderCart();
     },
@@ -12,77 +12,163 @@ window.POS = {
         if (!select) return;
         select.innerHTML = '<option value="">All Categories</option>';
         this.state.categories.forEach(cat => {
-            select.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
+            select.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`; // Categories are still loaded in app.js
         });
-
-        const prodSelect = document.getElementById(DOM.MODALS.PRODUCT.INPUT_CATEGORY);
-        if (prodSelect) {
-            prodSelect.innerHTML = '';
-            this.state.categories.forEach(cat => {
-                prodSelect.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
-            });
-        }
     },
 
-    renderProducts(filteredProducts = null) {
+    async renderProducts(overrideProducts = null) {
         const grid = document.getElementById(DOM.POS.PRODUCTS_GRID);
         if (!grid) return;
         grid.innerHTML = '';
+        Utils.showLoading();
 
-        const products = filteredProducts || this.state.products;
-        const { currencySymbol } = this.state.settings;
+        try {
+            let products = [];
 
-        products.forEach(prod => {
-            const card = document.createElement('div');
-            card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm";
-            card.onclick = () => this.addToCart(prod);
+            if (overrideProducts) {
+                products = overrideProducts;
+            } else {
+                // Default view (Paginated 50 items for grid)
+                // We could add pagination controls, but for now let's just show top 50 
+                // or implement infinite scroll if requested.
+                // User asked for pagination. Let's add simple Next/Prev at bottom of grid.
+                const page = this.state.posPage || 1;
+                const result = await DB.getProducts(page, 50);
+                products = result.data;
 
-            let imageHtml = `
-                <div class="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 mb-2">
-                    ${prod.name.charAt(0).toUpperCase()}
-                </div>
-            `;
-
-            if (prod.image) {
-                imageHtml = `<img src="${prod.image}" class="h-24 w-full object-cover rounded-lg mb-2" alt="${Utils.sanitize(prod.name)}">`;
+                // We need to render pagination controls
+                this.renderPosPagination(result.total, page);
             }
 
-            card.innerHTML = `
-                ${imageHtml}
-                <h4 class="font-bold text-gray-800 dark:text-gray-200 line-clamp-2 text-sm">${Utils.sanitize(prod.name)}</h4>
-                <p class="text-blue-600 dark:text-blue-400 font-bold mt-1">${Utils.formatCurrency(prod.price, currencySymbol)}</p>
-                <div class="text-xs text-gray-400 mt-1">Stock: ${prod.stock}</div>
-            `;
-            grid.appendChild(card);
-        });
+            const { currencySymbol } = this.state.settings;
+
+            products.forEach(prod => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm";
+                card.onclick = () => this.addToCart(prod);
+
+                let imageHtml = `
+                    <div class="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 mb-2">
+                        ${prod.name.charAt(0).toUpperCase()}
+                    </div>
+                `;
+
+                if (prod.image) {
+                    imageHtml = `<img src="${prod.image}" class="h-24 w-full object-cover rounded-lg mb-2" alt="${Utils.sanitize(prod.name)}">`;
+                }
+
+                card.innerHTML = `
+                    ${imageHtml}
+                    <h4 class="font-bold text-gray-800 dark:text-gray-200 line-clamp-2 text-sm">${Utils.sanitize(prod.name)}</h4>
+                    <p class="text-blue-600 dark:text-blue-400 font-bold mt-1">${Utils.formatCurrency(prod.price, currencySymbol)}</p>
+                    <div class="text-xs text-gray-400 mt-1">Stock: ${prod.stock}</div>
+                `;
+                grid.appendChild(card);
+            });
+
+            if (products.length === 0) {
+                grid.innerHTML = '<p class="text-center text-gray-500 col-span-full mt-10">No products found</p>';
+            }
+
+        } catch (e) {
+            console.error(e);
+        } finally {
+            Utils.hideLoading();
+        }
     },
 
-    filterProducts(searchTerm, categoryId) {
-        let results = this.state.products;
+    renderPosPagination(total, page) {
+        const grid = document.getElementById(DOM.POS.PRODUCTS_GRID);
+        const totalPages = Math.ceil(total / 50);
 
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            results = results.filter(p =>
-                p.name.toLowerCase().includes(term) ||
-                (p.barcode && p.barcode.includes(term))
-            );
-        }
+        // Remove old pagination if exists
+        const oldPag = document.getElementById('pos-pagination');
+        if (oldPag) oldPag.remove();
 
-        if (categoryId) {
-            results = results.filter(p => p.categoryId == categoryId);
-        }
+        const container = document.createElement('div');
+        container.id = 'pos-pagination';
+        container.className = "col-span-full flex justify-center gap-4 mt-4 p-4";
+        container.innerHTML = `
+            <button id="pos-prev" ${page <= 1 ? 'disabled' : ''} class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50">Prev</button>
+            <span class="text-gray-600 dark:text-gray-300 self-center">Page ${page} of ${totalPages || 1}</span>
+            <button id="pos-next" ${page >= totalPages ? 'disabled' : ''} class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50">Next</button>
+        `;
 
-        this.renderProducts(results);
+        grid.parentNode.appendChild(container); // Append after grid (grid is inside a flex-col, so this works nicely)
+        // Wait, grid is inside a div.
+        // POS layout: Left: Products Grid (flex-1 ... flex-col).
+        // Inside: Search Bar (div), Grid (div id=pos-products-grid).
+        // So I can append to grid (as last child? No grid layout). 
+        // Better append to grid.parentNode (the container).
 
-        // Auto-add if exact barcode match
-        if (searchTerm && results.length === 1 && results[0].barcode === searchTerm) {
-            this.addToCart(results[0]);
-            document.getElementById(DOM.POS.SEARCH).value = '';
-            this.renderProducts(this.state.products); // Reset view
+        // Bind events
+        container.querySelector('#pos-prev').onclick = () => {
+            this.state.posPage = page - 1;
+            this.renderProducts();
+        };
+        container.querySelector('#pos-next').onclick = () => {
+            this.state.posPage = page + 1;
+            this.renderProducts();
+        };
+    },
+
+    async filterProducts(searchTerm, categoryId) {
+        Utils.showLoading();
+        try {
+            // We use DB filtering now
+            // But DB.getProducts in db.js handles simple search/pagination
+            // It doesn't handle category filtering yet!
+            // I need to update db.js to handle category filtering if I want to use it here.
+            // Or I filter in memory if I load a subset? No.
+            // I should default to "Search by text". Category filter is tricky without multi-index query or logical filtering.
+            // Dexie can do: db.products.where('categoryId').equals(id).filter(...)
+
+            // For now, let's just handle text search using the updated DB.getProducts.
+            // If category is selected, we might need to update DB.getProducts to accept categoryId.
+            // Let's assume for this task that text search is priority.
+            // But category filter IS in the UI.
+
+            // Let's try to pass it if DB supports it.
+            // Current DB.getProducts(page, limit, search, lowStock).
+            // I should update DB.getProducts to accept categoryId.
+            // But I can't keep updating DB.js forever.
+            // I'll skip category filter coupled with search for this exact moment and just do search.
+            // Or I filter locally if the result set is small? No.
+
+            // Wait, I can just use `db.products` directly here if needed.
+            let collection = db.products.toCollection();
+
+            if (categoryId) {
+                collection = db.products.where('categoryId').equals(parseInt(categoryId));
+            }
+
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                // if we used index for category, we need to filter for name
+                collection = collection.filter(p =>
+                    p.name.toLowerCase().includes(term) ||
+                    (p.barcode && p.barcode.includes(term))
+                );
+            }
+
+            // Limit results for search view
+            const products = await collection.limit(50).toArray();
+
+            this.renderProducts(products); // Render without pagination controls (or single page)
+
+            // Auto-add if exact barcode match
+            if (searchTerm && products.length === 1 && products[0].barcode === searchTerm) {
+                this.addToCart(products[0]);
+                document.getElementById(DOM.POS.SEARCH).value = '';
+                this.renderProducts(); // Reset to default view
+            }
+        } finally {
+            Utils.hideLoading();
         }
     },
 
     addToCart(product) {
+        // ... (Logic remains mostly same, just checking passed product)
         if (product.stock <= 0) {
             Utils.showToast("Out of Stock!", "error");
             return;
@@ -138,6 +224,7 @@ window.POS = {
     },
 
     renderCart() {
+        // ... (Same as before)
         const container = document.getElementById(DOM.POS.CART_ITEMS);
         if (!container) return;
         container.innerHTML = '';
@@ -288,32 +375,67 @@ window.POS = {
             paymentMethod: this.state.paymentMethod
         };
 
-        await DB.saveOrder(order);
-
-        // Update Stock
-        for (const item of this.state.cart) {
-            const product = this.state.products.find(p => p.id === item.id);
-            if (product) {
-                product.stock -= item.qty;
-                await DB.updateProduct(product.id, { stock: product.stock });
-            }
+        // Open receipt window FIRST while user-gesture context is still active
+        // (Browsers block window.open after async/await calls)
+        const receiptWindow = window.open('', '', 'width=340,height=600');
+        if (receiptWindow) {
+            receiptWindow.document.write('<html><body style="font-family:monospace;text-align:center;padding-top:40px;"><p>Preparing receipt...</p></body></html>');
         }
 
-        // Print Receipt
-        const receiptWindow = window.open('', '', 'width=340,height=600');
-        receiptWindow.document.write(Utils.generateReceipt(
-            this.state.settings.storeName,
-            this.state.settings.storeAddress,
-            order,
-            this.state.settings,
-            this.state.settings.storeLogo
-        ));
-        receiptWindow.document.close();
+        try {
+            // Save order to DB
+            await DB.saveOrder(order);
 
-        this.state.cart = [];
-        this.renderCart();
-        await this.loadData();
-        this.renderProducts();
-        Utils.showToast("Order Completed!");
+            // Update Stock
+            for (const item of this.state.cart) {
+                try {
+                    const product = await DB.getProduct(item.id);
+                    if (product) {
+                        const newStock = product.stock - item.qty;
+                        await DB.updateProduct(product.id, { stock: newStock });
+                    }
+                } catch (stockErr) {
+                    console.error("Failed to update stock for item:", item.id, stockErr);
+                }
+            }
+
+            // Generate QR Code
+            let qrCodeDataUri = null;
+            if (this.state.settings.receiptShowQrCode && this.state.settings.receiptQrCodeUrl) {
+                try {
+                    qrCodeDataUri = await Utils.generateQRCode(this.state.settings.receiptQrCodeUrl);
+                } catch (e) {
+                    console.error("Failed to generate QR Code", e);
+                }
+            }
+
+            // Write receipt content into the already-open window
+            if (receiptWindow && !receiptWindow.closed) {
+                const settingsWithQr = { ...this.state.settings, receiptQrCodeDataUri: qrCodeDataUri };
+                const receiptHtml = Utils.generateReceipt(
+                    this.state.settings.storeName,
+                    this.state.settings.storeAddress,
+                    order,
+                    settingsWithQr,
+                    this.state.settings.storeLogo
+                );
+                receiptWindow.document.open();
+                receiptWindow.document.write(receiptHtml);
+                receiptWindow.document.close();
+            }
+
+            this.state.cart = [];
+            this.renderCart();
+
+            // Refresh grid to show new stock
+            this.renderProducts();
+
+            Utils.showToast("Order Completed!");
+        } catch (err) {
+            console.error("Checkout error:", err);
+            Utils.logError('checkout', err);
+            Utils.showToast("Checkout failed. Check console.", "error");
+        }
     }
+
 };

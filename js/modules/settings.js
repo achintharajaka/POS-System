@@ -53,7 +53,7 @@ window.Settings = {
         Utils.showToast("Logo Removed. Click Save.");
     },
 
-    previewReceipt() {
+    async previewReceipt() {
         // Create a fake order for preview
         const dummyOrder = {
             id: 1234,
@@ -68,16 +68,8 @@ window.Settings = {
             modifiers: [{ name: "Tax", amount: 2.55, rate: "add", type: "percent" }]
         };
 
-        // We need to construct a settings object from the current form state to show preview immediately?
-        // Or just use saved settings?
-        // User expects to see what's in the form.
-
         const currentFormSettings = { ...this.state.settings };
         // Override with form values
-        const storeName = document.getElementById(DOM.SETTINGS.STORE_NAME).value;
-        const storeAddress = document.getElementById(DOM.SETTINGS.STORE_ADDRESS).value;
-        // ... gather all
-        // Quick version: just read the inputs we need for receipt
         currentFormSettings.storeName = document.getElementById(DOM.SETTINGS.STORE_NAME).value;
         currentFormSettings.storeAddress = document.getElementById(DOM.SETTINGS.STORE_ADDRESS).value;
         currentFormSettings.receiptHeader = document.getElementById(DOM.SETTINGS.RECEIPT_HEADER).value;
@@ -89,6 +81,15 @@ window.Settings = {
         currentFormSettings.receiptShowQrCode = document.getElementById(DOM.SETTINGS.RECEIPT_SHOW_QR).checked;
         currentFormSettings.storeLogo = document.getElementById(DOM.SETTINGS.STORE_LOGO_HIDDEN).value;
 
+        // Pre-generate QR code data URI for offline support
+        if (currentFormSettings.receiptShowQrCode && currentFormSettings.receiptQrCodeUrl) {
+            try {
+                currentFormSettings.receiptQrCodeDataUri = await Utils.generateQRCode(currentFormSettings.receiptQrCodeUrl);
+            } catch (e) {
+                console.error("Failed to generate QR Code for preview", e);
+            }
+        }
+
         const win = window.open('', '', 'width=340,height=600');
         win.document.write(Utils.generateReceipt(
             currentFormSettings.storeName,
@@ -97,6 +98,7 @@ window.Settings = {
             currentFormSettings,
             currentFormSettings.storeLogo
         ));
+        win.document.close();
     },
 
     // Category Management

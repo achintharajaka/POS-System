@@ -5,12 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced POS System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/lib/tailwindcss.js"></script>
     <link rel="stylesheet" href="css/styles.css">
     <!-- Dexie.js for IndexedDB -->
-    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <script src="js/lib/dexie.js"></script>
     <!-- Chart.js for Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js for Analytics (Lazy Loaded) -->
+    <!-- <script src="js/lib/chart.js"></script> -->
+    <!-- QRCode.js for Receipts -->
+    <script src="js/lib/qrcode.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -819,9 +822,10 @@
     <script src="js/db.js"></script>
 
     <!-- Modules -->
+    <!-- Modules (Eager Loaded for offline compatibility) -->
+    <script src="js/modules/dashboard.js"></script>
     <script src="js/modules/pos.js"></script>
     <script src="js/modules/inventory.js"></script>
-    <script src="js/modules/dashboard.js"></script>
     <script src="js/modules/reports.js"></script>
     <script src="js/modules/settings.js"></script>
 

@@ -2,92 +2,94 @@
 // Depends on: db.js, utils.js, constants.js
 
 window.Inventory = {
-    renderInventory() {
+    async renderInventory() {
         const tbody = document.getElementById(DOM.INVENTORY.TABLE_BODY);
         const banner = document.getElementById(DOM.INVENTORY.FILTER_BANNER);
         const searchInput = document.getElementById('inv-search-input'); // Direct ID for now
 
         if (!tbody) return;
         tbody.innerHTML = '';
+        Utils.showLoading();
 
-        // Get State
-        const page = this.state.inventoryPage || 1;
-        const perPage = 10;
-        const query = (searchInput ? searchInput.value : '').toLowerCase();
-        const lowStockFilter = this.state.inventoryFilter === 'low_stock';
+        try {
+            // Get State
+            const page = this.state.inventoryPage || 1;
+            const perPage = 10;
+            const query = (searchInput ? searchInput.value : '').toLowerCase();
+            const lowStockFilter = this.state.inventoryFilter === 'low_stock';
 
-        // Filter
-        if (lowStockFilter) {
-            banner.classList.remove('hidden');
-        } else {
-            banner.classList.add('hidden');
-        }
-
-        const { currencySymbol } = this.state.settings;
-
-        let products = this.state.products;
-        if (lowStockFilter) {
-            products = products.filter(p => p.stock < 5);
-        }
-
-        if (query) {
-            products = products.filter(p =>
-                p.name.toLowerCase().includes(query) ||
-                (p.barcode && p.barcode.toLowerCase().includes(query))
-            );
-        }
-
-        // Empty State
-        if (products.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="p-8 text-center text-gray-500 dark:text-gray-400">
-                        <div class="flex flex-col items-center justify-center">
-                            <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                            </svg>
-                            <p>No products found.</p>
-                        </div>
-                    </td>
-                </tr>`;
-            this.updateInventoryPagination(0, 0, 1);
-            return;
-        }
-
-        // Pagination
-        const totalPages = Math.ceil(products.length / perPage);
-        const safePage = Math.min(Math.max(1, page), totalPages);
-        this.state.inventoryPage = safePage;
-
-        const start = (safePage - 1) * perPage;
-        const pagedProducts = products.slice(start, start + perPage);
-
-        pagedProducts.forEach(prod => {
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
-
-            let imgContent = '<div class="w-8 h-8 bg-gray-200 rounded-full"></div>';
-            if (prod.image) {
-                imgContent = `<img src="${prod.image}" class="w-8 h-8 object-cover rounded-full">`;
+            // Filter UI
+            if (lowStockFilter) {
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
             }
 
-            tr.innerHTML = `
-                <td class="p-4 flex items-center gap-3 dark:text-white">
-                    ${imgContent}
-                    <span class="font-medium">${Utils.sanitize(prod.name)}</span>
-                </td>
-                <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">${Utils.sanitize(prod.barcode || '-')}</td>
-                <td class="p-4 dark:text-white">${Utils.formatCurrency(prod.price, currencySymbol)}</td>
-                <td class="p-4 ${prod.stock < 5 ? 'text-red-500 font-bold' : 'dark:text-white'}">${prod.stock}</td>
-                <td class="p-4 flex gap-2">
-                    <button onclick="app.openProductModal(${prod.id})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">Edit</button>
-                    <button onclick="app.deleteProduct(${prod.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+            const { currencySymbol } = this.state.settings;
 
-        this.updateInventoryPagination(products.length, totalPages, safePage);
+            // Fetch from DB
+            const result = await DB.getProducts(page, perPage, query, lowStockFilter);
+            const products = result.data;
+            const totalItems = result.total;
+
+            // Empty State
+            if (products.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-gray-500 dark:text-gray-400">
+                            <div class="flex flex-col items-center justify-center">
+                                <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                </svg>
+                                <p>No products found.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                this.updateInventoryPagination(0, 0, 1);
+                return;
+            }
+
+            // Pagination Logic
+            const totalPages = Math.ceil(totalItems / perPage);
+            // safePage logic is handled by UI restrictions, but good to keep state consistent
+            if (page > totalPages && totalPages > 0) {
+                this.state.inventoryPage = totalPages;
+                // Refetch? Or just let it be next time.
+            }
+
+            products.forEach(prod => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
+
+                let imgContent = '<div class="w-8 h-8 bg-gray-200 rounded-full"></div>';
+                if (prod.image) {
+                    imgContent = `<img src="${prod.image}" class="w-8 h-8 object-cover rounded-full">`;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-4 flex items-center gap-3 dark:text-white">
+                        ${imgContent}
+                        <span class="font-medium">${Utils.sanitize(prod.name)}</span>
+                    </td>
+                    <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">${Utils.sanitize(prod.barcode || '-')}</td>
+                    <td class="p-4 dark:text-white">${Utils.formatCurrency(prod.price, currencySymbol)}</td>
+                    <td class="p-4 ${prod.stock < 5 ? 'text-red-500 font-bold' : 'dark:text-white'}">${prod.stock}</td>
+                    <td class="p-4 flex gap-2">
+                        <button onclick="app.openProductModal(${prod.id})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">Edit</button>
+                        <button onclick="app.deleteProduct(${prod.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            this.updateInventoryPagination(totalItems, totalPages, page);
+
+        } catch (error) {
+            console.error(error);
+            Utils.showToast("Error loading inventory", "error");
+        } finally {
+            Utils.hideLoading();
+        }
     },
 
     updateInventoryPagination(totalItems, totalPages, currentPage) {
@@ -169,17 +171,15 @@ window.Inventory = {
         modal.classList.remove('hidden');
     },
 
-    handleProductImageUpload(event) {
+    async handleProductImageUpload(event) {
         const file = event.target.files[0];
         if (file) {
-            if (file.size > 500 * 1024) { // 500KB limit
-                Utils.showToast("Image too large (Max 500KB)", "error");
-                event.target.value = ''; // clear input
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64 = e.target.result;
+            // Check size before compression (optional, but good for UX) or just compress
+            try {
+                Utils.showLoading();
+                const base64 = await Utils.compressImage(file, 800, 0.7);
+                Utils.hideLoading();
+
                 document.getElementById(DOM.MODALS.PRODUCT.IMAGE_BASE64).value = base64;
 
                 const preview = document.getElementById(DOM.MODALS.PRODUCT.IMAGE_PREVIEW);
@@ -188,8 +188,11 @@ window.Inventory = {
                 preview.src = base64;
                 preview.classList.remove('hidden');
                 placeholder.classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
+            } catch (error) {
+                Utils.hideLoading();
+                Utils.showToast("Failed to process image", "error");
+                console.error(error);
+            }
         }
     },
 

@@ -7,7 +7,8 @@ db.version(1).stores({
     products: '++id, name, barcode, price, costPrice, stock, categoryId',
     categories: '++id, name',
     orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod',
-    settings: 'key', // Key-value store
+    // settings: 'key', // Key-value store (Dexie 3+, no schema needed usually if just key, but strict mode might need it. Current code works.)
+    settings: 'key',
     expenses: '++id, description, amount, date, category',
     income: '++id, description, amount, date, category'
 });
@@ -57,8 +58,32 @@ db.open().catch(err => {
 
 window.DB = {
     // Products
-    async getProducts() {
-        try { return await db.products.toArray(); } catch (e) { console.error(e); throw e; }
+    async getProducts(page = null, limit = null, search = '', lowStock = false) {
+        try {
+            let collection = db.products.toCollection();
+
+            // Search (Naive filter for now, but efficient enough for thousands)
+            if (search) {
+                const q = search.toLowerCase();
+                collection = collection.filter(p => p.name.toLowerCase().includes(q) || (p.barcode && p.barcode.includes(q)));
+            }
+
+            if (lowStock) {
+                // Determine if we should use index or filter. 
+                // Using filter on top of previous collection is safer for chaining.
+                collection = collection.filter(p => p.stock < 5);
+            }
+
+            if (page && limit) {
+                const total = await collection.count();
+                const offset = (page - 1) * limit;
+                // Note: offset on filtered collection in Dexie works by scanning until offset match found
+                const data = await collection.offset(offset).limit(limit).toArray();
+                return { data, total };
+            }
+
+            return await collection.toArray();
+        } catch (e) { console.error(e); throw e; }
     },
     async addProduct(product) {
         try { return await db.products.add(product); } catch (e) { console.error(e); throw e; }
@@ -68,6 +93,9 @@ window.DB = {
     },
     async deleteProduct(id) {
         try { return await db.products.delete(id); } catch (e) { console.error(e); throw e; }
+    },
+    async getProduct(id) {
+        try { return await db.products.get(id); } catch (e) { console.error(e); throw e; }
     },
 
     // Categories
@@ -79,8 +107,28 @@ window.DB = {
     async saveOrder(order) {
         try { return await db.orders.add(order); } catch (e) { console.error(e); throw e; }
     },
-    async getOrders() {
-        try { return await db.orders.orderBy('timestamp').reverse().toArray(); } catch (e) { console.error(e); throw e; }
+    async getOrders(page = null, limit = null) {
+        try {
+            let collection = db.orders.orderBy('timestamp').reverse();
+            if (page && limit) {
+                const total = await collection.count();
+                const data = await collection.offset((page - 1) * limit).limit(limit).toArray();
+                return { data, total };
+            }
+            return await collection.toArray();
+        } catch (e) { console.error(e); throw e; }
+    },
+
+    async getOrdersSince(timestamp) {
+        try {
+            return await db.orders.where('timestamp').aboveOrEqual(timestamp).toArray();
+        } catch (e) { console.error(e); throw e; }
+    },
+
+    async getLowStockCount() {
+        try {
+            return await db.products.where('stock').below(5).count();
+        } catch (e) { console.error(e); throw e; }
     },
 
     // Expenses
