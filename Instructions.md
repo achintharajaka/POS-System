@@ -108,17 +108,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 - Useful for accountability and security
 
 ---
-### C. UX / UI Improvements
-
-| Improvement | Detail |
-|:---|:---|
-| **Loading states** | No spinners or loading indicators — large inventories would appear "frozen" |
-| **Pagination** | Dashboard history and inventory tables show up to 50 rows — add proper pagination or infinite scroll |
-| **Confirmation dialogs** | Currently uses native `confirm()` — replace with styled modal confirmations |
-| **Empty states** | Add illustrations/messages for empty inventory, no orders, etc. |
-| **Mobile responsiveness** | Navigation could use a hamburger menu on small screens |
-| **Form validation UX** | Show inline field-level errors instead of only toast messages |
-| **Inventory search** | No search bar on the Inventory page (only on POS view) |
 
 ### D. Performance
 
