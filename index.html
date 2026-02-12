@@ -35,8 +35,73 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2"></div>
 
+    <!-- Login Screen Overlay -->
+    <div id="login-screen" class="fixed inset-0 z-[90] flex items-center justify-center login-bg">
+        <div class="login-card w-full max-w-sm mx-4">
+            <!-- Logo & Store Name -->
+            <div class="text-center mb-8">
+                <div
+                    class="w-20 h-20 rounded-2xl mx-auto mb-4 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-1">POS System</h1>
+                <p class="text-gray-400 text-sm">Enter your PIN to clock in</p>
+            </div>
+
+            <!-- PIN Dots -->
+            <div id="pin-container" class="flex justify-center gap-3 mb-6">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="login-error-msg" class="hidden text-center text-red-400 text-sm mb-4 font-medium"></div>
+
+            <!-- PIN Pad -->
+            <div id="pin-pad" class="grid grid-cols-3 gap-3 max-w-[280px] mx-auto" tabindex="0">
+                <button data-pin-digit="1" class="pin-btn">1</button>
+                <button data-pin-digit="2" class="pin-btn">2</button>
+                <button data-pin-digit="3" class="pin-btn">3</button>
+                <button data-pin-digit="4" class="pin-btn">4</button>
+                <button data-pin-digit="5" class="pin-btn">5</button>
+                <button data-pin-digit="6" class="pin-btn">6</button>
+                <button data-pin-digit="7" class="pin-btn">7</button>
+                <button data-pin-digit="8" class="pin-btn">8</button>
+                <button data-pin-digit="9" class="pin-btn">9</button>
+                <button id="pin-clear" class="pin-btn pin-btn-action" title="Clear">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+                <button data-pin-digit="0" class="pin-btn">0</button>
+                <button id="pin-backspace" class="pin-btn pin-btn-action" title="Backspace">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414a2 2 0 011.414-.586H19a2 2 0 012 2v10a2 2 0 01-2 2h-8.172a2 2 0 01-1.414-.586L3 12z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Submit -->
+            <button id="pin-submit"
+                class="w-full mt-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-semibold text-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/25 active:scale-95">Sign
+                In</button>
+
+            <p class="text-center text-gray-500 text-xs mt-6">Default Admin PIN: 1234</p>
+        </div>
+    </div>
+
     <!-- Top Navigation -->
-    <nav class="bg-white dark:bg-gray-800 shadow-md z-10">
+    <nav class="bg-white dark:bg-gray-800 shadow-md z-10 hidden">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <div id="nav-logo-container"
@@ -75,6 +140,32 @@
                         </path>
                     </svg>
                 </button>
+
+                <!-- User Indicator -->
+                <div id="user-indicator"
+                    class="hidden flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-600">
+                    <div class="flex flex-col items-end">
+                        <span id="user-display-name"
+                            class="text-sm font-semibold text-gray-700 dark:text-gray-200"></span>
+                        <span id="user-display-role" class="text-xs px-2 py-0.5 rounded-full font-semibold"></span>
+                    </div>
+                    <div class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span id="shift-timer" class="font-mono">00:00:00</span>
+                    </div>
+                    <button id="logout-btn"
+                        class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+                        title="Logout">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Mobile Menu Button -->
@@ -88,10 +179,24 @@
         </div>
     </nav>
 
+    <!-- Mobile Menu Backdrop -->
+    <div id="mobile-menu-backdrop" class="hidden fixed inset-0 bg-black bg-opacity-25 z-15 md:hidden"></div>
+
     <!-- Mobile Menu Container -->
     <div id="mobile-menu"
         class="hidden md:hidden bg-white dark:bg-gray-800 shadow-lg border-t border-gray-100 dark:border-gray-700 absolute w-full z-20">
         <div class="flex flex-col p-4 space-y-2">
+            <div class="flex justify-between items-center mb-1">
+                <span
+                    class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Menu</span>
+                <button id="mobile-menu-close-btn"
+                    class="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
             <button data-nav="dashboard"
                 class="mobile-nav-link text-left px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Dashboard</button>
             <button data-nav="pos"
@@ -108,6 +213,15 @@
                 class="text-left px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex justify-between items-center w-full">
                 <span>Toggle Theme</span>
                 <span id="mobile-theme-status" class="text-xs uppercase font-bold tracking-wider opacity-70"></span>
+            </button>
+            <button id="mobile-logout-btn"
+                class="text-left px-4 py-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2 w-full">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                    </path>
+                </svg>
+                <span>Logout</span>
             </button>
         </div>
     </div>
@@ -685,6 +799,95 @@
                     </div>
                 </div>
             </div>
+
+            <!-- User Management (Admin Only) -->
+            <div id="user-management-section" class="mt-6">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">User Management</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Add / Edit User -->
+                    <div
+                        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <h3
+                            class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                            Add / Edit User</h3>
+                        <input type="hidden" id="edit-user-id" value="">
+                        <div class="space-y-3">
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                                <input type="text" id="new-user-name" placeholder="User name"
+                                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+                                    <select id="new-user-role"
+                                        class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                                        <option value="cashier">Cashier</option>
+                                        <option value="manager">Manager</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIN</label>
+                                    <input type="password" id="new-user-pin" placeholder="Min 4 digits" maxlength="6"
+                                        class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono tracking-widest">
+                                </div>
+                            </div>
+                            <button id="add-user-btn"
+                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">Add
+                                User</button>
+                        </div>
+                    </div>
+
+                    <!-- Users List -->
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white">Users</h3>
+                        <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
+                                    <tr>
+                                        <th class="p-3">Name</th>
+                                        <th class="p-3">Role</th>
+                                        <th class="p-3">Status</th>
+                                        <th class="p-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="user-table-body"
+                                    class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                                    <!-- Injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shift History -->
+                <div
+                    class="mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white">Shift History</h3>
+                    <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
+                                <tr>
+                                    <th class="p-3">User</th>
+                                    <th class="p-3">Clock In</th>
+                                    <th class="p-3">Clock Out</th>
+                                    <th class="p-3">Duration</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shift-table-body"
+                                class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                                <!-- Injected -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </main>
@@ -823,6 +1026,7 @@
 
     <!-- Modules -->
     <!-- Modules (Eager Loaded for offline compatibility) -->
+    <script src="js/modules/auth.js"></script>
     <script src="js/modules/dashboard.js"></script>
     <script src="js/modules/pos.js"></script>
     <script src="js/modules/inventory.js"></script>

@@ -13,13 +13,16 @@ const App = {
         currentOrder: null,
         modifiers: [],
         chart: null,
-        paymentMethod: 'cash'
+        paymentMethod: 'cash',
+        currentUser: null,
+        currentShift: null
     },
 
     async init() {
         console.log("Initializing App v3 (Modular)...");
 
         // Mixin all modules eagerly (loaded via script tags in index.html)
+        if (window.Auth) Object.assign(App, window.Auth);
         if (window.Dashboard) Object.assign(App, window.Dashboard);
         if (window.POS) Object.assign(App, window.POS);
         if (window.Inventory) Object.assign(App, window.Inventory);
@@ -40,16 +43,28 @@ const App = {
             this.state.modifiers = this.state.settings.orderModifiers;
 
             this.applyTheme();
-            this.updateStoreDetails();
 
-            // Load data
-            await this.loadData();
-
-            // Init Router/View
-            this.navigate('dashboard');
-
-            // Setup Listeners
+            // Setup Listeners (before showing login so PIN pad works)
             this.setupEventListeners();
+
+            // Setup Auth listeners
+            if (this.setupAuthListeners) this.setupAuthListeners();
+
+            // Check if there are any users — if DB was just migrated (no users), seed one
+            const userCount = await DB.getUserCount();
+            if (userCount === 0) {
+                const adminPinHash = await DB.hashPin('1234');
+                await DB.addUser({
+                    name: 'Admin',
+                    pin: adminPinHash,
+                    role: 'admin',
+                    active: true,
+                    createdAt: Date.now()
+                });
+            }
+
+            // Show login screen
+            this.showLoginScreen();
 
         } catch (error) {
             console.error("Initialization Failed:", error);
@@ -71,6 +86,15 @@ const App = {
     },
 
     async navigate(viewId) {
+        // Role-based access check
+        if (this.state.currentUser && !this.hasAccess(viewId)) {
+            Utils.showToast('Access denied for your role', 'error');
+            // Redirect to the first allowed view
+            const role = this.state.currentUser.role;
+            const allowed = this._roleAccess[role] || ['pos'];
+            viewId = allowed[0];
+        }
+
         Utils.showLoading();
         try {
             this.state.currentView = viewId;
@@ -87,6 +111,18 @@ const App = {
                 this.updateStoreDetails();
                 if (this.renderCategoryList) this.renderCategoryList();
                 if (this.renderModifiersList) this.renderModifiersList();
+
+                // User management (admin only)
+                const userMgmt = document.getElementById('user-management-section');
+                if (userMgmt) {
+                    if (this.state.currentUser && this.state.currentUser.role === 'admin') {
+                        userMgmt.classList.remove('hidden');
+                        if (this.renderUserManagement) this.renderUserManagement();
+                        if (this.renderShiftHistory) this.renderShiftHistory();
+                    } else {
+                        userMgmt.classList.add('hidden');
+                    }
+                }
             }
         } catch (e) {
             console.error(e);
@@ -197,20 +233,39 @@ const App = {
         // Mobile Menu
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
-        if (mobileMenuBtn && mobileMenu) {
-            mobileMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-            });
+        const mobileBackdrop = document.getElementById('mobile-menu-backdrop');
+        const mobileCloseBtn = document.getElementById('mobile-menu-close-btn');
 
-            // Close menu when clicking a link
-            document.querySelectorAll('.mobile-nav-link').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    const view = e.target.dataset.nav;
-                    if (view) this.navigate(view);
-                    mobileMenu.classList.add('hidden');
-                });
-            });
+        const toggleMobileMenu = (show) => {
+            if (!mobileMenu) return;
+            if (show === undefined) show = mobileMenu.classList.contains('hidden');
+            if (show) {
+                mobileMenu.classList.remove('hidden');
+                if (mobileBackdrop) mobileBackdrop.classList.remove('hidden');
+            } else {
+                mobileMenu.classList.add('hidden');
+                if (mobileBackdrop) mobileBackdrop.classList.add('hidden');
+            }
+        };
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => toggleMobileMenu());
         }
+        if (mobileCloseBtn) {
+            mobileCloseBtn.addEventListener('click', () => toggleMobileMenu(false));
+        }
+        if (mobileBackdrop) {
+            mobileBackdrop.addEventListener('click', () => toggleMobileMenu(false));
+        }
+
+        // Close menu when clicking a nav link
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                const view = e.target.dataset.nav;
+                if (view) this.navigate(view);
+                toggleMobileMenu(false);
+            });
+        });
 
         // --- Dashboard ---
         bindClick(DOM.DASHBOARD.LOW_STOCK_CARD, () => this.filterInventory('low_stock'));

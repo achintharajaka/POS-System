@@ -7,14 +7,34 @@ db.version(1).stores({
     products: '++id, name, barcode, price, costPrice, stock, categoryId',
     categories: '++id, name',
     orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod',
-    // settings: 'key', // Key-value store (Dexie 3+, no schema needed usually if just key, but strict mode might need it. Current code works.)
     settings: 'key',
     expenses: '++id, description, amount, date, category',
     income: '++id, description, amount, date, category'
 });
 
+// Version 2: Add users and shifts for authentication & role management
+db.version(2).stores({
+    products: '++id, name, barcode, price, costPrice, stock, categoryId',
+    categories: '++id, name',
+    orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod, userId, shiftId',
+    settings: 'key',
+    expenses: '++id, description, amount, date, category',
+    income: '++id, description, amount, date, category',
+    users: '++id, name, pin, role, active',
+    shifts: '++id, userId, clockIn, clockOut, status'
+});
+
+// PIN hashing utility (SHA-256 via crypto.subtle)
+async function hashPin(pin) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pin.toString());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // Seed default settings if not exists
-db.on("populate", () => {
+db.on("populate", async () => {
     db.settings.bulkAdd([
         { key: "storeName", value: "My POS Store" },
         { key: "storeAddress", value: "123 Main St" },
@@ -48,15 +68,26 @@ db.on("populate", () => {
         stock: 100,
         categoryId: 1
     });
+
+    // Default Admin User (PIN: 1234)
+    const adminPinHash = await hashPin('1234');
+    db.users.add({
+        name: 'Admin',
+        pin: adminPinHash,
+        role: 'admin',
+        active: true,
+        createdAt: Date.now()
+    });
 });
 
 db.open().catch(err => {
     console.error("Failed to open db: " + (err.stack || err));
-    // We can't use Utils here easily if Utils depends on DB, but Utils is mostly formatting/toast.
-    // Ideally pass this error to UI via main app or utils
 });
 
 window.DB = {
+    // --- PIN Hashing (exposed for auth module) ---
+    hashPin,
+
     // Products
     async getProducts(page = null, limit = null, search = '', lowStock = false) {
         try {
@@ -69,15 +100,12 @@ window.DB = {
             }
 
             if (lowStock) {
-                // Determine if we should use index or filter. 
-                // Using filter on top of previous collection is safer for chaining.
                 collection = collection.filter(p => p.stock < 5);
             }
 
             if (page && limit) {
                 const total = await collection.count();
                 const offset = (page - 1) * limit;
-                // Note: offset on filtered collection in Dexie works by scanning until offset match found
                 const data = await collection.offset(offset).limit(limit).toArray();
                 return { data, total };
             }
@@ -171,7 +199,6 @@ window.DB = {
         try { return await db.categories.add({ name }); } catch (e) { console.error(e); throw e; }
     },
     async deleteCategory(id) {
-        // Optional conflict check: check if products use this category
         try { return await db.categories.delete(id); } catch (e) { console.error(e); throw e; }
     },
 
@@ -179,24 +206,89 @@ window.DB = {
         try { return await db.orders.delete(id); } catch (e) { console.error(e); throw e; }
     },
 
+    // --- Users CRUD ---
+    async getUsers() {
+        try { return await db.users.toArray(); } catch (e) { console.error(e); throw e; }
+    },
+    async addUser(user) {
+        try { return await db.users.add(user); } catch (e) { console.error(e); throw e; }
+    },
+    async updateUser(id, updates) {
+        try { return await db.users.update(id, updates); } catch (e) { console.error(e); throw e; }
+    },
+    async deleteUser(id) {
+        try { return await db.users.delete(id); } catch (e) { console.error(e); throw e; }
+    },
+    async getUser(id) {
+        try { return await db.users.get(id); } catch (e) { console.error(e); throw e; }
+    },
+    async getUserByPin(hashedPin) {
+        try {
+            return await db.users.where('pin').equals(hashedPin).and(u => u.active).first();
+        } catch (e) { console.error(e); throw e; }
+    },
+    async getUserCount() {
+        try { return await db.users.count(); } catch (e) { console.error(e); throw e; }
+    },
+
+    // --- Shifts ---
+    async startShift(userId) {
+        try {
+            return await db.shifts.add({
+                userId,
+                clockIn: Date.now(),
+                clockOut: null,
+                status: 'open'
+            });
+        } catch (e) { console.error(e); throw e; }
+    },
+    async endShift(shiftId) {
+        try {
+            return await db.shifts.update(shiftId, {
+                clockOut: Date.now(),
+                status: 'closed'
+            });
+        } catch (e) { console.error(e); throw e; }
+    },
+    async getActiveShift(userId) {
+        try {
+            return await db.shifts.where('userId').equals(userId).and(s => s.status === 'open').first();
+        } catch (e) { console.error(e); throw e; }
+    },
+    async getShifts(page = null, limit = null) {
+        try {
+            let collection = db.shifts.orderBy('clockIn').reverse();
+            if (page && limit) {
+                const total = await collection.count();
+                const data = await collection.offset((page - 1) * limit).limit(limit).toArray();
+                return { data, total };
+            }
+            return await collection.toArray();
+        } catch (e) { console.error(e); throw e; }
+    },
+
+    // --- Data Import/Export ---
     async importData(jsonData) {
         try {
             // Clear existing
             await db.products.clear();
             await db.categories.clear();
             await db.settings.clear();
-            await db.orders.clear(); // Optional: maybe we don't want to clear working orders?
+            await db.orders.clear();
             await db.expenses.clear();
             await db.income.clear();
+            await db.users.clear();
+            await db.shifts.clear();
 
             // Load new
             await db.products.bulkAdd(jsonData.products);
             await db.categories.bulkAdd(jsonData.categories);
             await db.settings.bulkAdd(jsonData.settings);
-            // We usually don't import orders for restore unless full backup
             if (jsonData.orders) await db.orders.bulkAdd(jsonData.orders);
             if (jsonData.expenses) await db.expenses.bulkAdd(jsonData.expenses);
             if (jsonData.income) await db.income.bulkAdd(jsonData.income);
+            if (jsonData.users) await db.users.bulkAdd(jsonData.users);
+            if (jsonData.shifts) await db.shifts.bulkAdd(jsonData.shifts);
         } catch (e) { console.error(e); throw e; }
     },
     async exportData() {
@@ -207,7 +299,9 @@ window.DB = {
             const orders = await db.orders.toArray();
             const expenses = await db.expenses.toArray();
             const income = await db.income.toArray();
-            return { products, categories, settings, orders, expenses, income };
+            const users = await db.users.toArray();
+            const shifts = await db.shifts.toArray();
+            return { products, categories, settings, orders, expenses, income, users, shifts };
         } catch (e) { console.error(e); throw e; }
     },
 

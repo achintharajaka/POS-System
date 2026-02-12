@@ -3,25 +3,49 @@
 Welcome to the Point of Sale (POS) System! This guide will help you understand how to use the system effectively to manage your inventory, make sales, and track your business performance.
 
 ## Table of Contents
-1.  [Getting Started](#getting-started)
+1.  [Getting Started (Login)](#getting-started-login)
 2.  [Inventory Management](#inventory-management)
 3.  [Point of Sale (Making Sales)](#point-of-sale-making-sales)
 4.  [Reports & Finances](#reports--finances)
 5.  [Settings & Data](#settings--data)
+6.  [User Management (Admin)](#user-management-admin)
+7.  [Troubleshooting & Debugging](#troubleshooting--debugging)
 
 ---
 
-## 1. Getting Started
+## 1. Getting Started (Login)
 
-When you open the application, you will see the **Dashboard**. This is your command center.
+When you open the application, you will see the **Login Screen** — a dark overlay with a PIN pad.
+
+### Logging In
+1.  Enter your **PIN** (4–6 digits) using the on-screen number pad or your keyboard.
+2.  Click **Sign In** (or press **Enter**).
+3.  The default admin PIN is **1234**.
+
+### User Roles
+Your role determines which sections you can access:
+
+| Role | Access |
+| :--- | :--- |
+| **Admin** | Dashboard, POS, Inventory, Reports, Settings (full access) |
+| **Manager** | Dashboard, POS, Inventory, Reports |
+| **Cashier** | POS only |
+
+### Shifts
+- You are **automatically clocked in** when you log in.
+- Cashiers see a **live shift timer** (HH:MM:SS) in the top navigation bar.
+- When you **Logout**, your shift is closed and recorded.
+
+### Logging Out
+- **Desktop:** Click the logout icon (→) at the top-right of the navigation bar.
+- **Mobile:** Tap the hamburger menu (☰), then tap **Logout**.
+
+### After Login
+- **Admins/Managers** land on the **Dashboard**.
+- **Cashiers** land directly on the **POS Terminal**.
 - **Top Cards:** Show you a quick summary of today's sales, total revenue, expenses, and low stock warnings.
-- **Recent Transactions:** View your order history. Click **View** on any order to open its receipt in a popup window for review or printing. Click **Delete** to permanently remove an order record.
-- **Navigation Menu:** On the left (or top on mobile), use this to switch between different views:
-    - **Dashboard:** Overview.
-    - **POS:** The checkout terminal.
-    - **Inventory:** Manage products.
-    - **Reports:** View financial details.
-    - **Settings:** Configure store details.
+- **Recent Transactions:** View your order history. Click **View** on any order to open its receipt.
+- **Navigation Menu:** Use the top bar (desktop) or hamburger menu (mobile) to switch views.
 
 ---
 
@@ -95,16 +119,43 @@ Track how your business is doing.
 
 ## 5. Settings & Data
 
-- **Store Profile:** specific your Store Name, Address, and Currency Symbol.
+- **Store Profile:** Specify your Store Name, Address, and Currency Symbol.
 - **Receipt Settings:** Customize what appears on the receipt (Logo, Header, Footer, QR Code URL).
+- **Order Modifiers:** Configure taxes, discounts, and other adjustments that apply to every order.
+- **Category Management:** Add or remove product categories.
 - **Data Management:**
-    - **Export Data:** Download a backup of your entire database. **Do this regularly!**
+    - **Export Data:** Download a backup of your entire database (includes users and shifts). **Do this regularly!**
     - **Import Data:** Restore from a backup file.
-    - **Clear Data:** WIPE everything. Use with caution.
+    - **Reset System:** WIPE everything. Use with extreme caution.
 
 ---
 
-## 6. Troubleshooting & Debugging
+## 6. User Management (Admin)
+
+Only visible to Admin users, found at the bottom of the **Settings** page.
+
+### Adding a User
+1.  Go to **Settings** → scroll down to **User Management**.
+2.  Fill in **Name**, select a **Role**, and set a **PIN** (4–6 digits, numbers only).
+3.  Click **Add User**.
+
+### Editing a User
+- Click the ✏️ (edit) icon next to any user.
+- Update name, role, or PIN (leave PIN blank to keep the existing one).
+- Click **Update User**.
+
+### Resetting a PIN
+- Click the 🔑 icon to reset any user's PIN back to the default **1234**.
+
+### Deleting a User
+- Click the 🗑️ icon. You cannot delete your own account.
+
+### Shift History
+- Below user management, view the **Shift History** table showing all clock-in/clock-out records with duration.
+
+---
+
+## 7. Troubleshooting & Debugging
 
 If you encounter any issues or the system behaves unexpectedly:
 
