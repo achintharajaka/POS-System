@@ -862,42 +862,46 @@
 
             <!-- User Management (Admin Only) -->
             <div id="user-management-section" class="mt-6">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">User Management</h2>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white" data-i18n="set_user_mgmt">User
+                    Management</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Add / Edit User -->
                     <div
                         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <h3
-                            class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                        <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
+                            data-i18n="set_user_add_edit">
                             Add / Edit User</h3>
                         <input type="hidden" id="edit-user-id" value="">
                         <div class="space-y-3">
                             <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                    data-i18n="set_user_name">Name</label>
                                 <input type="text" id="new-user-name" placeholder="User name"
+                                    data-i18n="set_user_name_ph"
                                     class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                             </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                        data-i18n="set_user_role">Role</label>
                                     <select id="new-user-role"
                                         class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
-                                        <option value="cashier">Cashier</option>
-                                        <option value="manager">Manager</option>
-                                        <option value="admin">Admin</option>
+                                        <option value="cashier" data-i18n="role_cashier">Cashier</option>
+                                        <option value="manager" data-i18n="role_manager">Manager</option>
+                                        <option value="admin" data-i18n="role_admin">Admin</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIN</label>
-                                    <input type="password" id="new-user-pin" placeholder="Min 4 digits" maxlength="6"
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                        data-i18n="set_user_pin">PIN</label>
+                                    <input type="password" id="new-user-pin" placeholder="Min 4 digits"
+                                        data-i18n="set_user_pin_ph" maxlength="6"
                                         class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono tracking-widest">
                                 </div>
                             </div>
                             <button id="add-user-btn"
-                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">Add
+                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                                data-i18n="set_user_add_btn">Add
                                 User</button>
                         </div>
                     </div>
@@ -905,15 +909,16 @@
                     <!-- Users List -->
                     <div
                         class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white">Users</h3>
+                        <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white" data-i18n="set_user_list">
+                            Users</h3>
                         <div class="overflow-x-auto max-h-80 overflow-y-auto">
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
                                     <tr>
-                                        <th class="p-3">Name</th>
-                                        <th class="p-3">Role</th>
-                                        <th class="p-3">Status</th>
-                                        <th class="p-3">Actions</th>
+                                        <th class="p-3" data-i18n="set_user_col_name">Name</th>
+                                        <th class="p-3" data-i18n="set_user_col_role">Role</th>
+                                        <th class="p-3" data-i18n="set_user_col_status">Status</th>
+                                        <th class="p-3" data-i18n="set_user_col_actions">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="user-table-body"
@@ -928,16 +933,17 @@
                 <!-- Shift History -->
                 <div
                     class="mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white">Shift History</h3>
+                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white" data-i18n="set_shift_history">
+                        Shift History</h3>
                     <div class="overflow-x-auto max-h-96 overflow-y-auto">
                         <table class="w-full text-left">
                             <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
                                 <tr>
-                                    <th class="p-3">User</th>
-                                    <th class="p-3">Clock In</th>
-                                    <th class="p-3">Clock Out</th>
-                                    <th class="p-3">Duration</th>
-                                    <th class="p-3">Status</th>
+                                    <th class="p-3" data-i18n="set_shift_col_user">User</th>
+                                    <th class="p-3" data-i18n="set_shift_col_in">Clock In</th>
+                                    <th class="p-3" data-i18n="set_shift_col_out">Clock Out</th>
+                                    <th class="p-3" data-i18n="set_shift_col_duration">Duration</th>
+                                    <th class="p-3" data-i18n="set_shift_col_status">Status</th>
                                 </tr>
                             </thead>
                             <tbody id="shift-table-body"

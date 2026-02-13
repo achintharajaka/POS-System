@@ -82,6 +82,48 @@ const ta = {
     common_error: "பிழை",
     common_confirm: "நிச்சயமா?",
     common_cancel: "ரத்து செய்",
-    common_close: "மூடு"
+    common_close: "மூடு",
+
+    // User Management
+    set_user_mgmt: "பயனர் மேலாண்மை",
+    set_user_add_edit: "பயனரைச் சேர் / திருத்து",
+    set_user_name: "பெயர்",
+    set_user_name_ph: "பயனர் பெயர்",
+    set_user_role: "பங்கு",
+    set_user_pin: "PIN",
+    set_user_pin_ph: "குறைந்தது 4 இலக்கங்கள்",
+    set_user_add_btn: "பயனரைச் சேர்",
+    set_user_update_btn: "பயனரைப் புதுப்பி",
+    set_user_list: "பயனர்கள்",
+    set_user_col_name: "பெயர்",
+    set_user_col_role: "பங்கு",
+    set_user_col_status: "நிலை",
+    set_user_col_actions: "செயல்கள்",
+
+    // Roles
+    role_admin: "நிர்வாகி",
+    role_manager: "மேலாளர்",
+    role_cashier: "காசாளர்",
+
+    // Shift History
+    set_shift_history: "ஷிப்ட் வரலாறு",
+    set_shift_col_user: "பயனர்",
+    set_shift_col_in: "உள்ளே",
+    set_shift_col_out: "வெளியே",
+    set_shift_col_duration: "கால அளவு",
+    set_shift_col_status: "நிலை",
+
+    // Status
+    status_active: "செயலில்",
+    status_inactive: "செயலற்ற",
+    status_open: "திற",
+    status_closed: "மூடப்பட்டது",
+    status_unknown: "தெரியாத",
+
+    msg_no_shifts: "ஷிப்ட் பதிவுகள் இல்லை",
+    msg_pin_in_use: "இந்த PIN ஏற்கனவே பயன்பாட்டில் உள்ளது",
+    msg_user_added: "பயனர் சேர்க்கப்பட்டார்",
+    msg_user_updated: "பயனர் புதுப்பிக்கப்பட்டார்",
+    msg_user_deleted: "பயனர் நீக்கப்பட்டார்"
 };
 window.lang_ta = ta;

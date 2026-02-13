@@ -72,7 +72,7 @@ const en = {
     set_export: "Export Data (JSON)",
     set_import: "Import Data (JSON)",
     set_reset: "Reset System (Factory Reset)",
-    
+
     // New Language Settings
     set_language: "Language",
 
@@ -82,6 +82,48 @@ const en = {
     common_error: "Error",
     common_confirm: "Are you sure?",
     common_cancel: "Cancel",
-    common_close: "Close"
+    common_close: "Close",
+
+    // User Management
+    set_user_mgmt: "User Management",
+    set_user_add_edit: "Add / Edit User",
+    set_user_name: "Name",
+    set_user_name_ph: "User name",
+    set_user_role: "Role",
+    set_user_pin: "PIN",
+    set_user_pin_ph: "Min 4 digits",
+    set_user_add_btn: "Add User",
+    set_user_update_btn: "Update User",
+    set_user_list: "Users",
+    set_user_col_name: "Name",
+    set_user_col_role: "Role",
+    set_user_col_status: "Status",
+    set_user_col_actions: "Actions",
+
+    // Roles
+    role_admin: "Admin",
+    role_manager: "Manager",
+    role_cashier: "Cashier",
+
+    // Shift History
+    set_shift_history: "Shift History",
+    set_shift_col_user: "User",
+    set_shift_col_in: "Clock In",
+    set_shift_col_out: "Clock Out",
+    set_shift_col_duration: "Duration",
+    set_shift_col_status: "Status",
+
+    // Status
+    status_active: "Active",
+    status_inactive: "Inactive",
+    status_open: "Open",
+    status_closed: "Closed",
+    status_unknown: "Unknown",
+
+    msg_no_shifts: "No shift records yet",
+    msg_pin_in_use: "This PIN is already in use",
+    msg_user_added: "User added",
+    msg_user_updated: "User updated",
+    msg_user_deleted: "User deleted"
 };
 window.lang_en = en;

@@ -82,6 +82,48 @@ const si = {
     common_error: "දෝෂයකි",
     common_confirm: "ඔබට විශ්වාසද?",
     common_cancel: "අවලංගු කරන්න",
-    common_close: "වසන්න"
+    common_close: "වසන්න",
+
+    // User Management
+    set_user_mgmt: "පරිශීලක කළමනාකරණය",
+    set_user_add_edit: "පරිශීලක එක් කරන්න / සංස්කරණය",
+    set_user_name: " නම",
+    set_user_name_ph: "පරිශීලක නම",
+    set_user_role: "තනතුර",
+    set_user_pin: "PIN",
+    set_user_pin_ph: "අවම ඉලක්කම් 4ක්",
+    set_user_add_btn: "පරිශීලක එක් කරන්න",
+    set_user_update_btn: "පරිශීලක යාවත්කාලීන කරන්න",
+    set_user_list: "පරිශීලකයින්",
+    set_user_col_name: "නම",
+    set_user_col_role: "තනතුර",
+    set_user_col_status: "තත්වය",
+    set_user_col_actions: "ක්‍රියා",
+
+    // Roles
+    role_admin: "පරිපාලක",
+    role_manager: "කළමනාකරු",
+    role_cashier: "මුදල් අයකැමි",
+
+    // Shift History
+    set_shift_history: "සේවා මුර ඉතිහාසය",
+    set_shift_col_user: "පරිශීලක",
+    set_shift_col_in: "ආරම්භය",
+    set_shift_col_out: "අවසානය",
+    set_shift_col_duration: "කාල සීමාව",
+    set_shift_col_status: "තත්වය",
+
+    // Status
+    status_active: "සක්‍රීය",
+    status_inactive: "අක්‍රීය",
+    status_open: "විවෘත",
+    status_closed: "වසන ලදි",
+    status_unknown: "නොදන්නා",
+
+    msg_no_shifts: "සේවා මුර ගොනු නොමැත",
+    msg_pin_in_use: "මෙම PIN අංකය දැනටමත් භාවිතයේ ඇත",
+    msg_user_added: "පරිශීලක එක් කරන ලදි",
+    msg_user_updated: "පරිශීලක යාවත්කාලීන කරන ලදි",
+    msg_user_deleted: "පරිශීලක ඉවත් කරන ලදි"
 };
 window.lang_si = si;
