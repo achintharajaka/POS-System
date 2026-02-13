@@ -125,5 +125,27 @@ window.DOM = {
             PRINT_BTN: 'order-modal-print-btn',
             CLOSE_BTN: 'order-modal-close-btn'
         }
+    },
+    AUTH: {
+        LOGIN_SCREEN: 'login-screen',
+        PIN_PAD: 'pin-pad',
+        PIN_CONTAINER: 'pin-container',
+        PIN_BACKSPACE: 'pin-backspace',
+        PIN_CLEAR: 'pin-clear',
+        PIN_SUBMIT: 'pin-submit',
+        ERROR_MSG: 'login-error-msg',
+        USER_INDICATOR: 'user-indicator',
+        USER_NAME: 'user-display-name',
+        USER_ROLE: 'user-display-role',
+        LOGOUT_BTN: 'logout-btn',
+        MOBILE_LOGOUT_BTN: 'mobile-logout-btn',
+        SHIFT_TIMER: 'shift-timer',
+        USER_TABLE_BODY: 'user-table-body',
+        NEW_USER_NAME: 'new-user-name',
+        NEW_USER_ROLE: 'new-user-role',
+        NEW_USER_PIN: 'new-user-pin',
+        ADD_USER_BTN: 'add-user-btn',
+        EDIT_USER_ID: 'edit-user-id',
+        SHIFT_TABLE_BODY: 'shift-table-body'
     }
 };

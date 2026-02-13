@@ -6,11 +6,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 
 ## 🔴 High-Priority — New Features
 
-### 1. User Authentication & Role Management
-- **Pin-based login** for cashiers (no internet needed)
-- **Roles**: Admin (full access), Cashier (POS only), Manager (reports + inventory)
-- **Shift management**: Track clock-in/clock-out, tie orders to specific users
-
 ### 2. Customer Management (CRM Lite)
 - Customer database (name, phone, email)
 - Link orders to customers for purchase history

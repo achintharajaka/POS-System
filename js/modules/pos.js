@@ -239,26 +239,26 @@ window.POS = {
 
         this.state.cart.forEach(item => {
             const div = document.createElement('div');
-            div.className = "flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded-lg";
+            div.className = "bg-gray-50 dark:bg-gray-700 p-2 rounded-lg";
 
             let imgHtml = '';
             if (item.image) {
-                imgHtml = `<img src="${item.image}" class="w-10 h-10 object-cover rounded mr-2">`;
+                imgHtml = `<img src="${item.image}" class="w-10 h-10 object-cover rounded mr-2 flex-shrink-0">`;
             }
 
             div.innerHTML = `
-                <div class="flex items-center flex-1">
+                <div class="flex items-center gap-2">
                     ${imgHtml}
-                    <div>
-                        <h5 class="font-bold text-sm text-gray-800 dark:text-white line-clamp-1">${Utils.sanitize(item.name)}</h5>
+                    <div class="flex-1 min-w-0">
+                        <h5 class="font-bold text-sm text-gray-800 dark:text-white truncate">${Utils.sanitize(item.name)}</h5>
                         <p class="text-xs text-gray-500 dark:text-gray-400">${Utils.formatCurrency(item.price, currencySymbol)} x ${item.qty}</p>
                     </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="app.updateCartQty(${item.id}, -1)" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500">-</button>
-                    <span class="font-bold text-sm w-4 text-center dark:text-white">${item.qty}</span>
-                    <button onclick="app.updateCartQty(${item.id}, 1)" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500">+</button>
-                    <button onclick="app.removeFromCart(${item.id})" class="ml-2 text-red-500 hover:text-red-700">&times;</button>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button onclick="app.updateCartQty(${item.id}, -1)" class="w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold">-</button>
+                        <span class="font-bold text-sm w-5 text-center dark:text-white">${item.qty}</span>
+                        <button onclick="app.updateCartQty(${item.id}, 1)" class="w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold">+</button>
+                        <button onclick="app.removeFromCart(${item.id})" class="w-7 h-7 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-800 ml-1 flex-shrink-0" title="Remove">&times;</button>
+                    </div>
                 </div>
             `;
             container.appendChild(div);
@@ -372,7 +372,10 @@ window.POS = {
             modifiers: orderModifiers, // Save snapshot
             total: runningTotal,
             items: [...this.state.cart],
-            paymentMethod: this.state.paymentMethod
+            paymentMethod: this.state.paymentMethod,
+            userId: this.state.currentUser ? this.state.currentUser.id : null,
+            userName: this.state.currentUser ? this.state.currentUser.name : 'Unknown',
+            shiftId: this.state.currentShift ? this.state.currentShift.id : null
         };
 
         // Open receipt window FIRST while user-gesture context is still active

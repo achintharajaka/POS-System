@@ -23,11 +23,14 @@ The application follows a modular, client-side architecture using standard JavaS
 │   ├── utils.js        # Helper functions & Global Error Logger
 │   ├── constants.js    # Centralized DOM element IDs and constants
 │   └── modules/        # Feature-specific modules
+│       ├── auth.js     # Authentication, role management & shift tracking
 │       ├── dashboard.js
 │       ├── inventory.js
 │       ├── pos.js
 │       ├── reports.js
 │       └── settings.js
+├── css/
+│   └── styles.css      # Custom styles (login screen, animations)
 ├── README.md           # Technical Documentation
 └── UserGuide.md        # End-User Manual
 ```
@@ -39,10 +42,12 @@ The system uses `IndexedDB` for storage.
 | :--- | :--- | :--- |
 | **products** | `++id, name, barcode, price, costPrice, stock, categoryId` | Inventory items. Supports image (base64). |
 | **categories** | `++id, name` | Product categories. |
-| **orders** | `++id, timestamp, total, subtotal, modifiers, items, paymentMethod` | Sales logs. `modifiers` is a snapshot of applied adjustments (tax, discount, etc). |
+| **orders** | `++id, timestamp, total, subtotal, modifiers, items, paymentMethod, userId, userName, shiftId` | Sales logs with user attribution. |
 | **expenses** | `++id, description, amount, date, category` | Manual expense entries. |
 | **income** | `++id, description, amount, date` | Manual revenue entries. |
 | **settings** | `key` | Key-value store for app configuration. |
+| **users** | `++id, name, pin, role, active, createdAt` | User accounts. PINs stored as SHA-256 hashes. |
+| **shifts** | `++id, userId, clockIn, clockOut, status` | Shift records (open/closed). |
 
 ## 4. Key Features & Implementation Details
 
@@ -62,8 +67,22 @@ The system uses `IndexedDB` for storage.
     - `Net Profit` (Overall) = `Total Revenue` (Sales + Extra Income) - `Total COGS` - `Total Expenses`.
 - **Charts:** Renders a Bar chart comparing Revenue vs Expenses (COGS + Manual Expenses).
 
-### D. Data Management
-- **Import/Export:** The system exports the entire IndexedDB contents as a JSON file for backup/migration.
+### D. User Authentication & Role Management
+- **PIN-Based Login:** Users authenticate with a 4–6 digit numeric PIN (hashed with SHA-256 via `crypto.subtle`).
+- **Roles:** Three roles — `admin` (full access), `manager` (no settings), `cashier` (POS only).
+- **Role Enforcement:** Navigation items hidden per role. Unauthorized access redirects to the first allowed view.
+- **User Management:** Admin can create/edit/delete users and reset PINs from Settings.
+- **Default Admin:** Seeded on first run with PIN `1234`.
+
+### E. Shift Management
+- **Auto Clock-In:** A shift is automatically started when a user logs in.
+- **Clock-Out:** Triggered on logout. Shift records stored in the `shifts` table.
+- **Shift Timer:** Live HH:MM:SS timer displayed for cashiers in the nav bar.
+- **Order Attribution:** Every order records `userId`, `userName`, and `shiftId`.
+- **Shift History:** Admins can view all shift records in Settings.
+
+### F. Data Management
+- **Import/Export:** The system exports the entire IndexedDB contents (including users and shifts) as a JSON file for backup/migration.
 
 ## 5. Setup & Deployment
 Since this is a static web application:
