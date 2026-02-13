@@ -14,6 +14,12 @@
     <!-- <script src="js/lib/chart.js"></script> -->
     <!-- QRCode.js for Receipts -->
     <script src="js/lib/qrcode.js"></script>
+
+    <!-- Localization -->
+    <script src="js/lang/en.js"></script>
+    <script src="js/lang/si.js"></script>
+    <script src="js/lang/ta.js"></script>
+    <script src="js/modules/i18n.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -113,16 +119,21 @@
             </div>
             <div class="hidden md:flex items-center gap-4" id="nav-desktop-menu">
                 <button id="nav-dashboard"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Dashboard</button>
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    data-i18n="nav_dashboard">Dashboard</button>
                 <button id="nav-pos"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">POS
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    data-i18n="nav_pos">POS
                     Terminal</button>
                 <button id="nav-inventory"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Inventory</button>
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    data-i18n="nav_inventory">Inventory</button>
                 <button id="nav-settings"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Settings</button>
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    data-i18n="nav_settings">Settings</button>
                 <button id="nav-reports"
-                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Reports</button>
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    data-i18n="nav_reports">Reports</button>
 
                 <!-- Theme Toggle -->
                 <button id="theme-toggle-btn"
@@ -235,17 +246,20 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Daily Sales</h3>
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium" data-i18n="dash_daily_sales">Daily
+                        Sales</h3>
                     <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" id="dash-daily-sales">$0.00</p>
                 </div>
                 <div
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Orders</h3>
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium" data-i18n="dash_total_orders">Total
+                        Orders</h3>
                     <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" id="dash-total-orders">0</p>
                 </div>
                 <div id="dash-low-stock-card"
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Low Stock Items</h3>
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium" data-i18n="dash_low_stock">Low
+                        Stock Items</h3>
                     <p class="text-3xl font-bold text-red-500 mt-2" id="dash-low-stock">0</p>
                 </div>
             </div>
@@ -253,8 +267,10 @@
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
                 <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">Recent Transactions</h3>
-                    <button id="dash-refresh-btn" class="text-blue-600 text-sm hover:underline">Refresh</button>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white" data-i18n="dash_recent_transactions">
+                        Recent Transactions</h3>
+                    <button id="dash-refresh-btn" class="text-blue-600 text-sm hover:underline"
+                        data-i18n="dash_refresh">Refresh</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -297,10 +313,11 @@
                     class="min-h-[60vh] md:min-h-0 md:flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
                     <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex gap-2">
                         <input type="text" id="pos-search" placeholder="Search products or scan barcode..."
+                            data-i18n="pos_search_placeholder"
                             class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <select id="pos-category-filter"
                             class="px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Categories</option>
+                            <option value="" data-i18n="pos_all_categories">All Categories</option>
                         </select>
                     </div>
                     <div id="pos-products-grid"
@@ -313,27 +330,31 @@
                 <div
                     class="w-full md:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
                     <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                        <h3 class="font-bold text-lg text-gray-800 dark:text-white">Current Order</h3>
+                        <h3 class="font-bold text-lg text-gray-800 dark:text-white" data-i18n="pos_current_order">
+                            Current Order</h3>
                     </div>
                     <div id="pos-cart-items" class="flex-1 overflow-y-auto p-4 space-y-2 max-h-48 md:max-h-none">
                         <!-- Cart items injected here -->
                     </div>
                     <div
                         class="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 space-y-2">
-                        <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Subtotal:</span> <span
-                                id="cart-subtotal">$0.00</span></div>
-                        <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Tax (<span
-                                    id="cart-tax-rate">0</span>%):</span> <span id="cart-tax">$0.00</span></div>
+                        <div class="flex justify-between text-gray-600 dark:text-gray-300"><span
+                                data-i18n="pos_subtotal">Subtotal:</span> <span id="cart-subtotal">$0.00</span></div>
+                        <div class="flex justify-between text-gray-600 dark:text-gray-300"><span><span
+                                    data-i18n="pos_tax">Tax</span> (<span id="cart-tax-rate">0</span>%):</span> <span
+                                id="cart-tax">$0.00</span></div>
                         <div
                             class="flex justify-between text-xl font-bold text-gray-800 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-600">
-                            <span>Total:</span> <span id="cart-total">$0.00</span>
+                            <span data-i18n="pos_total">Total:</span> <span id="cart-total">$0.00</span>
                         </div>
 
                         <button id="pos-checkout-btn"
-                            class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay
+                            class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2"
+                            data-i18n="pos_pay_now">Pay
                             Now</button>
                         <button id="pos-clear-cart-btn"
-                            class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors">Clear
+                            class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                            data-i18n="pos_clear_cart">Clear
                             Cart</button>
                     </div>
                 </div>
@@ -344,10 +365,11 @@
         <div id="view-inventory" class="view-section h-full overflow-y-auto hidden">
             <div class="flex flex-col gap-4 mb-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Inventory Management</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white" data-i18n="inv_title">Inventory
+                        Management</h2>
                     <button id="inv-add-product-btn"
                         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-                        <span>+ Add Product</span>
+                        <span data-i18n="inv_add_product">+ Add Product</span>
                     </button>
                 </div>
 
@@ -356,6 +378,7 @@
                     class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-4">
                     <div class="flex-1 relative">
                         <input type="text" id="inv-search-input" placeholder="Search products by name or barcode..."
+                            data-i18n="inv_search_placeholder"
                             class="w-full pl-10 pr-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
                         <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
@@ -379,11 +402,11 @@
                     <thead
                         class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium border-b border-gray-100 dark:border-gray-600">
                         <tr>
-                            <th class="p-4">Product Name</th>
-                            <th class="p-4">Barcode</th>
-                            <th class="p-4">Price</th>
-                            <th class="p-4">Stock</th>
-                            <th class="p-4">Actions</th>
+                            <th class="p-4" data-i18n="inv_table_product">Product Name</th>
+                            <th class="p-4" data-i18n="inv_table_barcode">Barcode</th>
+                            <th class="p-4" data-i18n="inv_table_price">Price</th>
+                            <th class="p-4" data-i18n="inv_table_stock">Stock</th>
+                            <th class="p-4" data-i18n="inv_table_actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="inventory-table-body"
@@ -408,28 +431,33 @@
 
         <!-- Reports View -->
         <div id="view-reports" class="view-section h-full overflow-y-auto hidden">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Profit & Loss Statement</h2>
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white" data-i18n="rep_title">Profit & Loss
+                Statement</h2>
 
             <!-- Financial Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Revenue</h3>
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium" data-i18n="rep_total_revenue">Total
+                        Revenue</h3>
                     <p class="text-3xl font-bold text-gray-800 dark:text-white mt-2" id="report-revenue">$0.00</p>
                 </div>
                 <div
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Cost of Goods Sold</h3>
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium" data-i18n="rep_cogs">Cost of Goods
+                        Sold</h3>
                     <p class="text-3xl font-bold text-red-500 mt-2" id="report-cogs">$0.00</p>
                 </div>
                 <div
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Expenses</h3>
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium" data-i18n="rep_total_expenses">
+                        Total Expenses</h3>
                     <p class="text-3xl font-bold text-orange-500 mt-2" id="report-expenses">$0.00</p>
                 </div>
                 <div
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium">Net Profit</h3>
+                    <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium" data-i18n="rep_net_profit">Net
+                        Profit</h3>
                     <p class="text-3xl font-bold text-green-600 mt-2" id="report-net-profit">$0.00</p>
                 </div>
             </div>
@@ -438,31 +466,33 @@
                 <!-- Expense Management -->
                 <div
                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
+                        data-i18n="rep_record_expense">
                         Record Expense</h3>
                     <form id="expense-form" class="space-y-4">
                         <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                data-i18n="rep_expense_desc">Description</label>
                             <input type="text" id="expense-desc" required
                                 class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                    data-i18n="rep_expense_amount">Amount</label>
                                 <input type="number" step="0.01" id="expense-amount" required
                                     class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                             </div>
                             <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                    data-i18n="rep_expense_date">Date</label>
                                 <input type="date" id="expense-date" required
                                     class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                             </div>
                         </div>
                         <button type="submit"
-                            class="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">Add
+                            class="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600"
+                            data-i18n="rep_add_expense">Add
                             Expense</button>
                     </form>
                 </div>
@@ -470,15 +500,16 @@
                 <!-- Recent Expenses -->
                 <div
                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white">Recent Expenses</h3>
+                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white"
+                        data-i18n="rep_recent_expenses">Recent Expenses</h3>
                     <div class="overflow-x-auto max-h-80 overflow-y-auto">
                         <table class="w-full text-left">
                             <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
                                 <tr>
-                                    <th class="p-4">Date</th>
-                                    <th class="p-4">Description</th>
-                                    <th class="p-4">Amount</th>
-                                    <th class="p-4">Action</th>
+                                    <th class="p-4" data-i18n="rep_expense_date">Date</th>
+                                    <th class="p-4" data-i18n="rep_expense_desc">Description</th>
+                                    <th class="p-4" data-i18n="rep_expense_amount">Amount</th>
+                                    <th class="p-4" data-i18n="inv_table_actions">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="expenses-list-body"
@@ -609,35 +640,50 @@
 
         <!-- Settings View -->
         <div id="view-settings" class="view-section h-full overflow-y-auto hidden">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Settings</h2>
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white" data-i18n="set_title">Settings</h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- General Settings -->
                 <div
                     class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
+                        data-i18n="set_general_config">
                         General Configuration</h3>
                     <form id="settings-form" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                data-i18n="set_language">Language</label>
+                            <select id="setting-language"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                                <option value="en">English</option>
+                                <option value="si">Sinhala</option>
+                                <option value="ta">Tamil</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                data-i18n="set_store_name">Store
                                 Name</label>
                             <input type="text" name="storeName" id="setting-storeName"
                                 class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                data-i18n="set_store_address">Store
                                 Address</label>
                             <input type="text" name="storeAddress" id="setting-storeAddress"
                                 class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store Logo
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                data-i18n="set_store_logo">Store Logo
                                 (Image)</label>
                             <div class="flex gap-2">
                                 <input type="file" id="setting-logo-upload" accept="image/*"
                                     class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                                 <button type="button" id="setting-remove-logo-btn"
-                                    class="px-4 py-2 bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors">
+                                    class="px-4 py-2 bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                                    data-i18n="set_remove_logo">
                                     Remove
                                 </button>
                             </div>
@@ -646,7 +692,8 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                    data-i18n="set_currency_symbol">Currency
                                     Symbol</label>
                                 <input type="text" name="currencySymbol" id="setting-currencySymbol"
                                     class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
@@ -699,30 +746,32 @@
                         </div>
 
                         <div class="pt-4 border-t dark:border-gray-700 mt-4">
-                            <h4 class="font-bold text-gray-800 dark:text-white mb-2">Receipt Configuration</h4>
+                            <h4 class="font-bold text-gray-800 dark:text-white mb-2" data-i18n="set_receipt_config">
+                                Receipt Configuration</h4>
                             <div class="space-y-2">
                                 <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                                     <input type="checkbox" name="receiptShowLogo" id="setting-receiptShowLogo"
                                         class="rounded text-blue-600 focus:ring-blue-500">
-                                    Show Store Logo
+                                    <span data-i18n="set_show_logo">Show Store Logo</span>
                                 </label>
                                 <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                                     <input type="checkbox" name="receiptShowAddress" id="setting-receiptShowAddress"
                                         class="rounded text-blue-600 focus:ring-blue-500">
-                                    Show Store Address
+                                    <span data-i18n="set_show_address">Show Store Address</span>
                                 </label>
                                 <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                                     <input type="checkbox" name="receiptShowDate" id="setting-receiptShowDate"
                                         class="rounded text-blue-600 focus:ring-blue-500">
-                                    Show Date & Time
+                                    <span data-i18n="set_show_date">Show Date & Time</span>
                                 </label>
                                 <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                                     <input type="checkbox" name="receiptShowQrCode" id="setting-receiptShowQrCode"
                                         class="rounded text-blue-600 focus:ring-blue-500">
-                                    Show QR Code
+                                    <span data-i18n="set_show_qr">Show QR Code</span>
                                 </label>
                                 <div id="qr-code-url-container" class="mt-2">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">QR
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                        data-i18n="set_qr_url">QR
                                         Code
                                         URL/Text</label>
                                     <input type="text" name="receiptQrCodeUrl" id="setting-receiptQrCodeUrl"
@@ -733,14 +782,16 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Receipt
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                data-i18n="set_receipt_header">Receipt
                                 Header Text</label>
                             <textarea name="receiptHeader" id="setting-receiptHeader"
                                 class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
                                 rows="2"></textarea>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Receipt
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                data-i18n="set_receipt_footer">Receipt
                                 Footer Text</label>
                             <textarea name="receiptFooter" id="setting-receiptFooter"
                                 class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
@@ -748,11 +799,12 @@
                         </div>
 
                         <div class="pt-4 flex gap-3">
-                            <button type="submit"
-                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Save
+                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                                data-i18n="set_save">Save
                                 Settings</button>
                             <button type="button" id="setting-preview-receipt-btn"
-                                class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Preview
+                                class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                                data-i18n="set_preview_receipt">Preview
                                 Receipt</button>
                         </div>
                     </form>
@@ -763,14 +815,16 @@
                     <!-- Categories -->
                     <div
                         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <h3
-                            class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                        <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
+                            data-i18n="set_category_mgmt">
                             Category Management</h3>
                         <div class="flex gap-2 mb-4">
                             <input type="text" id="new-category-name" placeholder="New Category Name"
+                                data-i18n="set_new_category"
                                 class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                             <button id="setting-add-category-btn"
-                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Add</button>
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                                data-i18n="set_add">Add</button>
                         </div>
                         <ul id="settings-category-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
                             <!-- Injected -->
@@ -780,23 +834,26 @@
                     <!-- Data Management -->
                     <div
                         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <h3
-                            class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                        <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
+                            data-i18n="set_data_mgmt">
                             Data Management</h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Backup your store data or restore from
                             a previous backup.</p>
                         <div class="flex flex-col gap-3">
                             <button id="setting-export-btn"
-                                class="bg-gray-800 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center">Export
+                                class="bg-gray-800 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center"
+                                data-i18n="set_export">Export
                                 Data (JSON)</button>
                             <div class="relative">
                                 <input type="file" id="import-file" class="hidden">
                                 <button onclick="document.getElementById('import-file').click()"
-                                    class="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-center">Import
+                                    class="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-center"
+                                    data-i18n="set_import">Import
                                     Data (JSON)</button>
                             </div>
                             <button id="setting-reset-btn"
-                                class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-center mt-2">Reset
+                                class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-center mt-2"
+                                data-i18n="set_reset">Reset
                                 System (Factory Reset)</button>
                         </div>
                     </div>
