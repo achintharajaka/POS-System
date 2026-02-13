@@ -36,7 +36,7 @@
     <div id="toast-container" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2"></div>
 
     <!-- Login Screen Overlay -->
-    <div id="login-screen" class="fixed inset-0 z-[90] flex items-center justify-center login-bg">
+    <div id="login-screen" class="fixed inset-0 z-[90] flex items-start justify-center login-bg overflow-y-auto py-8">
         <div class="login-card w-full max-w-sm mx-4">
             <!-- Logo & Store Name -->
             <div class="text-center mb-8">
@@ -290,49 +290,52 @@
         </div>
 
         <!-- POS View -->
-        <div id="view-pos" class="view-section h-full hidden flex flex-col md:flex-row gap-4">
-            <!-- Left: Products Grid -->
-            <div
-                class="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex gap-2">
-                    <input type="text" id="pos-search" placeholder="Search products or scan barcode..."
-                        class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <select id="pos-category-filter"
-                        class="px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Categories</option>
-                    </select>
-                </div>
-                <div id="pos-products-grid"
-                    class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-900">
-                    <!-- Products injected here -->
-                </div>
-            </div>
-
-            <!-- Right: Cart -->
-            <div
-                class="w-full md:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                    <h3 class="font-bold text-lg text-gray-800 dark:text-white">Current Order</h3>
-                </div>
-                <div id="pos-cart-items" class="flex-1 overflow-y-auto p-4 space-y-2">
-                    <!-- Cart items injected here -->
-                </div>
-                <div class="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 space-y-2">
-                    <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Subtotal:</span> <span
-                            id="cart-subtotal">$0.00</span></div>
-                    <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Tax (<span
-                                id="cart-tax-rate">0</span>%):</span> <span id="cart-tax">$0.00</span></div>
-                    <div
-                        class="flex justify-between text-xl font-bold text-gray-800 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-600">
-                        <span>Total:</span> <span id="cart-total">$0.00</span>
+        <div id="view-pos" class="view-section hidden overflow-y-auto h-full">
+            <div class="flex flex-col md:flex-row gap-4 md:h-full">
+                <!-- Left: Products Grid -->
+                <div
+                    class="min-h-[60vh] md:min-h-0 md:flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex gap-2">
+                        <input type="text" id="pos-search" placeholder="Search products or scan barcode..."
+                            class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select id="pos-category-filter"
+                            class="px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Categories</option>
+                        </select>
                     </div>
+                    <div id="pos-products-grid"
+                        class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-900">
+                        <!-- Products injected here -->
+                    </div>
+                </div>
 
-                    <button id="pos-checkout-btn"
-                        class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay
-                        Now</button>
-                    <button id="pos-clear-cart-btn"
-                        class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors">Clear
-                        Cart</button>
+                <!-- Right: Cart -->
+                <div
+                    class="w-full md:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                        <h3 class="font-bold text-lg text-gray-800 dark:text-white">Current Order</h3>
+                    </div>
+                    <div id="pos-cart-items" class="flex-1 overflow-y-auto p-4 space-y-2 max-h-48 md:max-h-none">
+                        <!-- Cart items injected here -->
+                    </div>
+                    <div
+                        class="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 space-y-2">
+                        <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Subtotal:</span> <span
+                                id="cart-subtotal">$0.00</span></div>
+                        <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Tax (<span
+                                    id="cart-tax-rate">0</span>%):</span> <span id="cart-tax">$0.00</span></div>
+                        <div
+                            class="flex justify-between text-xl font-bold text-gray-800 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-600">
+                            <span>Total:</span> <span id="cart-total">$0.00</span>
+                        </div>
+
+                        <button id="pos-checkout-btn"
+                            class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay
+                            Now</button>
+                        <button id="pos-clear-cart-btn"
+                            class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors">Clear
+                            Cart</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -340,7 +343,7 @@
         <!-- Inventory View -->
         <div id="view-inventory" class="view-section h-full overflow-y-auto hidden">
             <div class="flex flex-col gap-4 mb-6">
-                <div class="flex justify-between items-center">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Inventory Management</h2>
                     <button id="inv-add-product-btn"
                         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
@@ -371,8 +374,8 @@
             </div>
 
             <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                <table class="w-full text-left">
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-x-auto">
+                <table class="w-full text-left min-w-[600px]">
                     <thead
                         class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium border-b border-gray-100 dark:border-gray-600">
                         <tr>
