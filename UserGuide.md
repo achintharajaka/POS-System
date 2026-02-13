@@ -120,6 +120,7 @@ Track how your business is doing.
 ## 5. Settings & Data
 
 - **Store Profile:** Specify your Store Name, Address, and Currency Symbol.
+- **Language Settings:** Choose your preferred display language (English, Sinhala, or Tamil) from the dropdown menu and click **Save Settings** to apply.
 - **Receipt Settings:** Customize what appears on the receipt (Logo, Header, Footer, QR Code URL).
 - **Order Modifiers:** Configure taxes, discounts, and other adjustments that apply to every order.
 - **Category Management:** Add or remove product categories.

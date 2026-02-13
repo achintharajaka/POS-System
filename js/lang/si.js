@@ -1,10 +1,10 @@
 const si = {
     // Navigation
-    nav_dashboard: "උ시ඛ ලෑල්ල",
-    nav_pos: "මුදල් අයකරණ පර්යන්තය",
-    nav_inventory: "බඩු තොගය",
-    nav_settings: "සකසුම්",
-    nav_reports: "වාර්තා",
+    nav_dashboard: "පාලක පුවරුව",
+    nav_pos: "මුදල් අයකිරීම්",
+    nav_inventory: "අයිතම කළමනාකරණය",
+    nav_settings: "සැකසුම්",
+    nav_reports: "ගොනු",
     nav_logout: "පිටවීම",
 
     // Dashboard
@@ -16,7 +16,7 @@ const si = {
 
     // POS
     pos_search_placeholder: "නිෂ්පාදන සොයන්න හෝ තීරු කේත ස්කෑන් කරන්න...",
-    pos_all_categories: "සියලු වර්ග",
+    pos_all_categories: "සියලු කාණ්ඩ",
     pos_current_order: "වත්මන් ඇණවුම",
     pos_pay_now: "දැන් ගෙවන්න",
     pos_clear_cart: "කරත්තය හිස් කරන්න",
@@ -25,10 +25,10 @@ const si = {
     pos_total: "එකතුව",
 
     // Inventory
-    inv_title: "තොග කළමනාකරණය",
-    inv_add_product: "+ නිෂ්පාදනය එක් කරන්න",
+    inv_title: "අයිතම කළමනාකරණය",
+    inv_add_product: "+ අයිතම එක් කරන්න",
     inv_search_placeholder: "නම හෝ තීරු කේතය මගින් සොයන්න...",
-    inv_table_product: "නිෂ්පාදන නම",
+    inv_table_product: "අයිතම නම",
     inv_table_barcode: "තීරු කේතය",
     inv_table_price: "මිල",
     inv_table_stock: "තොගය",
@@ -48,7 +48,7 @@ const si = {
     rep_recent_expenses: "මෑත වියදම්",
 
     // Settings
-    set_title: "සකසුම්",
+    set_title: "සැකසුම්",
     set_general_config: "සාමාන්‍ය සැකසුම්",
     set_store_name: "වෙළඳසැලේ නම",
     set_store_address: "ලිපිනය",
@@ -65,8 +65,8 @@ const si = {
     set_receipt_footer: "රිසිට්පත් පාදක පෙළ",
     set_save: "සැකසුම් සුරකින්න",
     set_preview_receipt: "රිසිට්පත පෙරදසුන් කරන්න",
-    set_category_mgmt: "වර්ග කළමනාකරණය",
-    set_new_category: "නව වර්ගයේ නම",
+    set_category_mgmt: "කාණ්ඩ කළමනාකරණය",
+    set_new_category: "නව කාණ්ඩයේ නම",
     set_add: "එක් කරන්න",
     set_data_mgmt: "දත්ත කළමනාකරණය",
     set_export: "දත්ත පිටපත් කරන්න (JSON)",
@@ -78,7 +78,7 @@ const si = {
 
     // Common
     common_loading: "පූරණය වෙමින්...",
-    common_success: "සාර්ථකයි",
+    common_success: "නිවැරදියි",
     common_error: "දෝෂයකි",
     common_confirm: "ඔබට විශ්වාසද?",
     common_cancel: "අවලංගු කරන්න",

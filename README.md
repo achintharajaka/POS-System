@@ -83,6 +83,11 @@ The system uses `IndexedDB` for storage.
 
 ### F. Data Management
 - **Import/Export:** The system exports the entire IndexedDB contents (including users and shifts) as a JSON file for backup/migration.
+- **Import:** The system imports the entire IndexedDB contents (including users and shifts) from a JSON file for backup/migration.
+
+### G. Multi-language Support (Localization)
+- **Multi-language:** The system supports multiple languages including English, Sinhala, and Tamil.
+- **Implementation:** Uses a modular translation system where language-specific strings are stored in `js/lang/`. The `i18next`-like implementation allows for easy switching and persistence of the user's language preference.
 
 ## 5. Setup & Deployment
 Since this is a static web application:
