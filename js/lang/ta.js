@@ -1,6 +1,6 @@
 const ta = {
     // Navigation
-    nav_dashboard: "උ시ඛ ලෑල්ල", // Placeholder translations as I am translating to Sinhala above, simulating limited knowledge for Tamil
+    nav_dashboard: "டாஷ்போர்டு",
     nav_pos: "விற்பனை முனையம்",
     nav_inventory: "சரக்கு இருப்பு",
     nav_settings: "அமைப்புகள்",
