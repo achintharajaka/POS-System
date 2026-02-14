@@ -23,6 +23,7 @@ const App = {
 
         // Mixin all modules eagerly (loaded via script tags in index.html)
         if (window.Auth) Object.assign(App, window.Auth);
+        if (window.I18n) Object.assign(App, window.I18n); // Mixin I18n
         if (window.Dashboard) Object.assign(App, window.Dashboard);
         if (window.POS) Object.assign(App, window.POS);
         if (window.Inventory) Object.assign(App, window.Inventory);
@@ -43,6 +44,9 @@ const App = {
             this.state.modifiers = this.state.settings.orderModifiers;
 
             this.applyTheme();
+
+            // Initialize Localization
+            if (this.load) this.load(); // I18n.load() mixed in
 
             // Setup Listeners (before showing login so PIN pad works)
             this.setupEventListeners();
@@ -200,6 +204,12 @@ const App = {
 
             const qrUrl = document.getElementById(DOM.SETTINGS.RECEIPT_QR_URL);
             if (qrUrl) qrUrl.value = settings.receiptQrCodeUrl || '';
+
+            // Language
+            const langSelect = document.getElementById('setting-language');
+            if (langSelect && this.currentLang) {
+                langSelect.value = this.currentLang;
+            }
         }
     },
 

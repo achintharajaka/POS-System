@@ -27,6 +27,12 @@ window.Settings = {
             await DB.updateSetting(key, value);
         }
 
+        // Handle Language
+        const newLang = formData.get('setting-language') || document.getElementById('setting-language').value;
+        if (newLang && window.I18n) {
+            window.I18n.setLanguage(newLang);
+        }
+
         Utils.showToast("Settings Saved");
         await this.loadData();
         this.updateStoreDetails();

@@ -236,7 +236,7 @@ window.Auth = {
 
         if (user && nameEl) nameEl.textContent = user.name;
         if (user && roleEl) {
-            roleEl.textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+            roleEl.textContent = (window.I18n && window.I18n.t('role_' + user.role)) || user.role.charAt(0).toUpperCase() + user.role.slice(1);
             roleEl.className = 'text-xs px-2 py-0.5 rounded-full font-semibold ' + this._getRoleBadgeClass(user.role);
         }
         if (indicator) indicator.classList.remove('hidden');
@@ -308,13 +308,13 @@ window.Auth = {
                 </td>
                 <td class="p-3">
                     <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${this._getRoleBadgeClass(u.role)}">
-                        ${u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                        ${(window.I18n && window.I18n.t('role_' + u.role)) || u.role.charAt(0).toUpperCase() + u.role.slice(1)}
                     </span>
                 </td>
                 <td class="p-3">
                     <span class="inline-flex items-center gap-1 text-xs font-medium ${u.active ? 'text-green-600' : 'text-red-500'}">
                         <span class="w-2 h-2 rounded-full ${u.active ? 'bg-green-500' : 'bg-red-500'}"></span>
-                        ${u.active ? 'Active' : 'Inactive'}
+                        ${u.active ? (window.I18n ? window.I18n.t('status_active') : 'Active') : (window.I18n ? window.I18n.t('status_inactive') : 'Inactive')}
                     </span>
                 </td>
                 <td class="p-3">
@@ -386,7 +386,7 @@ window.Auth = {
         if (roleInput) roleInput.value = user.role;
         if (pinInput) { pinInput.value = ''; pinInput.placeholder = 'Leave blank to keep'; }
         if (editIdInput) editIdInput.value = id;
-        if (addBtn) addBtn.textContent = 'Update User';
+        if (addBtn) addBtn.textContent = (window.I18n ? window.I18n.t('set_user_update_btn') : 'Update User');
     },
 
     async saveUserEdit() {
@@ -426,7 +426,7 @@ window.Auth = {
             if (pinInput) { pinInput.value = ''; pinInput.placeholder = 'Min 4 digits'; }
             if (editIdInput) editIdInput.value = '';
             const addBtn = document.getElementById(DOM.AUTH.ADD_USER_BTN);
-            if (addBtn) addBtn.textContent = 'Add User';
+            if (addBtn) addBtn.textContent = (window.I18n ? window.I18n.t('set_user_add_btn') : 'Add User');
 
             // Update current user state if editing self
             if (this.state.currentUser && this.state.currentUser.id === editId) {
@@ -504,13 +504,13 @@ window.Auth = {
             }
             return `
                 <tr class="border-b dark:border-gray-700">
-                    <td class="p-3">${userMap[s.userId] || 'Unknown'}</td>
+                    <td class="p-3">${userMap[s.userId] || (window.I18n ? window.I18n.t('status_unknown') : 'Unknown')}</td>
                     <td class="p-3 text-sm">${clockIn.toLocaleDateString()} ${clockIn.toLocaleTimeString()}</td>
-                    <td class="p-3 text-sm">${clockOut ? clockOut.toLocaleDateString() + ' ' + clockOut.toLocaleTimeString() : '<span class="text-green-500 font-medium">Active</span>'}</td>
+                    <td class="p-3 text-sm">${clockOut ? clockOut.toLocaleDateString() + ' ' + clockOut.toLocaleTimeString() : '<span class="text-green-500 font-medium">' + (window.I18n ? window.I18n.t('status_active') : 'Active') + '</span>'}</td>
                     <td class="p-3 text-sm">${duration}</td>
                     <td class="p-3">
                         <span class="text-xs px-2 py-0.5 rounded-full font-medium ${s.status === 'open' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}">
-                            ${s.status === 'open' ? 'Open' : 'Closed'}
+                            ${s.status === 'open' ? (window.I18n ? window.I18n.t('status_open') : 'Open') : (window.I18n ? window.I18n.t('status_closed') : 'Closed')}
                         </span>
                     </td>
                 </tr>
@@ -518,7 +518,7 @@ window.Auth = {
         }).join('');
 
         if (shifts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No shift records yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">' + (window.I18n ? window.I18n.t('msg_no_shifts') : 'No shift records yet') + '</td></tr>';
         }
     },
 
