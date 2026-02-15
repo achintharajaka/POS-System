@@ -29,6 +29,10 @@ const App = {
         if (window.Inventory) Object.assign(App, window.Inventory);
         if (window.Reports) Object.assign(App, window.Reports);
         if (window.Settings) Object.assign(App, window.Settings);
+        if (window.Shortcuts) {
+            Object.assign(App, window.Shortcuts);
+            window.Shortcuts.init();
+        }
 
         try {
             // Load settings

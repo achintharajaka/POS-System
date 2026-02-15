@@ -27,10 +27,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 - Add a global barcode listener that auto-adds products to cart when scanned
 - Support for generating & printing barcode labels
 
-### 6. Multi-Language / Localization Support
-- Language selector in Settings (English, Sinhala, Tamil, etc.)
-- Translatable UI strings for international use
-
 ---
 
 ## 🟡 Medium-Priority — New Features
@@ -46,12 +42,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 - **Stock adjustment log** — track why stock changed (sold, damaged, restocked, theft)
 - **Reorder alerts** — configurable low-stock threshold per product (currently hardcoded at 5)
 - **Supplier management** — link products to suppliers
-
-### 9. Keyboard Shortcuts
-- `F1`–`F5` for navigation between views
-- `F9` or `Enter` to complete checkout
-- `Esc` to close modals
-- Number keys for quick quantity entry
 
 ### 10. Product Variants & Bundles
 - Size/Color variants for a single product (e.g. T-Shirt: S/M/L/XL)
