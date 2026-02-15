@@ -9,7 +9,8 @@ Welcome to the Point of Sale (POS) System! This guide will help you understand h
 4.  [Reports & Finances](#reports--finances)
 5.  [Settings & Data](#settings--data)
 6.  [User Management (Admin)](#user-management-admin)
-7.  [Troubleshooting & Debugging](#troubleshooting--debugging)
+7.  [Keyboard Shortcuts](#keyboard-shortcuts)
+8.  [Troubleshooting & Debugging](#troubleshooting--debugging)
 
 ---
 
@@ -156,7 +157,27 @@ Only visible to Admin users, found at the bottom of the **Settings** page.
 
 ---
 
-## 7. Troubleshooting & Debugging
+## 7. Keyboard Shortcuts
+
+Boost your efficiency with these shortcuts:
+
+### Navigation
+- **F1**: Go to Dashboard
+- **F2**: Go to POS Terminal
+- **F3**: Go to Inventory
+- **F4**: Go to Reports
+- **F5**: Go to Settings
+
+### POS Operations
+- **Number Keys (0-9)**: When in POS view, typing numbers will update the quantity of the **last added item** in the cart.
+- **F9 / Enter**: Complete order (Checkout). *Note: Enter only works if not focusing a text box.*
+
+### General
+- **Esc**: Close any open popup or modal window.
+
+---
+
+## 8. Troubleshooting & Debugging
 
 If you encounter any issues or the system behaves unexpectedly:
 

@@ -28,6 +28,7 @@ The application follows a modular, client-side architecture using standard JavaS
 │       ├── inventory.js
 │       ├── pos.js
 │       ├── reports.js
+│       ├── shortcuts.js # Keyboard shortcuts handling
 │       └── settings.js
 ├── css/
 │   └── styles.css      # Custom styles (login screen, animations)
@@ -88,6 +89,10 @@ The system uses `IndexedDB` for storage.
 ### G. Multi-language Support (Localization)
 - **Multi-language:** The system supports multiple languages including English, Sinhala, and Tamil.
 - **Implementation:** Uses a modular translation system where language-specific strings are stored in `js/lang/`. The `i18next`-like implementation allows for easy switching and persistence of the user's language preference.
+
+### H. Keyboard Shortcuts
+- **Implementation:** Global keydown listener in `shortcuts.js`. 
+- **Features:** View navigation (F1-F5), Quick Checkout (F9/Enter), Modal control (Esc), and Quick Quantity Entry (Number keys).
 
 ## 5. Setup & Deployment
 Since this is a static web application:
