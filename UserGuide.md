@@ -101,12 +101,17 @@ This is where you'll spend most of your time.
 Track how your business is doing.
 
 ### Financial Overview
-- **Charts:** View Revenue vs. Expenses over the last 7 days.
+- **Date Filtering:** Use the filter bar at the top of the Reports page to select a time period.
+    - **Today:** Shows data for the current day only.
+    - **This Week:** Shows data from the start of the current week.
+    - **This Month:** Shows data for the entire current month (Default).
+    - **Custom Range:** Select a specific **From** and **To** date and click **Filter**.
+- **Charts:** View a Bar chart comparing Revenue vs. Expenses for the selected period.
     - **Revenue (Blue):** Total sales + Extra Revenue.
     - **Expenses (Orange):** Cost of Goods Sold (COGS) + Manual Expenses.
 - **Cards:**
-    - **Total Revenue:** Gross income.
-    - **Net Profit:** Revenue - (COGS + Expenses).
+    - **Total Revenue:** Gross income for the selected period.
+    - **Net Profit:** Revenue - (COGS + Expenses) for the selected period.
 
 ### Recording Extra Data
 - **Record Expense:** Log bills like Rent, Electricity, or Wages.

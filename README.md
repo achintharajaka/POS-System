@@ -66,7 +66,8 @@ The system uses `IndexedDB` for storage.
 - **Profit Calculation:**
     - `Gross Profit` (per order) = `Total Price` - `Total Cost Price`.
     - `Net Profit` (Overall) = `Total Revenue` (Sales + Extra Income) - `Total COGS` - `Total Expenses`.
-- **Charts:** Renders a Bar chart comparing Revenue vs Expenses (COGS + Manual Expenses).
+- **Date-Range Filtering:** All reports (cards, lists, and charts) can be filtered by Today, This Week, This Month, or a Custom Range.
+- **Charts:** Renders a dynamic Bar chart comparing Revenue vs Expenses (COGS + Manual Expenses) for the selected period.
 
 ### D. User Authentication & Role Management
 - **PIN-Based Login:** Users authenticate with a 4–6 digit numeric PIN (hashed with SHA-256 via `crypto.subtle`).
