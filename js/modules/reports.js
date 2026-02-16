@@ -1,14 +1,103 @@
-// Reports Module
-// Depends on: db.js, utils.js, constants.js
-
 window.Reports = {
-    async renderProfitLoss() {
-        this.renderExpensesList();
-        this.renderIncomeList();
+    reportRange: { start: null, end: null, type: 'this_month' },
 
-        const orders = await DB.getOrders();
-        const expenses = this.state.expenses;
-        const income = this.state.income;
+    initReportsUI() {
+        const bindClick = (id, handler) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', handler);
+        };
+
+        bindClick(DOM.REPORTS.FILTER_TODAY, () => this.setReportRange('today'));
+        bindClick(DOM.REPORTS.FILTER_WEEK, () => this.setReportRange('this_week'));
+        bindClick(DOM.REPORTS.FILTER_MONTH, () => this.setReportRange('this_month'));
+        bindClick(DOM.REPORTS.FILTER_BTN, () => {
+            const from = document.getElementById(DOM.REPORTS.FILTER_FROM).value;
+            const to = document.getElementById(DOM.REPORTS.FILTER_TO).value;
+            if (from && to) {
+                this.setReportRange('custom', from, to);
+            } else {
+                Utils.showToast("Please select both dates", "warning");
+            }
+        });
+
+        // Set initial range if not set
+        if (!this.reportRange.start) {
+            this.setReportRange('this_month', null, null, false);
+        }
+    },
+
+    setReportRange(type, start = null, end = null, render = true) {
+        this.reportRange.type = type;
+        const now = new Date();
+
+        switch (type) {
+            case 'today':
+                const todayStr = now.toISOString().slice(0, 10);
+                this.reportRange.start = todayStr;
+                this.reportRange.end = todayStr;
+                break;
+            case 'this_week':
+                const first = now.getDate() - now.getDay();
+                const last = first + 6;
+                this.reportRange.start = new Date(now.setDate(first)).toISOString().slice(0, 10);
+                this.reportRange.end = new Date(now.setDate(last)).toISOString().slice(0, 10);
+                break;
+            case 'this_month':
+                this.reportRange.start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+                this.reportRange.end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+                break;
+            case 'custom':
+                this.reportRange.start = start;
+                this.reportRange.end = end;
+                break;
+        }
+
+        // Update UI buttons
+        const types = ['today', 'this_week', 'this_month'];
+        types.forEach(t => {
+            const btn = document.getElementById(DOM.REPORTS[`FILTER_${t.split('_').pop().toUpperCase()}`]);
+            if (btn) {
+                if (t === type) {
+                    btn.className = "px-4 py-2 bg-blue-600 text-white rounded-lg transition-colors text-sm font-medium";
+                } else {
+                    btn.className = "px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 rounded-lg transition-colors text-sm font-medium";
+                }
+            }
+        });
+
+        // Update date inputs
+        document.getElementById(DOM.REPORTS.FILTER_FROM).value = this.reportRange.start;
+        document.getElementById(DOM.REPORTS.FILTER_TO).value = this.reportRange.end;
+
+        if (render) this.renderProfitLoss();
+    },
+
+    async renderProfitLoss() {
+        if (!this.reportRange.start) this.setReportRange('this_month', null, null, false);
+
+        const startDate = new Date(this.reportRange.start);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(this.reportRange.end);
+        endDate.setHours(23, 59, 59, 999);
+
+        // Fetch all data (optimization: could be filtered in DB)
+        const allOrders = await DB.getOrders();
+        const allExpenses = await DB.getExpenses();
+        const allIncome = await DB.getIncome();
+
+        // Filter by Range
+        const orders = allOrders.filter(o => o.timestamp >= startDate.getTime() && o.timestamp <= endDate.getTime());
+        const expenses = allExpenses.filter(e => {
+            const d = new Date(e.date);
+            return d >= startDate && d <= endDate;
+        });
+        const income = allIncome.filter(i => {
+            const d = new Date(i.date);
+            return d >= startDate && d <= endDate;
+        });
+
+        this.renderExpensesList(expenses);
+        this.renderIncomeList(income);
 
         // Calculate Metrics
         let orderRevenue = 0;
@@ -46,13 +135,13 @@ window.Reports = {
         this.renderOrderProfits(orders);
     },
 
-    renderIncomeList() {
+    renderIncomeList(income) {
         const tbody = document.getElementById(DOM.REPORTS.INCOME_BODY);
         if (!tbody) return;
         tbody.innerHTML = '';
         const { currencySymbol } = this.state.settings;
 
-        this.state.income.slice(0, 50).forEach(inc => {
+        income.slice(0, 50).forEach(inc => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
             tr.innerHTML = `
@@ -101,13 +190,13 @@ window.Reports = {
         });
     },
 
-    renderExpensesList() {
+    renderExpensesList(expenses) {
         const tbody = document.getElementById(DOM.REPORTS.EXPENSES_BODY);
         if (!tbody) return;
         tbody.innerHTML = '';
         const { currencySymbol } = this.state.settings;
 
-        this.state.expenses.slice(0, 50).forEach(exp => {
+        expenses.slice(0, 50).forEach(exp => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
             tr.innerHTML = `
@@ -127,12 +216,17 @@ window.Reports = {
         const ctx = document.getElementById(DOM.REPORTS.CHART);
         if (!ctx) return;
 
-        // Group by Date (Last 7 days)
+        // Group by Date for the selected range
         const days = {};
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            days[d.toISOString().slice(0, 10)] = { revenue: 0, expenses: 0 };
+        const start = new Date(this.reportRange.start);
+        const end = new Date(this.reportRange.end);
+
+        // Populate all days in range
+        let curr = new Date(start);
+        while (curr <= end) {
+            days[curr.toISOString().slice(0, 10)] = { revenue: 0, expenses: 0 };
+            curr.setDate(curr.getDate() + 1);
+            if (Object.keys(days).length > 366) break; // Safety break
         }
 
         orders.forEach(o => {
@@ -150,8 +244,6 @@ window.Reports = {
             if (days[d]) days[d].expenses += e.amount;
         });
 
-        // Also add COGS to expenses for the chart?
-        // Logic: Chart shows Revenue vs Expenses (which usually implies COGS + OpEx)
         orders.forEach(o => {
             const d = new Date(o.timestamp).toISOString().slice(0, 10);
             if (days[d]) {

@@ -67,7 +67,13 @@ window.DOM = {
         INCOME_BODY: 'income-list-body',
         PROFITS_BODY: 'profits-list-body',
         DETAILED_PROFITS_BODY: 'report-profits-body',
-        CHART: 'profit-loss-chart'
+        CHART: 'profit-loss-chart',
+        FILTER_FROM: 'report-filter-from',
+        FILTER_TO: 'report-filter-to',
+        FILTER_BTN: 'report-filter-btn',
+        FILTER_TODAY: 'report-filter-today',
+        FILTER_WEEK: 'report-filter-week',
+        FILTER_MONTH: 'report-filter-month'
     },
     SETTINGS: {
         FORM: 'settings-form',
