@@ -116,7 +116,7 @@ window.Inventory = {
         }
     },
 
-    openProductModal(productId = null) {
+    async openProductModal(productId = null) {
         const modal = document.getElementById(DOM.MODALS.PRODUCT.ID);
         const form = document.getElementById(DOM.MODALS.PRODUCT.FORM);
         const title = document.getElementById(DOM.MODALS.PRODUCT.TITLE);
@@ -143,6 +143,18 @@ window.Inventory = {
             categorySelect.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
         });
 
+        // Ensure Suppliers are refreshed
+        const supplierSelect = document.getElementById(DOM.MODALS.PRODUCT.INPUT_SUPPLIER);
+        if (supplierSelect) {
+            supplierSelect.innerHTML = '<option value="">None</option>';
+            try {
+                const suppliers = await DB.getSuppliers();
+                suppliers.forEach(s => {
+                    supplierSelect.innerHTML += `<option value="${s.id}">${Utils.sanitize(s.name)}</option>`;
+                });
+            } catch (e) { console.error("Error loading suppliers for modal", e); }
+        }
+
 
         if (productId) {
             const prod = this.state.products.find(p => p.id === productId);
@@ -154,6 +166,12 @@ window.Inventory = {
             document.getElementById(DOM.MODALS.PRODUCT.INPUT_COST).value = prod.costPrice;
             document.getElementById(DOM.MODALS.PRODUCT.INPUT_STOCK).value = prod.stock;
             document.getElementById(DOM.MODALS.PRODUCT.INPUT_CATEGORY).value = prod.categoryId;
+            if (document.getElementById(DOM.MODALS.PRODUCT.INPUT_SUPPLIER)) {
+                document.getElementById(DOM.MODALS.PRODUCT.INPUT_SUPPLIER).value = prod.supplierId || '';
+            }
+            if (document.getElementById(DOM.MODALS.PRODUCT.INPUT_THRESHOLD)) {
+                document.getElementById(DOM.MODALS.PRODUCT.INPUT_THRESHOLD).value = prod.lowStockThreshold || 5;
+            }
 
             if (prod.image) {
                 preview.src = prod.image;
@@ -166,6 +184,10 @@ window.Inventory = {
             title.innerText = "Add Product";
             form.reset();
             document.getElementById(DOM.MODALS.PRODUCT.INPUT_ID).value = '';
+            // Defaults
+            if (document.getElementById(DOM.MODALS.PRODUCT.INPUT_THRESHOLD)) {
+                document.getElementById(DOM.MODALS.PRODUCT.INPUT_THRESHOLD).value = 5;
+            }
         }
 
         modal.classList.remove('hidden');
@@ -222,12 +244,16 @@ window.Inventory = {
         const priceInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_PRICE);
         const stockInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_STOCK);
         const barcodeInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_BARCODE);
+        const supplierInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_SUPPLIER);
+        const thresholdInput = document.getElementById(DOM.MODALS.PRODUCT.INPUT_THRESHOLD);
 
         const id = idInput.value;
         const name = nameInput.value.trim();
         const price = parseFloat(priceInput.value);
         const stock = parseInt(stockInput.value);
         const barcode = barcodeInput.value.trim();
+        const supplierId = supplierInput ? parseInt(supplierInput.value) || null : null;
+        const lowStockThreshold = thresholdInput ? parseInt(thresholdInput.value) || 5 : 5;
 
         // Validation based on fields
         let isValid = true;
@@ -256,7 +282,9 @@ window.Inventory = {
             costPrice: parseFloat(document.getElementById(DOM.MODALS.PRODUCT.INPUT_COST).value) || 0,
             stock,
             categoryId: parseInt(document.getElementById(DOM.MODALS.PRODUCT.INPUT_CATEGORY).value),
-            image: document.getElementById(DOM.MODALS.PRODUCT.IMAGE_BASE64).value
+            image: document.getElementById(DOM.MODALS.PRODUCT.IMAGE_BASE64).value,
+            supplierId,
+            lowStockThreshold
         };
 
         // Check for duplicate barcode
@@ -269,18 +297,93 @@ window.Inventory = {
             }
         }
 
-        if (id) {
-            await DB.updateProduct(parseInt(id), product);
-            Utils.showToast("Product Updated");
-        } else {
-            await DB.addProduct(product);
-            Utils.showToast("Product Added");
+        try {
+            if (id) {
+                const oldProduct = await DB.getProduct(parseInt(id));
+                const stockDiff = product.stock - oldProduct.stock;
+
+                // If stock changed manually, log it
+                if (stockDiff !== 0) {
+                    await DB.addStockLog({
+                        productId: parseInt(id),
+                        changeAmount: stockDiff,
+                        reason: 'Manual Adjustment',
+                        timestamp: Date.now(),
+                        note: 'Edited via Product Modal',
+                        userId: null // TODO: Add user ID when auth enabled globally
+                    });
+                }
+
+                await DB.updateProduct(parseInt(id), product);
+                Utils.showToast("Product Updated");
+            } else {
+                const newId = await DB.addProduct(product);
+                // Log initial stock
+                await DB.addStockLog({
+                    productId: newId,
+                    changeAmount: product.stock,
+                    reason: 'Initial Stock',
+                    timestamp: Date.now(),
+                    note: 'New Product Created'
+                });
+                Utils.showToast("Product Added");
+            }
+
+            this.closeProductModal();
+            await this.loadData();
+            // renderInventory included in loadData flow usually if state updated, but here we manually refresh
+            if (this.state.activeTab === 'products') {
+                this.renderInventory();
+            } else {
+                // If we were on another tab, maybe switch back? Nah.
+            }
+        } catch (e) {
+            console.error(e);
+            Utils.showToast("Error saving product", "error");
+        }
+    },
+
+    switchTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.inv-tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.inv-tab-btn').forEach(btn => {
+            btn.classList.remove('border-blue-600', 'text-blue-600');
+            btn.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+        });
+
+        // Show selected
+        const selectedContent = document.getElementById(`inv-tab-content-${tabName}`);
+        const selectedBtn = document.querySelector(`.inv-tab-btn[data-tab="${tabName}"]`);
+
+        if (selectedContent) selectedContent.classList.remove('hidden');
+        if (selectedBtn) {
+            selectedBtn.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            selectedBtn.classList.add('border-blue-600', 'text-blue-600');
         }
 
-        this.closeProductModal();
-        await this.loadData();
-        // renderInventory included in loadData flow usually if state updated, but here we manually refresh
-        this.renderInventory();
+        this.state.activeTab = tabName;
+
+        // Button visibility
+        const addProdBtn = document.getElementById('inv-add-product-btn');
+        const addSupplierBtn = document.getElementById('inv-add-supplier-btn');
+        const addPOBtn = document.getElementById('inv-add-po-btn');
+
+        if (addProdBtn) addProdBtn.classList.add('hidden');
+        if (addSupplierBtn) addSupplierBtn.classList.add('hidden');
+        if (addPOBtn) addPOBtn.classList.add('hidden');
+
+        if (tabName === 'products') {
+            if (addProdBtn) addProdBtn.classList.remove('hidden');
+            this.renderInventory();
+        } else if (tabName === 'suppliers') {
+            if (addSupplierBtn) addSupplierBtn.classList.remove('hidden');
+            if (typeof Suppliers !== 'undefined') Suppliers.renderSuppliers();
+        } else if (tabName === 'purchase-orders') {
+            if (addPOBtn) addPOBtn.classList.remove('hidden');
+            if (typeof Stock !== 'undefined') Stock.renderPurchaseOrders();
+        } else if (tabName === 'stock-logs') {
+            if (typeof Stock !== 'undefined') Stock.renderStockLogs();
+        }
     },
 
     async deleteProduct(id) {

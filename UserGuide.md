@@ -54,8 +54,15 @@ Your role determines which sections you can access:
 
 Before making sales, you need products!
 
+### Inventory Tabs
+The Inventory section is now divided into tabs for better organization:
+- **Products:** Your main item list.
+- **Suppliers:** Manage your vendors.
+- **Purchase Orders:** Track incoming stock.
+- **Stock Logs:** Audit trail of movements.
+
 ### Adding a Product
-1.  Go to the **Inventory** tab.
+1.  Go to the **Inventory** tab (Products view).
 2.  Click the **+ Add Product** button.
 3.  Fill in the details:
     - **Name:** Product name (e.g., "Latte").
@@ -68,9 +75,27 @@ Before making sales, you need products!
 4.  Click **Save**.
 
 ### Managing Stock
-- **Low Stock Filter:** If an item's stock drops below 5, it will be highlighted in Red. Click the **Low Stock Items** card on the Dashboard to filter the inventory view to only these items.
-- **Editing:** Click "Edit" on any item to update its price, stock, or image.
+- **Low Stock Filter:** If an item's stock drops below its **Low Stock Alert** threshold (default 5), it will be highlighted in Red. Click the **Low Stock Items** card on the Dashboard to filter the inventory view.
+- **Editing:** Click "Edit" on any item to update its price, stock, threshold, or image.
 - **Deleting:** Click "Delete" to remove an item permanently.
+
+### Supplier Management
+1.  Go to the **Inventory > Suppliers** tab.
+2.  Click **+ Supplier** to add a new vendor.
+3.  Enter details (Name, Contact, Phone, etc.) and Save.
+4.  **Linking Products:** When adding/editing a product, select the supplier from the dropdown to link them.
+
+### Purchase Orders (Restocking)
+Use this to officially bring in new stock.
+1.  Go to the **Inventory > Purchase Orders** tab.
+2.  Click **+ Purchase Order**.
+3.  Select the **Supplier** and add items + quantities.
+4.  **Receive Stock:** When the shipment arrives, find the order in the list (Status: Ordered) and click **Receive**. This automatically adds the items to your current stock inventory.
+
+### Stock History (Logs)
+View a complete history of why stock changed.
+1.  Go to the **Inventory > Stock Logs** tab.
+2.  See every transaction: Sales (POS), Purchase Orders (Restock), and Manual Adjustments.
 
 ---
 
