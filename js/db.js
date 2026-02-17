@@ -24,6 +24,21 @@ db.version(2).stores({
     shifts: '++id, userId, clockIn, clockOut, status'
 });
 
+// Version 3: Enhanced Stock Management
+db.version(3).stores({
+    products: '++id, name, barcode, price, costPrice, stock, categoryId, supplierId, lowStockThreshold',
+    categories: '++id, name',
+    orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod, userId, shiftId',
+    settings: 'key',
+    expenses: '++id, description, amount, date, category',
+    income: '++id, description, amount, date, category',
+    users: '++id, name, pin, role, active',
+    shifts: '++id, userId, clockIn, clockOut, status',
+    suppliers: '++id, name, contact, email, phone, address',
+    purchaseOrders: '++id, supplierId, date, status, totalCost, items, receivedDate',
+    stockLogs: '++id, productId, changeAmount, reason, timestamp, note, userId'
+});
+
 // PIN hashing utility (SHA-256 via crypto.subtle)
 async function hashPin(pin) {
     const encoder = new TextEncoder();
@@ -66,7 +81,10 @@ db.on("populate", async () => {
         price: 10.00,
         costPrice: 5.00,
         stock: 100,
-        categoryId: 1
+        categoryId: 1,
+        // New fields default
+        supplierId: null,
+        lowStockThreshold: 5
     });
 
     // Default Admin User (PIN: 1234)
@@ -100,7 +118,8 @@ window.DB = {
             }
 
             if (lowStock) {
-                collection = collection.filter(p => p.stock < 5);
+                // Filter by dynamic threshold if available, else default to 5
+                collection = collection.filter(p => p.stock < (p.lowStockThreshold || 5));
             }
 
             if (page && limit) {
@@ -155,7 +174,10 @@ window.DB = {
 
     async getLowStockCount() {
         try {
-            return await db.products.where('stock').below(5).count();
+            // This is slightly more complex with dynamic thresholds.
+            // For performance, we might want to just iterate correctly or use a simpler check.
+            // Currently simplified:
+            return await db.products.filter(p => p.stock < (p.lowStockThreshold || 5)).count();
         } catch (e) { console.error(e); throw e; }
     },
 
@@ -267,6 +289,45 @@ window.DB = {
         } catch (e) { console.error(e); throw e; }
     },
 
+    // --- Suppliers ---
+    async getSuppliers() {
+        try { return await db.suppliers.toArray(); } catch (e) { console.error(e); throw e; }
+    },
+    async addSupplier(supplier) {
+        try { return await db.suppliers.add(supplier); } catch (e) { console.error(e); throw e; }
+    },
+    async updateSupplier(id, updates) {
+        try { return await db.suppliers.update(id, updates); } catch (e) { console.error(e); throw e; }
+    },
+    async deleteSupplier(id) {
+        try { return await db.suppliers.delete(id); } catch (e) { console.error(e); throw e; }
+    },
+
+    // --- Purchase Orders ---
+    async getPurchaseOrders() {
+        try { return await db.purchaseOrders.orderBy('date').reverse().toArray(); } catch (e) { console.error(e); throw e; }
+    },
+    async addPurchaseOrder(po) {
+        try { return await db.purchaseOrders.add(po); } catch (e) { console.error(e); throw e; }
+    },
+    async updatePurchaseOrder(id, updates) {
+        try { return await db.purchaseOrders.update(id, updates); } catch (e) { console.error(e); throw e; }
+    },
+
+    // --- Stock Logs ---
+    async getStockLogs(productId = null) {
+        try {
+            let collection = db.stockLogs.orderBy('timestamp').reverse();
+            if (productId) {
+                collection = collection.filter(log => log.productId === productId);
+            }
+            return await collection.toArray();
+        } catch (e) { console.error(e); throw e; }
+    },
+    async addStockLog(log) {
+        try { return await db.stockLogs.add(log); } catch (e) { console.error(e); throw e; }
+    },
+
     // --- Data Import/Export ---
     async importData(jsonData) {
         try {
@@ -279,6 +340,10 @@ window.DB = {
             await db.income.clear();
             await db.users.clear();
             await db.shifts.clear();
+            // Clear new tables
+            await db.suppliers.clear();
+            await db.purchaseOrders.clear();
+            await db.stockLogs.clear();
 
             // Load new
             await db.products.bulkAdd(jsonData.products);
@@ -289,6 +354,11 @@ window.DB = {
             if (jsonData.income) await db.income.bulkAdd(jsonData.income);
             if (jsonData.users) await db.users.bulkAdd(jsonData.users);
             if (jsonData.shifts) await db.shifts.bulkAdd(jsonData.shifts);
+            // Load new tables data if exists
+            if (jsonData.suppliers) await db.suppliers.bulkAdd(jsonData.suppliers);
+            if (jsonData.purchaseOrders) await db.purchaseOrders.bulkAdd(jsonData.purchaseOrders);
+            if (jsonData.stockLogs) await db.stockLogs.bulkAdd(jsonData.stockLogs);
+
         } catch (e) { console.error(e); throw e; }
     },
     async exportData() {
@@ -301,7 +371,11 @@ window.DB = {
             const income = await db.income.toArray();
             const users = await db.users.toArray();
             const shifts = await db.shifts.toArray();
-            return { products, categories, settings, orders, expenses, income, users, shifts };
+            const suppliers = await db.suppliers.toArray();
+            const purchaseOrders = await db.purchaseOrders.toArray();
+            const stockLogs = await db.stockLogs.toArray();
+            
+            return { products, categories, settings, orders, expenses, income, users, shifts, suppliers, purchaseOrders, stockLogs };
         } catch (e) { console.error(e); throw e; }
     },
 

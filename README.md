@@ -41,7 +41,7 @@ The system uses `IndexedDB` for storage.
 
 | Store | Schema | Description |
 | :--- | :--- | :--- |
-| **products** | `++id, name, barcode, price, costPrice, stock, categoryId` | Inventory items. Supports image (base64). |
+| **products** | `++id, name, barcode, price, costPrice, stock, categoryId, supplierId, lowStockThreshold` | Inventory items. Supports image (base64). |
 | **categories** | `++id, name` | Product categories. |
 | **orders** | `++id, timestamp, total, subtotal, modifiers, items, paymentMethod, userId, userName, shiftId` | Sales logs with user attribution. |
 | **expenses** | `++id, description, amount, date, category` | Manual expense entries. |
@@ -49,6 +49,9 @@ The system uses `IndexedDB` for storage.
 | **settings** | `key` | Key-value store for app configuration. |
 | **users** | `++id, name, pin, role, active, createdAt` | User accounts. PINs stored as SHA-256 hashes. |
 | **shifts** | `++id, userId, clockIn, clockOut, status` | Shift records (open/closed). |
+| **suppliers** | `++id, name, contact, email, phone, address` | Supplier registry. |
+| **purchaseOrders** | `++id, supplierId, date, status, totalCost, items, receivedDate` | Track stock arrivals from suppliers. |
+| **stockLogs** | `++id, productId, changeAmount, reason, timestamp, note, userId` | Immutable history of all stock movements. |
 
 ## 4. Key Features & Implementation Details
 
@@ -57,7 +60,13 @@ The system uses `IndexedDB` for storage.
 - **Image Support:** Images are converted to Base64 strings and stored directly in the `products` store. Size limited to 500KB.
 - **Validation:** Logic ensures `stock` cannot be negative and `barcode` must be unique across the inventory.
 
-### B. Point of Sale (POS)
+### B. Enhanced Stock Control
+- **Suppliers:** Manage supplier details and link products to derived sources.
+- **Purchase Orders:** Create and receive orders to automatically increment stock.
+- **Stock Logs:** detailed audit trail of every stock change (Sales, POs, Adjustments).
+- **Reorder Alerts:** Per-product configurable low stock thresholds.
+
+### C. Point of Sale (POS)
 - **Cart Logic:** In-memory array (`state.cart`).
 - **Stock Deduction:** Upon checkout, stock is deducted atomically from the `products` store.
 - **Receipts:** Generated on-the-fly using `Utils.generateReceipt()` which creates a printable HTML window. Past order receipts can be reviewed from the Dashboard by clicking "View" on any order in the transaction history.

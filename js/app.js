@@ -29,6 +29,8 @@ const App = {
         if (window.Inventory) Object.assign(App, window.Inventory);
         if (window.Reports) Object.assign(App, window.Reports);
         if (window.Settings) Object.assign(App, window.Settings);
+        if (window.Suppliers) Object.assign(App, window.Suppliers); // Mixin, though mainly accessed via Global
+        if (window.Stock) Object.assign(App, window.Stock);
         if (this.initReportsUI) this.initReportsUI();
         if (window.Shortcuts) {
             Object.assign(App, window.Shortcuts);
@@ -299,8 +301,19 @@ const App = {
         bindClick(DOM.POS.CLEAR_CART_BTN, () => this.clearCart());
 
         // --- Inventory ---
+        // --- Inventory ---
         bindClick(DOM.INVENTORY.ADD_PRODUCT_BTN, () => this.openProductModal());
+        bindClick(DOM.INVENTORY.ADD_SUPPLIER_BTN, () => Suppliers.openSupplierModal());
+        bindClick(DOM.INVENTORY.ADD_PO_BTN, () => Stock.openPOModal());
         bindClick(DOM.INVENTORY.CLEAR_FILTER_BTN, () => this.renderInventory());
+
+        // Inventory Tabs
+        document.querySelectorAll('.inv-tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tab = e.target.getAttribute('data-tab'); // Use getAttribute to be safe
+                if (tab && this.switchTab) this.switchTab(tab);
+            });
+        });
 
         const invSearchInput = document.getElementById('inv-search-input');
         if (invSearchInput) {

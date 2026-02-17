@@ -396,6 +396,16 @@ window.POS = {
                     if (product) {
                         const newStock = product.stock - item.qty;
                         await DB.updateProduct(product.id, { stock: newStock });
+
+                        // Log Stock Change
+                        await DB.addStockLog({
+                            productId: product.id,
+                            changeAmount: -item.qty,
+                            reason: 'Sale',
+                            timestamp: Date.now(),
+                            note: `Order #${orderId || 'New'}`, // We might not have order ID if it's auto-incremented by DB and not returned in add() immediately if not awaited properly, but we can just say 'Sale'
+                            userId: this.state.currentUser ? this.state.currentUser.id : null
+                        });
                     }
                 } catch (stockErr) {
                     console.error("Failed to update stock for item:", item.id, stockErr);

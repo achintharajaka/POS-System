@@ -48,7 +48,19 @@ window.DOM = {
         TABLE_BODY: 'inventory-table-body',
         FILTER_BANNER: 'inventory-filter-banner',
         ADD_PRODUCT_BTN: 'inv-add-product-btn',
-        CLEAR_FILTER_BTN: 'inv-clear-filter-btn'
+        ADD_SUPPLIER_BTN: 'inv-add-supplier-btn',
+        ADD_PO_BTN: 'inv-add-po-btn',
+        CLEAR_FILTER_BTN: 'inv-clear-filter-btn',
+        SEARCH_INPUT: 'inv-search-input',
+        TABS: 'inv-tab-btn',
+        TAB_CONTENTS: 'inv-tab-content'
+    },
+    SUPPLIERS: {
+        TABLE_BODY: 'suppliers-table-body'
+    },
+    STOCK: {
+        PO_TABLE_BODY: 'po-table-body',
+        LOGS_TABLE_BODY: 'stock-logs-table-body'
     },
     REPORTS: {
         REVENUE: 'report-revenue',
@@ -116,6 +128,8 @@ window.DOM = {
             INPUT_COST: 'prod-costPrice',
             INPUT_STOCK: 'prod-stock',
             INPUT_CATEGORY: 'prod-category',
+            INPUT_SUPPLIER: 'prod-supplier',
+            INPUT_THRESHOLD: 'prod-lowStockThreshold',
             IMAGE_PREVIEW: 'prod-image-preview',
             IMAGE_PLACEHOLDER: 'prod-image-placeholder',
             IMAGE_INPUT: 'prod-image-input',
@@ -123,6 +137,24 @@ window.DOM = {
             REMOVE_IMG_BTN: 'prod-remove-img-btn',
             CANCEL_BTN: 'prod-modal-cancel-btn',
             CLOSE_X: 'prod-modal-close-x'
+        },
+        SUPPLIER: {
+            ID: 'supplier-modal',
+            FORM: 'supplier-form',
+            TITLE: 'supplier-modal-title',
+            INPUT_ID: 'supplier-id',
+            INPUT_NAME: 'supplier-name',
+            INPUT_CONTACT: 'supplier-contact',
+            INPUT_PHONE: 'supplier-phone',
+            INPUT_EMAIL: 'supplier-email',
+            INPUT_ADDRESS: 'supplier-address'
+        },
+        PO: {
+            ID: 'po-modal',
+            FORM: 'po-form',
+            INPUT_SUPPLIER: 'po-supplier',
+            ITEMS_CONTAINER: 'po-items-container',
+            TOTAL_COST: 'po-total-cost'
         },
         ORDER: {
             ID: 'order-modal',
