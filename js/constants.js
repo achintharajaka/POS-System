@@ -14,7 +14,8 @@ window.DOM = {
         POS: 'nav-pos',
         INVENTORY: 'nav-inventory',
         SETTINGS: 'nav-settings',
-        REPORTS: 'nav-reports'
+        REPORTS: 'nav-reports',
+        CUSTOMERS: 'nav-customers'
     },
     VIEWS: {
         ALL_SECTIONS: '.view-section',

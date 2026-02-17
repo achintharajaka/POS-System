@@ -28,6 +28,7 @@ The application follows a modular, client-side architecture using standard JavaS
 │       ├── inventory.js
 │       ├── pos.js
 │       ├── reports.js
+│       ├── customers.js    # Customer Management & Loyalty Logic
 │       ├── shortcuts.js # Keyboard shortcuts handling
 │       └── settings.js
 ├── css/
@@ -52,6 +53,7 @@ The system uses `IndexedDB` for storage.
 | **suppliers** | `++id, name, contact, email, phone, address` | Supplier registry. |
 | **purchaseOrders** | `++id, supplierId, date, status, totalCost, items, receivedDate` | Track stock arrivals from suppliers. |
 | **stockLogs** | `++id, productId, changeAmount, reason, timestamp, note, userId` | Immutable history of all stock movements. |
+| **customers** | `++id, name, phone, email, points, tier, totalSpent` | Customer database with loyalty info. |
 
 ## 4. Key Features & Implementation Details
 
@@ -71,36 +73,41 @@ The system uses `IndexedDB` for storage.
 - **Stock Deduction:** Upon checkout, stock is deducted atomically from the `products` store.
 - **Receipts:** Generated on-the-fly using `Utils.generateReceipt()` which creates a printable HTML window. Past order receipts can be reviewed from the Dashboard by clicking "View" on any order in the transaction history.
 
-### C. Financial Reporting
+### D. Customer Management (CRM)
+- **Customer Database:** Manage customer details (Name, Phone, Email).
+- **Loyalty System:** Earn points on purchases (configurable rate). Redeem points for discounts (configurable rate). Manual adjustment of points is supported for admins/managers.
+- **Order Linking:** Link sales to specific customers for purchase history tracking.
+
+### E. Financial Reporting
 - **Profit Calculation:**
     - `Gross Profit` (per order) = `Total Price` - `Total Cost Price`.
     - `Net Profit` (Overall) = `Total Revenue` (Sales + Extra Income) - `Total COGS` - `Total Expenses`.
 - **Date-Range Filtering:** All reports (cards, lists, and charts) can be filtered by Today, This Week, This Month, or a Custom Range.
 - **Charts:** Renders a dynamic Bar chart comparing Revenue vs Expenses (COGS + Manual Expenses) for the selected period.
 
-### D. User Authentication & Role Management
+### F. User Authentication & Role Management
 - **PIN-Based Login:** Users authenticate with a 4–6 digit numeric PIN (hashed with SHA-256 via `crypto.subtle`).
 - **Roles:** Three roles — `admin` (full access), `manager` (no settings), `cashier` (POS only).
 - **Role Enforcement:** Navigation items hidden per role. Unauthorized access redirects to the first allowed view.
 - **User Management:** Admin can create/edit/delete users and reset PINs from Settings.
 - **Default Admin:** Seeded on first run with PIN `1234`.
 
-### E. Shift Management
+### G. Shift Management
 - **Auto Clock-In:** A shift is automatically started when a user logs in.
 - **Clock-Out:** Triggered on logout. Shift records stored in the `shifts` table.
 - **Shift Timer:** Live HH:MM:SS timer displayed for cashiers in the nav bar.
 - **Order Attribution:** Every order records `userId`, `userName`, and `shiftId`.
 - **Shift History:** Admins can view all shift records in Settings.
 
-### F. Data Management
+### H. Data Management
 - **Import/Export:** The system exports the entire IndexedDB contents (including users and shifts) as a JSON file for backup/migration.
 - **Import:** The system imports the entire IndexedDB contents (including users and shifts) from a JSON file for backup/migration.
 
-### G. Multi-language Support (Localization)
+### I. Multi-language Support (Localization)
 - **Multi-language:** The system supports multiple languages including English, Sinhala, and Tamil.
 - **Implementation:** Uses a modular translation system where language-specific strings are stored in `js/lang/`. The `i18next`-like implementation allows for easy switching and persistence of the user's language preference.
 
-### H. Keyboard Shortcuts
+### J. Keyboard Shortcuts
 - **Implementation:** Global keydown listener in `shortcuts.js`. 
 - **Features:** View navigation (F1-F5), Quick Checkout (F9/Enter), Modal control (Esc), and Quick Quantity Entry (Number keys).
 

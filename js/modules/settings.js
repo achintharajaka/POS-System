@@ -17,7 +17,7 @@ window.Settings = {
         // Other fields
         // We iterate specifically to catch known keys or just iterate input IDs?
         // Easier: Just grab known text/number/textarea fields
-        const textFields = ['storeName', 'storeAddress', 'currencySymbol', 'receiptHeader', 'receiptFooter', 'receiptQrCodeUrl', 'storeLogo'];
+        const textFields = ['storeName', 'storeAddress', 'currencySymbol', 'receiptHeader', 'receiptFooter', 'receiptQrCodeUrl', 'storeLogo', 'pointsEarningRate', 'pointsRedemptionRate'];
         textFields.forEach(key => {
             updates[key] = formData.get(key);
         });

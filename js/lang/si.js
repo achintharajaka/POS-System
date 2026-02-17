@@ -5,6 +5,7 @@ const si = {
     nav_inventory: "අයිතම කළමනාකරණය",
     nav_settings: "සැකසුම්",
     nav_reports: "ගොනු",
+    nav_customers: "පාරිභෝගිකයින්",
     nav_logout: "පිටවීම",
 
     // Dashboard
