@@ -5,12 +5,13 @@ Welcome to the Point of Sale (POS) System! This guide will help you understand h
 ## Table of Contents
 1.  [Getting Started (Login)](#getting-started-login)
 2.  [Inventory Management](#inventory-management)
-3.  [Point of Sale (Making Sales)](#point-of-sale-making-sales)
-4.  [Reports & Finances](#reports--finances)
-5.  [Settings & Data](#settings--data)
-6.  [User Management (Admin)](#user-management-admin)
-7.  [Keyboard Shortcuts](#keyboard-shortcuts)
-8.  [Troubleshooting & Debugging](#troubleshooting--debugging)
+3.  [Customer Management](#customer-management)
+4.  [Point of Sale (Making Sales)](#point-of-sale-making-sales)
+5.  [Reports & Finances](#reports--finances)
+6.  [Settings & Data](#settings--data)
+7.  [User Management (Admin)](#user-management-admin)
+8.  [Keyboard Shortcuts](#keyboard-shortcuts)
+9.  [Troubleshooting & Debugging](#troubleshooting--debugging)
 
 ---
 
@@ -99,7 +100,25 @@ View a complete history of why stock changed.
 
 ---
 
-## 3. Point of Sale (Making Sales)
+## 3. Customer Management
+
+Build relationships with your customers and reward loyalty.
+
+### Managing Customers
+1.  Click **Customers** in the navigation menu.
+2.  **Add Customer:** Click **+ Add Customer**, enter Name, Phone, and Email.
+3.  **Search:** Use the search bar to find customers by name or phone.
+4.  **Edit/Delete:** Use the action buttons in the list.
+
+### Loyalty Points
+- **Earning:** Customers earn points based on the configured rate (Default: 1 Point per $1 spent).
+- **Redeeming:** Points can be redeemed for discounts based on the configured rate (Default: 100 Points = $1.00).
+- **Manual Edit:** You can manually adjust a customer's points by clicking **Edit** on the customer list and changing the value in the **Loyalty Points** field.
+- Points are tracked automatically and displayed in the customer list and POS.
+
+---
+
+## 4. Point of Sale (Making Sales)
 
 This is where you'll spend most of your time.
 
@@ -107,7 +126,9 @@ This is where you'll spend most of your time.
 1.  **Add Items:** Click on product cards in the grid.
     - You can **Search** by name or **Filter** by category.
     - Clicking multiple times increases quantity.
-2.  **Manage Cart:**
+2.  **Manage Cart & Customers:**
+    - **Select Customer:** Click **+ Select Customer** to link the order.
+    - **Redeem Points:** If a customer has points, a **Redeem** button appears. Click it to apply a discount (e.g., Redeem 500 pts for $5 off).
     - The right side shows the current order.
     - Use **+ / -** buttons to adjust quantity.
     - Click **X** to remove an item.
@@ -121,7 +142,7 @@ This is where you'll spend most of your time.
 
 ---
 
-## 4. Reports & Finances
+## 5. Reports & Finances
 
 Track how your business is doing.
 
@@ -148,11 +169,12 @@ Track how your business is doing.
 
 ---
 
-## 5. Settings & Data
+## 6. Settings & Data
 
 - **Store Profile:** Specify your Store Name, Address, and Currency Symbol.
 - **Language Settings:** Choose your preferred display language (English, Sinhala, or Tamil) from the dropdown menu and click **Save Settings** to apply.
 - **Receipt Settings:** Customize what appears on the receipt (Logo, Header, Footer, QR Code URL).
+- **Loyalty Program:** Configure the Earning Rate (points per currency unit) and Redemption Rate (points required for 1 currency unit discount).
 - **Order Modifiers:** Configure taxes, discounts, and other adjustments that apply to every order.
 - **Category Management:** Add or remove product categories.
 - **Data Management:**
@@ -162,7 +184,7 @@ Track how your business is doing.
 
 ---
 
-## 6. User Management (Admin)
+## 7. User Management (Admin)
 
 Only visible to Admin users, found at the bottom of the **Settings** page.
 
@@ -187,7 +209,7 @@ Only visible to Admin users, found at the bottom of the **Settings** page.
 
 ---
 
-## 7. Keyboard Shortcuts
+## 8. Keyboard Shortcuts
 
 Boost your efficiency with these shortcuts:
 
@@ -207,7 +229,7 @@ Boost your efficiency with these shortcuts:
 
 ---
 
-## 8. Troubleshooting & Debugging
+## 9. Troubleshooting & Debugging
 
 If you encounter any issues or the system behaves unexpectedly:
 

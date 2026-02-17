@@ -157,7 +157,19 @@ window.Inventory = {
 
 
         if (productId) {
-            const prod = this.state.products.find(p => p.id === productId);
+            let prod;
+            try {
+                prod = await DB.getProduct(productId);
+            } catch (e) {
+                console.error("Failed to fetch product for edit", e);
+                Utils.showToast("Error loading product details", "error");
+                return;
+            }
+
+            if (!prod) {
+                Utils.showToast("Product not found", "error");
+                return;
+            }
             title.innerText = "Edit Product";
             document.getElementById(DOM.MODALS.PRODUCT.INPUT_ID).value = prod.id;
             document.getElementById(DOM.MODALS.PRODUCT.INPUT_NAME).value = prod.name;
@@ -289,11 +301,15 @@ window.Inventory = {
 
         // Check for duplicate barcode
         if (product.barcode) {
-            const existing = this.state.products.find(p => p.barcode === product.barcode);
-            // If exists AND (we are adding new OR editing different product)
-            if (existing && (!id || existing.id != id)) {
-                Utils.showFormError(barcodeInput, "Barcode already exists");
-                return;
+            try {
+                const existing = await DB.getProductByBarcode(product.barcode);
+                // If exists AND (we are adding new OR editing different product)
+                if (existing && (!id || existing.id != parseInt(id))) {
+                    Utils.showFormError(barcodeInput, "Barcode already exists");
+                    return;
+                }
+            } catch (e) {
+                console.error("Error checking barcode", e);
             }
         }
 

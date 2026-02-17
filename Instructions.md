@@ -6,12 +6,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 
 ## 🔴 High-Priority — New Features
 
-### 2. Customer Management (CRM Lite)
-- Customer database (name, phone, email)
-- Link orders to customers for purchase history
-- **Loyalty points** system — earn points on purchases, redeem as discounts
-- Customer-specific pricing or discount tiers
-
 ### 3. Return & Refund System
 - Process full or partial returns against existing orders
 - Auto-restock returned items back to inventory
@@ -36,12 +30,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 - **Per-product discounts** (sale prices with date ranges)
 - **Coupon codes** — percentage or fixed-amount coupons
 - **Buy X Get Y** promotions
-
-### 8. Stock Management (Enhanced)
-- **Purchase orders** — record when new stock arrives
-- **Stock adjustment log** — track why stock changed (sold, damaged, restocked, theft)
-- **Reorder alerts** — configurable low-stock threshold per product (currently hardcoded at 5)
-- **Supplier management** — link products to suppliers
 
 ### 10. Product Variants & Bundles
 - Size/Color variants for a single product (e.g. T-Shirt: S/M/L/XL)

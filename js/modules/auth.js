@@ -8,8 +8,8 @@ window.Auth = {
 
     // --- Role Access Map ---
     _roleAccess: {
-        admin: ['dashboard', 'pos', 'inventory', 'reports', 'settings'],
-        manager: ['dashboard', 'pos', 'inventory', 'reports'],
+        admin: ['dashboard', 'pos', 'inventory', 'reports', 'settings', 'customers'],
+        manager: ['dashboard', 'pos', 'inventory', 'reports', 'customers'],
         cashier: ['pos']
     },
 
@@ -199,7 +199,8 @@ window.Auth = {
             'pos': DOM.NAV.POS,
             'inventory': DOM.NAV.INVENTORY,
             'reports': DOM.NAV.REPORTS,
-            'settings': DOM.NAV.SETTINGS
+            'settings': DOM.NAV.SETTINGS,
+            'customers': DOM.NAV.CUSTOMERS
         };
 
         Object.entries(navMap).forEach(([view, id]) => {

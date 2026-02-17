@@ -39,6 +39,22 @@ db.version(3).stores({
     stockLogs: '++id, productId, changeAmount, reason, timestamp, note, userId'
 });
 
+// Version 4: Customer Management (CRM)
+db.version(4).stores({
+    products: '++id, name, barcode, price, costPrice, stock, categoryId, supplierId, lowStockThreshold',
+    categories: '++id, name',
+    orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod, userId, shiftId, customerId',
+    settings: 'key',
+    expenses: '++id, description, amount, date, category',
+    income: '++id, description, amount, date, category',
+    users: '++id, name, pin, role, active',
+    shifts: '++id, userId, clockIn, clockOut, status',
+    suppliers: '++id, name, contact, email, phone, address',
+    purchaseOrders: '++id, supplierId, date, status, totalCost, items, receivedDate',
+    stockLogs: '++id, productId, changeAmount, reason, timestamp, note, userId',
+    customers: '++id, name, phone, email, points, tier, totalSpent'
+});
+
 // PIN hashing utility (SHA-256 via crypto.subtle)
 async function hashPin(pin) {
     const encoder = new TextEncoder();
@@ -60,7 +76,11 @@ db.on("populate", async () => {
         { key: "receiptShowAddress", value: true },
         { key: "receiptShowDate", value: true },
         // New Modifiers System (Migrating from simple taxRate)
-        { key: "maxModifierId", value: 1 }
+        { key: "maxModifierId", value: 1 },
+        // Loyalty Settings
+        { key: "loyaltyEnabled", value: true },
+        { key: "loyaltyPointsPerCurrency", value: 1 }, // 1 point per $1
+        { key: "loyaltyRedemptionRate", value: 0.05 }, // 100 points = $5
     ]);
 
     // Default Modifier (10% Tax)
@@ -144,6 +164,12 @@ window.DB = {
     async getProduct(id) {
         try { return await db.products.get(id); } catch (e) { console.error(e); throw e; }
     },
+    async getProductByBarcode(barcode) {
+        try {
+            if (!barcode) return null;
+            return await db.products.where('barcode').equals(barcode).first();
+        } catch (e) { console.error(e); throw e; }
+    },
 
     // Categories
     async getCategories() {
@@ -169,6 +195,12 @@ window.DB = {
     async getOrdersSince(timestamp) {
         try {
             return await db.orders.where('timestamp').aboveOrEqual(timestamp).toArray();
+        } catch (e) { console.error(e); throw e; }
+    },
+
+    async getOrdersByCustomer(customerId) {
+        try {
+            return await db.orders.where('customerId').equals(customerId).reverse().sortBy('timestamp');
         } catch (e) { console.error(e); throw e; }
     },
 
@@ -328,6 +360,41 @@ window.DB = {
         try { return await db.stockLogs.add(log); } catch (e) { console.error(e); throw e; }
     },
 
+    // --- Customers ---
+    async getCustomers(page = null, limit = null, search = '') {
+        try {
+            let collection = db.customers.orderBy('name');
+
+            if (search) {
+                const q = search.toLowerCase();
+                collection = collection.filter(c =>
+                    c.name.toLowerCase().includes(q) ||
+                    (c.phone && c.phone.includes(q)) ||
+                    (c.email && c.email.toLowerCase().includes(q))
+                );
+            }
+
+            if (page && limit) {
+                const total = await collection.count();
+                const data = await collection.offset((page - 1) * limit).limit(limit).toArray();
+                return { data, total };
+            }
+            return await collection.toArray();
+        } catch (e) { console.error(e); throw e; }
+    },
+    async addCustomer(customer) {
+        try { return await db.customers.add(customer); } catch (e) { console.error(e); throw e; }
+    },
+    async updateCustomer(id, updates) {
+        try { return await db.customers.update(id, updates); } catch (e) { console.error(e); throw e; }
+    },
+    async deleteCustomer(id) {
+        try { return await db.customers.delete(id); } catch (e) { console.error(e); throw e; }
+    },
+    async getCustomer(id) {
+        try { return await db.customers.get(id); } catch (e) { console.error(e); throw e; }
+    },
+
     // --- Data Import/Export ---
     async importData(jsonData) {
         try {
@@ -344,6 +411,7 @@ window.DB = {
             await db.suppliers.clear();
             await db.purchaseOrders.clear();
             await db.stockLogs.clear();
+            await db.customers.clear();
 
             // Load new
             await db.products.bulkAdd(jsonData.products);
@@ -358,6 +426,7 @@ window.DB = {
             if (jsonData.suppliers) await db.suppliers.bulkAdd(jsonData.suppliers);
             if (jsonData.purchaseOrders) await db.purchaseOrders.bulkAdd(jsonData.purchaseOrders);
             if (jsonData.stockLogs) await db.stockLogs.bulkAdd(jsonData.stockLogs);
+            if (jsonData.customers) await db.customers.bulkAdd(jsonData.customers);
 
         } catch (e) { console.error(e); throw e; }
     },
@@ -374,8 +443,9 @@ window.DB = {
             const suppliers = await db.suppliers.toArray();
             const purchaseOrders = await db.purchaseOrders.toArray();
             const stockLogs = await db.stockLogs.toArray();
-            
-            return { products, categories, settings, orders, expenses, income, users, shifts, suppliers, purchaseOrders, stockLogs };
+            const customers = await db.customers.toArray();
+
+            return { products, categories, settings, orders, expenses, income, users, shifts, suppliers, purchaseOrders, stockLogs, customers };
         } catch (e) { console.error(e); throw e; }
     },
 

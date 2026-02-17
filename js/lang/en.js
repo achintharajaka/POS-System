@@ -5,6 +5,7 @@ const en = {
     nav_inventory: "Inventory",
     nav_settings: "Settings",
     nav_reports: "Reports",
+    nav_customers: "Customers",
     nav_logout: "Logout",
 
     // Dashboard

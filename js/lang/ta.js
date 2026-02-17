@@ -5,6 +5,7 @@ const ta = {
     nav_inventory: "சரக்கு இருப்பு",
     nav_settings: "அமைப்புகள்",
     nav_reports: "அறிக்கைகள்",
+    nav_customers: "வாடிக்கையாளர்கள்",
     nav_logout: "வெளியேறு",
 
     // Dashboard

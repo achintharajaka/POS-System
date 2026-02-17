@@ -2,6 +2,15 @@
 // Depends on: db.js, utils.js, constants.js
 
 window.POS = {
+    async init() {
+        // existing init
+    },
+    state: {
+        // ... other state
+        currentCustomer: null,
+        cartModifiers: []
+    },
+
     async renderPOS() {
         this.renderProducts();
         this.renderCart();
@@ -12,8 +21,104 @@ window.POS = {
         if (!select) return;
         select.innerHTML = '<option value="">All Categories</option>';
         this.state.categories.forEach(cat => {
-            select.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`; // Categories are still loaded in app.js
+            select.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
         });
+    },
+
+    // Customer Selection Logic
+    openCustomerSelection() {
+        document.getElementById('pos-customer-modal').classList.remove('hidden');
+        document.getElementById('pos-customer-search').value = '';
+        document.getElementById('pos-customer-search').focus();
+        this.renderCustomerSelectionList();
+
+        document.getElementById('pos-customer-search').oninput = (e) => this.renderCustomerSelectionList(e.target.value);
+    },
+
+    async renderCustomerSelectionList(query = '') {
+        const list = document.getElementById('pos-customer-list');
+        // Debounce? For now direct.
+        const result = await DB.getCustomers(1, 20, query);
+        list.innerHTML = '';
+
+        if (result.data.length === 0) {
+            list.innerHTML = '<li class="p-4 text-center text-gray-500">No customers found</li>';
+            return;
+        }
+
+        result.data.forEach(c => {
+            const li = document.createElement('li');
+            li.className = "p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center transition-colors";
+            li.onclick = () => {
+                this.selectCustomer(c);
+                document.getElementById('pos-customer-modal').classList.add('hidden');
+            };
+            li.innerHTML = `
+                <div>
+                    <div class="font-bold dark:text-gray-200">${Utils.sanitize(c.name)}</div>
+                    <div class="text-xs text-gray-500">${Utils.sanitize(c.phone || '')}</div>
+                </div>
+                <div class="text-blue-600 dark:text-blue-400 font-bold text-sm">${c.points || 0} pts</div>
+             `;
+            list.appendChild(li);
+        });
+    },
+
+    selectCustomer(customer) {
+        this.state.currentCustomer = customer;
+        this.renderCart();
+        Utils.showToast(`Customer set to ${customer.name}`);
+    },
+
+    removeCustomer() {
+        this.state.currentCustomer = null;
+        this.state.cartModifiers = []; // Clear redemptions
+        this.renderCart();
+    },
+
+    redeemPoints() {
+        if (!this.state.currentCustomer) return;
+        const maxPoints = this.state.currentCustomer.points || 0;
+        if (maxPoints <= 0) {
+            Utils.showToast("No points to redeem!", "error");
+            return;
+        }
+
+        const redemptionRate = this.state.settings.pointsRedemptionRate || 100;
+        const discountAmount = 1; // Base unit for calculation description
+
+        const pointsStr = prompt(`Enter points to redeem (Available: ${maxPoints})\nRate: ${redemptionRate} pts = $${discountAmount.toFixed(2)}`);
+        if (pointsStr === null) return;
+
+        const points = parseInt(pointsStr);
+        if (isNaN(points) || points <= 0) {
+            Utils.showToast("Invalid amount", "error");
+            return;
+        }
+        if (points > maxPoints) {
+            Utils.showToast("Insufficient points", "error");
+            return;
+        }
+
+        // Rate: configured points = 1.00 Currency
+        // redemptionRate already declared above
+        const discountValue = points / redemptionRate;
+
+        if (!this.state.cartModifiers) this.state.cartModifiers = [];
+        // Remove existing redemption
+        this.state.cartModifiers = this.state.cartModifiers.filter(m => !m.isRedemption);
+
+        this.state.cartModifiers.push({
+            name: "Loyalty Discount",
+            value: discountValue,
+            type: 'fixed',
+            rate: 'subtract',
+            isRedemption: true,
+            pointsCost: points
+        });
+
+        this.renderCart();
+        Utils.showToast(`Redeemed ${points} pts for $${discountValue.toFixed(2)}`);
     },
 
     async renderProducts(overrideProducts = null) {
@@ -224,10 +329,35 @@ window.POS = {
     },
 
     renderCart() {
-        // ... (Same as before)
+        if (!this.state.cart) this.state.cart = [];
         const container = document.getElementById(DOM.POS.CART_ITEMS);
         if (!container) return;
         container.innerHTML = '';
+
+        // Render Customer Section
+        const customerSection = document.createElement('div');
+        customerSection.className = "mb-4 pb-4 border-b dark:border-gray-700";
+        if (this.state.currentCustomer) {
+            customerSection.innerHTML = `
+                <div class="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+                    <div>
+                        <div class="font-bold text-blue-800 dark:text-blue-300 text-sm overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]">${Utils.sanitize(this.state.currentCustomer.name)}</div>
+                        <div class="text-xs text-blue-600 dark:text-blue-400">Points: ${this.state.currentCustomer.points || 0}</div>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="app.redeemPoints()" class="text-green-600 hover:text-green-800 text-xs font-bold border border-green-200 bg-green-50 rounded px-2 py-1">Redeem</button>
+                        <button onclick="app.removeCustomer()" class="text-red-500 hover:text-red-700 p-1 text-sm">X</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            customerSection.innerHTML = `
+                <button onclick="app.openCustomerSelection()" class="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 transition-colors text-sm font-medium">
+                    + Select Customer
+                </button>
+            `;
+        }
+        container.appendChild(customerSection);
 
         if (this.state.cart.length === 0) {
             container.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 mt-10">Cart is empty</div>';
@@ -272,7 +402,7 @@ window.POS = {
         this.state.cart.forEach(item => subtotal += item.price * item.qty);
 
         const { currencySymbol } = this.state.settings;
-        const modifiers = this.state.modifiers || [];
+        const modifiers = (this.state.modifiers || []).concat(this.state.cartModifiers || []);
 
         // Calculate Modifiers
         let runningTotal = subtotal;
@@ -346,7 +476,10 @@ window.POS = {
         const orderModifiers = [];
         let runningTotal = subtotal;
 
-        this.state.modifiers.forEach(mod => {
+        // Combine global modifiers and cart-specific modifiers (like redemption)
+        const allModifiers = (this.state.modifiers || []).concat(this.state.cartModifiers || []);
+
+        allModifiers.forEach(mod => {
             let amount = 0;
             if (mod.type === 'percent') {
                 amount = subtotal * (mod.value / 100);
@@ -360,7 +493,9 @@ window.POS = {
             orderModifiers.push({
                 name: mod.name,
                 amount: amount,
-                rate: mod.rate
+                rate: mod.rate,
+                isRedemption: mod.isRedemption || false,
+                pointsCost: mod.pointsCost || 0
             });
         });
 
@@ -375,8 +510,23 @@ window.POS = {
             paymentMethod: this.state.paymentMethod,
             userId: this.state.currentUser ? this.state.currentUser.id : null,
             userName: this.state.currentUser ? this.state.currentUser.name : 'Unknown',
-            shiftId: this.state.currentShift ? this.state.currentShift.id : null
+            shiftId: this.state.currentShift ? this.state.currentShift.id : null,
+            customerId: this.state.currentCustomer ? this.state.currentCustomer.id : null,
+            customerName: this.state.currentCustomer ? this.state.currentCustomer.name : null
         };
+
+        // Check for redemption
+        const redemption = (this.state.cartModifiers || []).find(m => m.isRedemption);
+        if (redemption) {
+            order.pointsRedeemed = redemption.pointsCost;
+        }
+
+        // Points Calculation (Configurable rate)
+        const earningRate = this.state.settings.pointsEarningRate || 1;
+        const pointsEarned = Math.floor(runningTotal * earningRate);
+        if (this.state.currentCustomer) {
+            order.pointsEarned = pointsEarned;
+        }
 
         // Open receipt window FIRST while user-gesture context is still active
         // (Browsers block window.open after async/await calls)
@@ -387,7 +537,7 @@ window.POS = {
 
         try {
             // Save order to DB
-            await DB.saveOrder(order);
+            const orderId = await DB.saveOrder(order);
 
             // Update Stock
             for (const item of this.state.cart) {
@@ -403,7 +553,7 @@ window.POS = {
                             changeAmount: -item.qty,
                             reason: 'Sale',
                             timestamp: Date.now(),
-                            note: `Order #${orderId || 'New'}`, // We might not have order ID if it's auto-incremented by DB and not returned in add() immediately if not awaited properly, but we can just say 'Sale'
+                            note: `Order #${orderId}`,
                             userId: this.state.currentUser ? this.state.currentUser.id : null
                         });
                     }
@@ -437,7 +587,19 @@ window.POS = {
                 receiptWindow.document.close();
             }
 
+            // Update Customer Points
+            if (this.state.currentCustomer) {
+                const currentPoints = this.state.currentCustomer.points || 0;
+                const earned = order.pointsEarned || 0;
+                const redeemed = order.pointsRedeemed || 0;
+                const newPoints = currentPoints + earned - redeemed;
+
+                await DB.updateCustomer(this.state.currentCustomer.id, { points: newPoints });
+            }
+
             this.state.cart = [];
+            this.state.cartModifiers = [];
+            this.state.currentCustomer = null;
             this.renderCart();
 
             // Refresh grid to show new stock

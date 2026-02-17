@@ -15,25 +15,47 @@ const App = {
         chart: null,
         paymentMethod: 'cash',
         currentUser: null,
-        currentShift: null
+        currentShift: null,
+        // POS specific state
+        currentCustomer: null,
+        cartModifiers: []
     },
 
     async init() {
         console.log("Initializing App v3 (Modular)...");
 
+        if (!window.crypto || !window.crypto.subtle) {
+            console.error("Secure Context Warning: crypto.subtle is unavailable. Login may fail.");
+            setTimeout(() => Utils.showToast("Warning: App requires Secure Context (HTTPS/Localhost) for login.", "warning"), 1000);
+        }
+
+        // Helper to safely mixin modules
+        const mixin = (module) => {
+            if (!module) return;
+            if (module.state) {
+                // Merge state instead of overwriting
+                Object.assign(this.state, module.state);
+            }
+            // Link module.state to shared App.state so module methods invoked directly
+            // (e.g. Customers.method()) still have access to the full state.
+            module.state = this.state;
+            Object.assign(App, module);
+        };
+
         // Mixin all modules eagerly (loaded via script tags in index.html)
-        if (window.Auth) Object.assign(App, window.Auth);
-        if (window.I18n) Object.assign(App, window.I18n); // Mixin I18n
-        if (window.Dashboard) Object.assign(App, window.Dashboard);
-        if (window.POS) Object.assign(App, window.POS);
-        if (window.Inventory) Object.assign(App, window.Inventory);
-        if (window.Reports) Object.assign(App, window.Reports);
-        if (window.Settings) Object.assign(App, window.Settings);
-        if (window.Suppliers) Object.assign(App, window.Suppliers); // Mixin, though mainly accessed via Global
-        if (window.Stock) Object.assign(App, window.Stock);
+        if (window.Auth) mixin(window.Auth);
+        if (window.I18n) mixin(window.I18n); // Mixin I18n
+        if (window.Dashboard) mixin(window.Dashboard);
+        if (window.POS) mixin(window.POS);
+        if (window.Inventory) mixin(window.Inventory);
+        if (window.Reports) mixin(window.Reports);
+        if (window.Settings) mixin(window.Settings);
+        if (window.Suppliers) mixin(window.Suppliers); // Mixin, though mainly accessed via Global
+        if (window.Stock) mixin(window.Stock);
         if (this.initReportsUI) this.initReportsUI();
+        if (window.Customers) mixin(window.Customers);
         if (window.Shortcuts) {
-            Object.assign(App, window.Shortcuts);
+            mixin(window.Shortcuts);
             window.Shortcuts.init();
         }
 
@@ -117,6 +139,7 @@ const App = {
             if (viewId === 'dashboard' && this.renderDashboard) await this.renderDashboard();
             if (viewId === 'pos' && this.renderPOS) this.renderPOS();
             if (viewId === 'inventory' && this.renderInventory) this.renderInventory();
+            if (viewId === 'customers' && this.renderCustomers) this.renderCustomers();
             if (viewId === 'reports' && this.renderProfitLoss) await this.renderProfitLoss();
             if (viewId === 'settings') {
                 this.updateStoreDetails();
@@ -242,6 +265,7 @@ const App = {
         bindClick(DOM.NAV.DASHBOARD, () => this.navigate('dashboard'));
         bindClick(DOM.NAV.POS, () => this.navigate('pos'));
         bindClick(DOM.NAV.INVENTORY, () => this.navigate('inventory'));
+        bindClick('nav-customers', () => this.navigate('customers'));
         bindClick(DOM.NAV.SETTINGS, () => this.navigate('settings'));
         bindClick(DOM.NAV.REPORTS, () => this.navigate('reports'));
         bindClick(DOM.APP.THEME_TOGGLE_BTN, () => this.toggleTheme());

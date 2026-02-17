@@ -135,6 +135,9 @@
                 <button id="nav-reports"
                     class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
                     data-i18n="nav_reports">Reports</button>
+                <button id="nav-customers"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                    data-i18n="nav_customers">Customers</button>
 
                 <!-- Theme Toggle -->
                 <button id="theme-toggle-btn"
@@ -218,6 +221,8 @@
                 class="mobile-nav-link text-left px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Inventory</button>
             <button data-nav="reports"
                 class="mobile-nav-link text-left px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Reports</button>
+            <button data-nav="customers"
+                class="mobile-nav-link text-left px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Customers</button>
             <button data-nav="settings"
                 class="mobile-nav-link text-left px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Settings</button>
             <div class="border-t border-gray-100 dark:border-gray-700 my-2"></div>
@@ -769,6 +774,66 @@
             </div>
         </div>
 
+        <!-- Customers View -->
+        <div id="view-customers" class="view-section h-full overflow-hidden flex flex-col hidden">
+            <div class="flex justify-between items-center mb-6 flex-none">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white" data-i18n="cust_title">Customers</h2>
+                <button onclick="Customers.openCustomerModal()"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                    <span>+ Add Customer</span>
+                </button>
+            </div>
+
+            <!-- Customer Search Bar -->
+            <div
+                class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex gap-4 mb-4 flex-none">
+                <div class="flex-1 relative">
+                    <input type="text" id="customers-search-input"
+                        placeholder="Search customers by name, phone or email..."
+                        class="w-full pl-10 pr-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        oninput="Customers.renderCustomers()">
+                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Customers Table -->
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-x-auto flex-1 overflow-y-auto">
+                <table class="w-full text-left min-w-[600px]">
+                    <thead
+                        class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium border-b border-gray-100 dark:border-gray-600 sticky top-0">
+                        <tr>
+                            <th class="p-4">Name</th>
+                            <th class="p-4">Phone</th>
+                            <th class="p-4">Email</th>
+                            <th class="p-4">Loyalty Info</th>
+                            <th class="p-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-table-body"
+                        class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                        <!-- Rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mt-4 flex-none"
+                id="customers-pagination-container">
+                <span class="text-sm text-gray-500 dark:text-gray-400" id="customers-page-info">Page 1</span>
+                <div class="flex gap-2">
+                    <button id="customers-prev-btn"
+                        class="px-3 py-1 text-sm border dark:border-gray-600 rounded disabled:opacity-50 dark:text-gray-300">Previous</button>
+                    <button id="customers-next-btn"
+                        class="px-3 py-1 text-sm border dark:border-gray-600 rounded disabled:opacity-50 dark:text-gray-300">Next</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Settings View -->
         <div id="view-settings" class="view-section h-full overflow-y-auto hidden">
             <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white" data-i18n="set_title">Settings</h2>
@@ -831,253 +896,248 @@
                                     placeholder="$">
                             </div>
                         </div>
-
-                        <!-- Order Modifiers (Tax, Discount, Fees) -->
-                        <div class="border-t dark:border-gray-700 pt-4 mt-2">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Global Order
-                                Adjustments (Taxes, Fees, Discounts)</label>
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                                <table class="w-full text-sm text-left mb-3">
-                                    <thead
-                                        class="text-gray-500 dark:text-gray-400 font-medium border-b dark:border-gray-600">
-                                        <tr>
-                                            <th class="pb-2">Name</th>
-                                            <th class="pb-2">Type</th>
-                                            <th class="pb-2">Value</th>
-                                            <th class="pb-2 text-right">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="settings-modifiers-list"
-                                        class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-800 dark:text-gray-200">
-                                        <!-- Injected -->
-                                    </tbody>
-                                </table>
-
-                                <div class="grid grid-cols-4 gap-2">
-                                    <input type="text" id="new-mod-name" placeholder="Name (e.g. VAT)"
-                                        class="col-span-1 px-2 py-1 border dark:border-gray-500 dark:bg-gray-600 dark:text-white rounded text-sm">
-                                    <select id="new-mod-type"
-                                        class="col-span-1 px-2 py-1 border dark:border-gray-500 dark:bg-gray-600 dark:text-white rounded text-sm">
-                                        <option value="percent">% (Percentage)</option>
-                                        <option value="fixed">Fixed Amount</option>
-                                    </select>
-                                    <select id="new-mod-action"
-                                        class="col-span-1 px-2 py-1 border dark:border-gray-500 dark:bg-gray-600 dark:text-white rounded text-sm">
-                                        <option value="add">Add (+)</option>
-                                        <option value="subtract">Deduct (-)</option>
-                                    </select>
-                                    <div class="flex gap-1">
-                                        <input type="number" step="0.01" id="new-mod-value" placeholder="Val"
-                                            class="w-16 px-2 py-1 border dark:border-gray-500 dark:bg-gray-600 dark:text-white rounded text-sm">
-                                        <button type="button" id="setting-add-modifier-btn"
-                                            class="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-sm flex-1">+</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="pt-4 border-t dark:border-gray-700 mt-4">
-                            <h4 class="font-bold text-gray-800 dark:text-white mb-2" data-i18n="set_receipt_config">
-                                Receipt Configuration</h4>
-                            <div class="space-y-2">
-                                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                                    <input type="checkbox" name="receiptShowLogo" id="setting-receiptShowLogo"
-                                        class="rounded text-blue-600 focus:ring-blue-500">
-                                    <span data-i18n="set_show_logo">Show Store Logo</span>
-                                </label>
-                                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                                    <input type="checkbox" name="receiptShowAddress" id="setting-receiptShowAddress"
-                                        class="rounded text-blue-600 focus:ring-blue-500">
-                                    <span data-i18n="set_show_address">Show Store Address</span>
-                                </label>
-                                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                                    <input type="checkbox" name="receiptShowDate" id="setting-receiptShowDate"
-                                        class="rounded text-blue-600 focus:ring-blue-500">
-                                    <span data-i18n="set_show_date">Show Date & Time</span>
-                                </label>
-                                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                                    <input type="checkbox" name="receiptShowQrCode" id="setting-receiptShowQrCode"
-                                        class="rounded text-blue-600 focus:ring-blue-500">
-                                    <span data-i18n="set_show_qr">Show QR Code</span>
-                                </label>
-                                <div id="qr-code-url-container" class="mt-2">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                                        data-i18n="set_qr_url">QR
-                                        Code
-                                        URL/Text</label>
-                                    <input type="text" name="receiptQrCodeUrl" id="setting-receiptQrCodeUrl"
-                                        class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
-                                        placeholder="https://example.com or any text">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                                data-i18n="set_receipt_header">Receipt
-                                Header Text</label>
-                            <textarea name="receiptHeader" id="setting-receiptHeader"
-                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
-                                rows="2"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                                data-i18n="set_receipt_footer">Receipt
-                                Footer Text</label>
-                            <textarea name="receiptFooter" id="setting-receiptFooter"
-                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
-                                rows="2"></textarea>
-                        </div>
-
-                        <div class="pt-4 flex gap-3">
-                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                                data-i18n="set_save">Save
-                                Settings</button>
-                            <button type="button" id="setting-preview-receipt-btn"
-                                class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
-                                data-i18n="set_preview_receipt">Preview
-                                Receipt</button>
-                        </div>
-                    </form>
                 </div>
 
-                <!-- Category & Data Management -->
-                <div class="space-y-6">
-                    <!-- Categories -->
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
-                            data-i18n="set_category_mgmt">
-                            Category Management</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input type="text" id="new-category-name" placeholder="New Category Name"
-                                data-i18n="set_new_category"
-                                class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
-                            <button id="setting-add-category-btn"
-                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                                data-i18n="set_add">Add</button>
+                <!-- Loyalty Program Configuration -->
+                <div class="border-t dark:border-gray-700 pt-4 mt-2">
+                    <h4 class="font-bold text-gray-800 dark:text-white mb-2">Loyalty Program</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Earning Rate
+                                (Points per $1)</label>
+                            <input type="number" name="pointsEarningRate" id="setting-pointsEarningRate" step="0.1"
+                                min="0" placeholder="Default: 1"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                         </div>
-                        <ul id="settings-category-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
-                            <!-- Injected -->
-                        </ul>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Redemption
+                                Rate (Points for $1)</label>
+                            <input type="number" name="pointsRedemptionRate" id="setting-pointsRedemptionRate" step="1"
+                                min="1" placeholder="Default: 100"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                        </div>
                     </div>
+                </div>
 
-                    <!-- Data Management -->
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
-                            data-i18n="set_data_mgmt">
-                            Data Management</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Backup your store data or restore from
-                            a previous backup.</p>
-                        <div class="flex flex-col gap-3">
-                            <button id="setting-export-btn"
-                                class="bg-gray-800 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center"
-                                data-i18n="set_export">Export
-                                Data (JSON)</button>
-                            <div class="relative">
-                                <input type="file" id="import-file" class="hidden">
-                                <button onclick="document.getElementById('import-file').click()"
-                                    class="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-center"
-                                    data-i18n="set_import">Import
-                                    Data (JSON)</button>
+                <!-- Order Modifiers (Tax, Discount, Fees) -->
+                <div class="border-t dark:border-gray-700 pt-4 mt-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Global Order
+                        Adjustments (Taxes, Fees, Discounts)</label>
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                        <table class="w-full text-sm text-left mb-3">
+                            <thead class="text-gray-500 dark:text-gray-400 font-medium border-b dark:border-gray-600">
+                                <tr>
+                                    <th class="pb-2">Name</th>
+                                    <th class="pb-2">Type</th>
+                                    <th class="pb-2">Value</th>
+                                    <th class="pb-2 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="settings-modifiers-list"
+                                class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-800 dark:text-gray-200">
+                                <!-- Injected -->
+                            </tbody>
+                        </table>
+
+                        <div class="grid grid-cols-4 gap-2">
+                            <input type="text" id="new-mod-name" placeholder="Name (e.g. VAT)"
+                                class="col-span-1 px-2 py-1 border dark:border-gray-500 dark:bg-gray-600 dark:text-white rounded text-sm">
+                            <select id="new-mod-type"
+                                class="col-span-1 px-2 py-1 border dark:border-gray-500 dark:bg-gray-600 dark:text-white rounded text-sm">
+                                <option value="percent">% (Percentage)</option>
+                                <option value="fixed">Fixed Amount</option>
+                            </select>
+                            <select id="new-mod-action"
+                                class="col-span-1 px-2 py-1 border dark:border-gray-500 dark:bg-gray-600 dark:text-white rounded text-sm">
+                                <option value="add">Add (+)</option>
+                                <option value="subtract">Deduct (-)</option>
+                            </select>
+                            <div class="flex gap-1">
+                                <input type="number" step="0.01" id="new-mod-value" placeholder="Val"
+                                    class="w-16 px-2 py-1 border dark:border-gray-500 dark:bg-gray-600 dark:text-white rounded text-sm">
+                                <button type="button" id="setting-add-modifier-btn"
+                                    class="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-sm flex-1">+</button>
                             </div>
-                            <button id="setting-reset-btn"
-                                class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-center mt-2"
-                                data-i18n="set_reset">Reset
-                                System (Factory Reset)</button>
                         </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t dark:border-gray-700 mt-4">
+                    <h4 class="font-bold text-gray-800 dark:text-white mb-2" data-i18n="set_receipt_config">
+                        Receipt Configuration</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                            <input type="checkbox" name="receiptShowLogo" id="setting-receiptShowLogo"
+                                class="rounded text-blue-600 focus:ring-blue-500">
+                            <span data-i18n="set_show_logo">Show Store Logo</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                            <input type="checkbox" name="receiptShowAddress" id="setting-receiptShowAddress"
+                                class="rounded text-blue-600 focus:ring-blue-500">
+                            <span data-i18n="set_show_address">Show Store Address</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                            <input type="checkbox" name="receiptShowDate" id="setting-receiptShowDate"
+                                class="rounded text-blue-600 focus:ring-blue-500">
+                            <span data-i18n="set_show_date">Show Date & Time</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                            <input type="checkbox" name="receiptShowQrCode" id="setting-receiptShowQrCode"
+                                class="rounded text-blue-600 focus:ring-blue-500">
+                            <span data-i18n="set_show_qr">Show QR Code</span>
+                        </label>
+                        <div id="qr-code-url-container" class="mt-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                data-i18n="set_qr_url">QR
+                                Code
+                                URL/Text</label>
+                            <input type="text" name="receiptQrCodeUrl" id="setting-receiptQrCodeUrl"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                                placeholder="https://example.com or any text">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        data-i18n="set_receipt_header">Receipt
+                        Header Text</label>
+                    <textarea name="receiptHeader" id="setting-receiptHeader"
+                        class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                        rows="2"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        data-i18n="set_receipt_footer">Receipt
+                        Footer Text</label>
+                    <textarea name="receiptFooter" id="setting-receiptFooter"
+                        class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                        rows="2"></textarea>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                        data-i18n="set_save">Save
+                        Settings</button>
+                    <button type="button" id="setting-preview-receipt-btn"
+                        class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                        data-i18n="set_preview_receipt">Preview
+                        Receipt</button>
+                </div>
+                </form>
+            </div>
+
+            <!-- Category & Data Management -->
+            <div class="space-y-6">
+                <!-- Categories -->
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
+                        data-i18n="set_category_mgmt">
+                        Category Management</h3>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="new-category-name" placeholder="New Category Name"
+                            data-i18n="set_new_category"
+                            class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                        <button id="setting-add-category-btn"
+                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                            data-i18n="set_add">Add</button>
+                    </div>
+                    <ul id="settings-category-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                        <!-- Injected -->
+                    </ul>
+                </div>
+
+                <!-- Data Management -->
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
+                        data-i18n="set_data_mgmt">
+                        Data Management</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Backup your store data or restore from
+                        a previous backup.</p>
+                    <div class="flex flex-col gap-3">
+                        <button id="setting-export-btn"
+                            class="bg-gray-800 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-center"
+                            data-i18n="set_export">Export
+                            Data (JSON)</button>
+                        <div class="relative">
+                            <input type="file" id="import-file" class="hidden">
+                            <button onclick="document.getElementById('import-file').click()"
+                                class="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-center"
+                                data-i18n="set_import">Import
+                                Data (JSON)</button>
+                        </div>
+                        <button id="setting-reset-btn"
+                            class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-center mt-2"
+                            data-i18n="set_reset">Reset
+                            System (Factory Reset)</button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- User Management (Admin Only) -->
-            <div id="user-management-section" class="mt-6">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white" data-i18n="set_user_mgmt">User
-                    Management</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Add / Edit User -->
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
-                            data-i18n="set_user_add_edit">
-                            Add / Edit User</h3>
-                        <input type="hidden" id="edit-user-id" value="">
-                        <div class="space-y-3">
+        <!-- User Management (Admin Only) -->
+        <div id="user-management-section" class="mt-6">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white" data-i18n="set_user_mgmt">User
+                Management</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Add / Edit User -->
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
+                        data-i18n="set_user_add_edit">
+                        Add / Edit User</h3>
+                    <input type="hidden" id="edit-user-id" value="">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                data-i18n="set_user_name">Name</label>
+                            <input type="text" id="new-user-name" placeholder="User name" data-i18n="set_user_name_ph"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                                    data-i18n="set_user_name">Name</label>
-                                <input type="text" id="new-user-name" placeholder="User name"
-                                    data-i18n="set_user_name_ph"
+                                    data-i18n="set_user_role">Role</label>
+                                <select id="new-user-role"
                                     class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                                    <option value="cashier" data-i18n="role_cashier">Cashier</option>
+                                    <option value="manager" data-i18n="role_manager">Manager</option>
+                                    <option value="admin" data-i18n="role_admin">Admin</option>
+                                </select>
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                                        data-i18n="set_user_role">Role</label>
-                                    <select id="new-user-role"
-                                        class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
-                                        <option value="cashier" data-i18n="role_cashier">Cashier</option>
-                                        <option value="manager" data-i18n="role_manager">Manager</option>
-                                        <option value="admin" data-i18n="role_admin">Admin</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                                        data-i18n="set_user_pin">PIN</label>
-                                    <input type="password" id="new-user-pin" placeholder="Min 4 digits"
-                                        data-i18n="set_user_pin_ph" maxlength="6"
-                                        class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono tracking-widest">
-                                </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                    data-i18n="set_user_pin">PIN</label>
+                                <input type="password" id="new-user-pin" placeholder="Min 4 digits"
+                                    data-i18n="set_user_pin_ph" maxlength="6"
+                                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono tracking-widest">
                             </div>
-                            <button id="add-user-btn"
-                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
-                                data-i18n="set_user_add_btn">Add
-                                User</button>
                         </div>
-                    </div>
-
-                    <!-- Users List -->
-                    <div
-                        class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white" data-i18n="set_user_list">
-                            Users</h3>
-                        <div class="overflow-x-auto max-h-80 overflow-y-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
-                                    <tr>
-                                        <th class="p-3" data-i18n="set_user_col_name">Name</th>
-                                        <th class="p-3" data-i18n="set_user_col_role">Role</th>
-                                        <th class="p-3" data-i18n="set_user_col_status">Status</th>
-                                        <th class="p-3" data-i18n="set_user_col_actions">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="user-table-body"
-                                    class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
-                                    <!-- Injected -->
-                                </tbody>
-                            </table>
-                        </div>
+                        <button id="add-user-btn"
+                            class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                            data-i18n="set_user_add_btn">Add
+                            User</button>
                     </div>
                 </div>
 
-                <!-- Shift History -->
+                <!-- Users List -->
                 <div
-                    class="mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white" data-i18n="set_shift_history">
-                        Shift History</h3>
-                    <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white" data-i18n="set_user_list">
+                        Users</h3>
+                    <div class="overflow-x-auto max-h-80 overflow-y-auto">
                         <table class="w-full text-left">
                             <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
                                 <tr>
-                                    <th class="p-3" data-i18n="set_shift_col_user">User</th>
-                                    <th class="p-3" data-i18n="set_shift_col_in">Clock In</th>
-                                    <th class="p-3" data-i18n="set_shift_col_out">Clock Out</th>
-                                    <th class="p-3" data-i18n="set_shift_col_duration">Duration</th>
-                                    <th class="p-3" data-i18n="set_shift_col_status">Status</th>
+                                    <th class="p-3" data-i18n="set_user_col_name">Name</th>
+                                    <th class="p-3" data-i18n="set_user_col_role">Role</th>
+                                    <th class="p-3" data-i18n="set_user_col_status">Status</th>
+                                    <th class="p-3" data-i18n="set_user_col_actions">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="shift-table-body"
+                            <tbody id="user-table-body"
                                 class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
                                 <!-- Injected -->
                             </tbody>
@@ -1085,6 +1145,31 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Shift History -->
+            <div
+                class="mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <h3 class="text-lg font-bold p-6 pb-2 text-gray-800 dark:text-white" data-i18n="set_shift_history">
+                    Shift History</h3>
+                <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
+                            <tr>
+                                <th class="p-3" data-i18n="set_shift_col_user">User</th>
+                                <th class="p-3" data-i18n="set_shift_col_in">Clock In</th>
+                                <th class="p-3" data-i18n="set_shift_col_out">Clock Out</th>
+                                <th class="p-3" data-i18n="set_shift_col_duration">Duration</th>
+                                <th class="p-3" data-i18n="set_shift_col_status">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shift-table-body"
+                            class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+                            <!-- Injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
         </div>
 
     </main>
@@ -1237,6 +1322,49 @@
         </div>
     </div>
 
+    <!-- Customer Modal -->
+    <div id="customer-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold dark:text-white" id="customer-modal-title">Add Customer</h3>
+                <button onclick="Customers.closeCustomerModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">&times;</button>
+            </div>
+            <form id="customer-form" onsubmit="Customers.saveCustomer(event)">
+                <input type="hidden" id="customer-id">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                        <input type="text" id="customer-name" required
+                            class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
+                        <input type="text" id="customer-phone"
+                            class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                        <input type="email" id="customer-email"
+                            class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Loyalty Points</label>
+                        <input type="number" id="customer-points" min="0" placeholder="0"
+                            class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" onclick="Customers.closeCustomerModal()"
+                            class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Purchase Order Modal -->
     <div id="po-modal"
         class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
@@ -1301,6 +1429,34 @@
         </div>
     </div>
 
+    <!-- POS Customer Selection Modal -->
+    <div id="pos-customer-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-md p-6 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold dark:text-white">Select Customer</h3>
+                <button onclick="document.getElementById('pos-customer-modal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">&times;</button>
+            </div>
+            <div class="mb-4">
+                <input type="text" id="pos-customer-search" placeholder="Search by name, phone..."
+                    class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div class="flex-1 overflow-y-auto mb-4 border dark:border-gray-700 rounded-lg max-h-60">
+                <ul id="pos-customer-list" class="divide-y divide-gray-100 dark:divide-gray-700">
+                    <!-- Injected -->
+                </ul>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="Customers.openCustomerModal()"
+                    class="px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg">New
+                    Customer</button>
+                <button onclick="document.getElementById('pos-customer-modal').classList.add('hidden')"
+                    class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Confirmation Modal -->
     <div id="confirm-modal"
         class="fixed inset-0 z-[70] hidden flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
@@ -1341,6 +1497,7 @@
     <script src="js/modules/settings.js"></script>
     <script src="js/modules/suppliers.js"></script>
     <script src="js/modules/stock.js"></script>
+    <script src="js/modules/customers.js"></script>
 
     <!-- Main App -->
     <script src="js/app.js"></script>
