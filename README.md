@@ -78,7 +78,13 @@ The system uses `IndexedDB` for storage.
 - **Loyalty System:** Earn points on purchases (configurable rate). Redeem points for discounts (configurable rate). Manual adjustment of points is supported for admins/managers.
 - **Order Linking:** Link sales to specific customers for purchase history tracking.
 
-### E. Financial Reporting
+### E. Returns & Refunds
+- **Process Returns:** Search by Order ID and select items to return.
+- **Auto-Restock:** Option to automatically add returned items back to inventory.
+- **Refund Tracking:** Refunds are deducted from daily revenue calculations.
+- **History:** Order status updates to 'partially_refunded' or 'refunded'.
+
+### F. Financial Reporting
 - **Profit Calculation:**
     - `Gross Profit` (per order) = `Total Price` - `Total Cost Price`.
     - `Net Profit` (Overall) = `Total Revenue` (Sales + Extra Income) - `Total COGS` - `Total Expenses`.

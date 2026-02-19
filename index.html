@@ -138,6 +138,8 @@
                 <button id="nav-customers"
                     class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
                     data-i18n="nav_customers">Customers</button>
+                <button onclick="Returns.openReturnModal()"
+                    class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Returns</button>
 
                 <!-- Theme Toggle -->
                 <button id="theme-toggle-btn"
@@ -1487,6 +1489,92 @@
     <script src="js/utils.js"></script>
     <script src="js/db.js"></script>
 
+    <!-- Returns Modal -->
+    <div id="return-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div
+                class="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-xl">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white">Process Return / Refund</h3>
+                <button onclick="Returns.closeReturnModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="flex gap-2 mb-6">
+                    <input type="number" id="return-order-search" placeholder="Enter Order ID to Search..."
+                        class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        onkeypress="if(event.key === 'Enter') Returns.searchOrder(this.value)">
+                    <button onclick="Returns.searchOrder(document.getElementById('return-order-search').value)"
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium">
+                        Search
+                    </button>
+                </div>
+
+                <div id="return-order-details" class="hidden space-y-4">
+                    <div id="return-order-meta"
+                        class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border dark:border-gray-700"></div>
+
+                    <div>
+                        <h4 class="font-bold text-sm text-gray-700 dark:text-gray-300 mb-2">Select Items to Return</h4>
+                        <div class="border dark:border-gray-700 rounded-lg overflow-hidden">
+                            <div
+                                class="bg-gray-100 dark:bg-gray-700 p-2 flex justify-between text-xs font-bold text-gray-500 uppercase">
+                                <span>Item</span>
+                                <span>Return Qty</span>
+                            </div>
+                            <div id="return-order-items-list"
+                                class="max-h-60 overflow-y-auto bg-white dark:bg-gray-800"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason for
+                                Return</label>
+                            <select id="return-reason"
+                                class="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                                <option value="defective">Defective / Damaged</option>
+                                <option value="wrong_item">Wrong Item Sent</option>
+                                <option value="customer_changed_mind">Customer Changed Mind</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center pt-6">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="return-restock"
+                                    class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" checked>
+                                <span class="text-gray-700 dark:text-gray-300">Restock Items to Inventory</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center border border-blue-100 dark:border-blue-800">
+                        <span class="font-bold text-blue-800 dark:text-blue-300">Total Refund Amount:</span>
+                        <span id="return-total-amount"
+                            class="text-2xl font-bold text-blue-600 dark:text-blue-400">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-xl flex justify-end gap-2">
+                <button onclick="Returns.closeReturnModal()"
+                    class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg">Cancel</button>
+                <button onclick="Returns.processReturn()"
+                    class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold shadow-lg shadow-red-500/30">
+                    Process Refund
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modules -->
     <!-- Modules (Eager Loaded for offline compatibility) -->
     <script src="js/modules/auth.js"></script>
@@ -1498,6 +1586,7 @@
     <script src="js/modules/suppliers.js"></script>
     <script src="js/modules/stock.js"></script>
     <script src="js/modules/customers.js"></script>
+    <script src="js/modules/returns.js"></script>
 
     <!-- Main App -->
     <script src="js/app.js"></script>
