@@ -55,6 +55,23 @@ db.version(4).stores({
     customers: '++id, name, phone, email, points, tier, totalSpent'
 });
 
+// Version 5: Return & Refund System
+db.version(5).stores({
+    products: '++id, name, barcode, price, costPrice, stock, categoryId, supplierId, lowStockThreshold',
+    categories: '++id, name',
+    orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod, userId, shiftId, customerId, status', // Added status
+    settings: 'key',
+    expenses: '++id, description, amount, date, category',
+    income: '++id, description, amount, date, category',
+    users: '++id, name, pin, role, active',
+    shifts: '++id, userId, clockIn, clockOut, status',
+    suppliers: '++id, name, contact, email, phone, address',
+    purchaseOrders: '++id, supplierId, date, status, totalCost, items, receivedDate',
+    stockLogs: '++id, productId, changeAmount, reason, timestamp, note, userId',
+    customers: '++id, name, phone, email, points, tier, totalSpent',
+    returns: '++id, orderId, timestamp, totalRefund, items, reason, userId, customerId' // New table
+});
+
 // PIN hashing utility (SHA-256 via crypto.subtle)
 async function hashPin(pin) {
     const encoder = new TextEncoder();
@@ -211,6 +228,13 @@ window.DB = {
             // Currently simplified:
             return await db.products.filter(p => p.stock < (p.lowStockThreshold || 5)).count();
         } catch (e) { console.error(e); throw e; }
+    },
+
+    async getOrder(id) {
+        try { return await db.orders.get(id); } catch (e) { console.error(e); throw e; }
+    },
+    async updateOrder(id, updates) {
+        try { return await db.orders.update(id, updates); } catch (e) { console.error(e); throw e; }
     },
 
     // Expenses
@@ -395,6 +419,23 @@ window.DB = {
         try { return await db.customers.get(id); } catch (e) { console.error(e); throw e; }
     },
 
+    // --- Returns ---
+    async addReturn(returnData) {
+        try { return await db.returns.add(returnData); } catch (e) { console.error(e); throw e; }
+    },
+    async getReturns(page = null, limit = null) {
+        try {
+            let collection = db.returns.orderBy('timestamp').reverse();
+            if (page && limit) {
+                const total = await collection.count();
+                const data = await collection.offset((page - 1) * limit).limit(limit).toArray();
+                return { data, total };
+            }
+            return await collection.toArray();
+        } catch (e) { console.error(e); throw e; }
+    },
+
+
     // --- Data Import/Export ---
     async importData(jsonData) {
         try {
@@ -444,8 +485,9 @@ window.DB = {
             const purchaseOrders = await db.purchaseOrders.toArray();
             const stockLogs = await db.stockLogs.toArray();
             const customers = await db.customers.toArray();
+            const returns = await db.returns.toArray();
 
-            return { products, categories, settings, orders, expenses, income, users, shifts, suppliers, purchaseOrders, stockLogs, customers };
+            return { products, categories, settings, orders, expenses, income, users, shifts, suppliers, purchaseOrders, stockLogs, customers, returns };
         } catch (e) { console.error(e); throw e; }
     },
 

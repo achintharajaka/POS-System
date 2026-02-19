@@ -85,6 +85,12 @@ window.Reports = {
         const allExpenses = await DB.getExpenses();
         const allIncome = await DB.getIncome();
 
+        // Fetch Returns (Added for Refund Logic)
+        let allReturns = [];
+        try {
+            if (DB.getReturns) allReturns = await DB.getReturns();
+        } catch (e) { console.warn("Returns table not found or error fetching", e); }
+
         // Filter by Range
         const orders = allOrders.filter(o => o.timestamp >= startDate.getTime() && o.timestamp <= endDate.getTime());
         const expenses = allExpenses.filter(e => {
@@ -95,6 +101,7 @@ window.Reports = {
             const d = new Date(i.date);
             return d >= startDate && d <= endDate;
         });
+        const returns = allReturns.filter(r => r.timestamp >= startDate.getTime() && r.timestamp <= endDate.getTime());
 
         this.renderExpensesList(expenses);
         this.renderIncomeList(income);
@@ -111,16 +118,53 @@ window.Reports = {
             });
         });
 
+        // --- Refund & COGS Adjustment Logic ---
+        let totalRefunds = 0;
+        let cogsReduction = 0;
+
+        for (const ret of returns) {
+            totalRefunds += (ret.totalRefund || 0);
+
+            // If items were restocked, we should reverse the COGS for those items
+            if (ret.restocked && ret.items) {
+                // To get the accurate Cost Price at time of sale, we look up the original order
+                const originalOrder = allOrders.find(o => o.id === ret.orderId);
+                if (originalOrder) {
+                    ret.items.forEach(retItem => {
+                        const originalItem = originalOrder.items.find(i => i.id === retItem.id);
+                        if (originalItem) {
+                            cogsReduction += (parseFloat(originalItem.costPrice) || 0) * retItem.qty;
+                        }
+                    });
+                }
+            }
+        }
+
         const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
         const totalIncome = income.reduce((sum, inc) => sum + inc.amount, 0);
 
-        const totalRevenue = orderRevenue + totalIncome;
-        const netProfit = totalRevenue - cogs - totalExpenses;
+        // Net Metrics
+        const netOrderRevenue = orderRevenue - totalRefunds;
+        const netCogs = Math.max(0, cogs - cogsReduction);
+        const totalNetRevenue = netOrderRevenue + totalIncome;
+        const netProfit = totalNetRevenue - netCogs - totalExpenses;
 
         const { currencySymbol } = this.state.settings;
 
-        document.getElementById(DOM.REPORTS.REVENUE).innerText = Utils.formatCurrency(totalRevenue, currencySymbol);
-        document.getElementById(DOM.REPORTS.COGS).innerText = Utils.formatCurrency(cogs, currencySymbol);
+        // Update UI
+        // We show Net quantities, but maybe with a tooltip or smaller text for refunds if we had space.
+        // For now, updating the main numbers to reflect reality.
+
+        document.getElementById(DOM.REPORTS.REVENUE).innerHTML = `
+            ${Utils.formatCurrency(totalNetRevenue, currencySymbol)}
+            ${totalRefunds > 0 ? `<div class="text-xs text-red-400 font-normal">(-${Utils.formatCurrency(totalRefunds)} refunds)</div>` : ''}
+        `;
+
+        document.getElementById(DOM.REPORTS.COGS).innerHTML = `
+            ${Utils.formatCurrency(netCogs, currencySymbol)}
+             ${cogsReduction > 0 ? `<div class="text-xs text-green-600 font-normal">(-${Utils.formatCurrency(cogsReduction)} restocked)</div>` : ''}
+        `;
+
         document.getElementById(DOM.REPORTS.EXPENSES).innerText = Utils.formatCurrency(totalExpenses, currencySymbol);
 
         const netEl = document.getElementById(DOM.REPORTS.NET_PROFIT);
@@ -131,7 +175,7 @@ window.Reports = {
             await Utils.loadScript('js/lib/chart.js');
         }
 
-        this.renderChart(orders, expenses, income);
+        this.renderChart(orders, expenses, income, returns);
         this.renderOrderProfits(orders);
     },
 
@@ -169,10 +213,11 @@ window.Reports = {
             let cogs = 0;
             order.items.forEach(i => cogs += (parseFloat(i.costPrice) || 0) * i.qty);
 
-            // Gross Profit = Revenue - COGS
-            // Revenue here is order.total (including tax/mods) or subtotal? 
-            // Usually Gross Profit is Sales - COGS. 
-            // Let's use Total for now as it represents money in.
+            // Note: This per-order view doesn't easily show if *this specific order* was returned 
+            // without doing a lookup against the returns table.
+            // For MVP, we leave this as "Original Profit".
+            // If we wanted, we could mark it as "Returned".
+
             const profit = order.total - cogs;
             const margin = order.total > 0 ? ((profit / order.total) * 100).toFixed(1) : 0;
 
@@ -180,7 +225,7 @@ window.Reports = {
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
             tr.innerHTML = `
                 <td class="p-4 dark:text-gray-300">${Utils.formatDate(order.timestamp)}</td>
-                <td class="p-4 font-mono text-sm dark:text-gray-400">#${order.id}</td>
+                <td class="p-4 font-mono text-sm dark:text-gray-400">#${order.id} ${order.status === 'refunded' ? '<span class="text-xs text-red-500">(Refunded)</span>' : ''}</td>
                  <td class="p-4 dark:text-white">${Utils.formatCurrency(order.total, currencySymbol)}</td>
                 <td class="p-4 dark:text-gray-300">${Utils.formatCurrency(cogs, currencySymbol)}</td>
                 <td class="p-4 font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${Utils.formatCurrency(profit, currencySymbol)}</td>
@@ -212,7 +257,7 @@ window.Reports = {
     },
 
     // Chart
-    renderChart(orders, expenses, income) {
+    renderChart(orders, expenses, income, returns = []) {
         const ctx = document.getElementById(DOM.REPORTS.CHART);
         if (!ctx) return;
 
@@ -253,8 +298,21 @@ window.Reports = {
             }
         });
 
+        // Adjust chart for returns
+        returns.forEach(r => {
+            const d = new Date(r.timestamp).toISOString().slice(0, 10);
+            if (days[d]) {
+                days[d].revenue -= (r.totalRefund || 0); // Decrease revenue
+                // COGS adjustment is complex here without looking up every item, 
+                // but strictly we should decrease expenses (COGS) too if restocked.
+                // For chart simplicity, maybe we skip COGS adjustment or approximate?
+                // Let's rely on the simpler Net Profit view for exact numbers.
+                // Or we could subtract from expenses if we knew validity.
+            }
+        });
+
         const labels = Object.keys(days);
-        const revenueData = Object.values(days).map(x => x.revenue);
+        const revenueData = Object.values(days).map(x => Math.max(0, x.revenue)); // Don't show negative revenue on bar chart usually
         const expenseData = Object.values(days).map(x => x.expenses);
 
         if (this.state.chart) {
@@ -267,7 +325,7 @@ window.Reports = {
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Revenue',
+                        label: 'Net Revenue',
                         data: revenueData,
                         backgroundColor: '#3b82f6',
                         borderRadius: 4

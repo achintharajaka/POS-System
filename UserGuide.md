@@ -7,9 +7,10 @@ Welcome to the Point of Sale (POS) System! This guide will help you understand h
 2.  [Inventory Management](#inventory-management)
 3.  [Customer Management](#customer-management)
 4.  [Point of Sale (Making Sales)](#point-of-sale-making-sales)
-5.  [Reports & Finances](#reports--finances)
-6.  [Settings & Data](#settings--data)
-7.  [User Management (Admin)](#user-management-admin)
+5.  [Returns & Refunds](#returns--refunds)
+6.  [Reports & Finances](#reports--finances)
+7.  [Settings & Data](#settings--data)
+8.  [User Management (Admin)](#user-management-admin)
 8.  [Keyboard Shortcuts](#keyboard-shortcuts)
 9.  [Troubleshooting & Debugging](#troubleshooting--debugging)
 
@@ -142,7 +143,29 @@ This is where you'll spend most of your time.
 
 ---
 
-## 5. Reports & Finances
+---
+
+## 5. Returns & Refunds
+
+Handle customer returns smoothly.
+
+1.  **Open Returns:**  
+    Click the **Returns** button in the top navigation bar.
+2.  **Find Order:**  
+    Enter the **Order ID** (from the receipt) and click **Search**.
+3.  **Select Items:**  
+    - You will see the items in the order.
+    - Enter the **Quantity** being returned for each item.
+    - Select a **Reason** (e.g., Defective, Changed Mind).
+4.  **Options:**  
+    - **Restock Items:** Keep this checked (default) to add the items back to your inventory count. Uncheck it if the items are damaged and cannot be resold.
+5.  **Process:**  
+    - Click **Process Refund**. 
+    - The Total Refund Amount will be recorded, and the order status updated.
+
+---
+
+## 6. Reports & Finances
 
 Track how your business is doing.
 

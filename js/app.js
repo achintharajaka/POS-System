@@ -54,6 +54,7 @@ const App = {
         if (window.Stock) mixin(window.Stock);
         if (this.initReportsUI) this.initReportsUI();
         if (window.Customers) mixin(window.Customers);
+        if (window.Returns) mixin(window.Returns);
         if (window.Shortcuts) {
             mixin(window.Shortcuts);
             window.Shortcuts.init();
