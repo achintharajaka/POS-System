@@ -6,10 +6,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 
 ## 🔴 High-Priority — New Features
 
-### 3. Return & Refund System
-- Process full or partial returns against existing orders
-- Auto-restock returned items back to inventory
-- Track refund history with reason codes
 
 ### 4. Payment Method Selection at Checkout
 - Currently hardcoded to `'cash'` — the UI has Cash/Card/Online options but they're **not wired up**
