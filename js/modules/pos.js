@@ -8,7 +8,8 @@ window.POS = {
     state: {
         // ... other state
         currentCustomer: null,
-        cartModifiers: []
+        cartModifiers: [],
+        payments: [] // For split payments
     },
 
     async renderPOS() {
@@ -457,6 +458,12 @@ window.POS = {
                             <span class="text-xs font-medium">Online</span>
                         </button>
                     </div>
+                    <button onclick="app.openSplitPaymentModal()" class="w-full mt-2 py-2 border border-blue-500 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                        ${this.state.paymentMethod === 'split' ? 'Manage Split Payment' : 'Split Payment / Mixed'}
+                    </button>
+                    <div id="split-payment-summary" class="${this.state.paymentMethod === 'split' ? '' : 'hidden'} mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm">
+                        <!-- Summary injected here -->
+                    </div>
                 </div>
                 <button onclick="app.checkout()" class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay Now</button>
                 <button onclick="app.clearCart()" class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors mt-2">Clear Cart</button>
@@ -471,13 +478,11 @@ window.POS = {
         }
 
         const subtotal = this.state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-
-        // Calculate Modifiers Snapshot
-        const orderModifiers = [];
         let runningTotal = subtotal;
 
         // Combine global modifiers and cart-specific modifiers (like redemption)
         const allModifiers = (this.state.modifiers || []).concat(this.state.cartModifiers || []);
+        const orderModifiers = [];
 
         allModifiers.forEach(mod => {
             let amount = 0;
@@ -500,14 +505,50 @@ window.POS = {
         });
 
         if (runningTotal < 0) runningTotal = 0;
+        const finalTotal = parseFloat(runningTotal.toFixed(2)); // Ensure precision
+
+        // Split Payment Validation
+        let assignedPayments = [];
+        if (this.state.paymentMethod === 'split') {
+            const totalPaid = this.state.payments.reduce((sum, p) => sum + p.amount, 0);
+            // Allow for small floating point diffs
+            if (Math.abs(totalPaid - finalTotal) > 0.01) {
+                // If total paid is less, error.
+                if (totalPaid < finalTotal) {
+                    Utils.showToast(`Insufficient payment! Paid: $${totalPaid.toFixed(2)}, Due: $${finalTotal.toFixed(2)}`, "error");
+                    return;
+                }
+                // If total paid is more, assume change if cash is involved, or strictly require match?
+                // For simplicity, let's treat excess as Change (Cash) if a cash payment exists, or just record it as 'Paid'.
+                // Ideally, we shouldn't allow Card > Total.
+
+                // Let's prompt or just toast?
+                // Actually, let's just allow it and record the change in one of the payments? 
+                // No, typically we render 'Change: $x'.
+                // Let's checking if the "Change" is covered by a Cash payment.
+                const cashPayment = this.state.payments.find(p => p.method === 'cash');
+                if (totalPaid > finalTotal && !cashPayment) {
+                    Utils.showToast("Overpayment without Cash! Please adjust amounts.", "error");
+                    return;
+                }
+            }
+            assignedPayments = [...this.state.payments];
+        } else {
+            // Single payment method
+            assignedPayments = [{
+                method: this.state.paymentMethod || 'cash',
+                amount: finalTotal
+            }];
+        }
 
         const order = {
             timestamp: Date.now(),
             subtotal: subtotal,
             modifiers: orderModifiers, // Save snapshot
-            total: runningTotal,
+            total: finalTotal,
             items: [...this.state.cart],
-            paymentMethod: this.state.paymentMethod,
+            paymentMethod: this.state.paymentMethod, // 'split', 'cash', 'card', 'online'
+            payments: assignedPayments, // NEW: Detailed payment breakdown
             userId: this.state.currentUser ? this.state.currentUser.id : null,
             userName: this.state.currentUser ? this.state.currentUser.name : 'Unknown',
             shiftId: this.state.currentShift ? this.state.currentShift.id : null,
@@ -562,7 +603,7 @@ window.POS = {
                 }
             }
 
-            // Generate QR Code
+            // Generate QR Code state logic... (reused)
             let qrCodeDataUri = null;
             if (this.state.settings.receiptShowQrCode && this.state.settings.receiptQrCodeUrl) {
                 try {
@@ -599,6 +640,8 @@ window.POS = {
 
             this.state.cart = [];
             this.state.cartModifiers = [];
+            this.state.payments = [];
+            this.state.paymentMethod = 'cash'; // Reset
             this.state.currentCustomer = null;
             this.renderCart();
 
@@ -610,7 +653,135 @@ window.POS = {
             console.error("Checkout error:", err);
             Utils.logError('checkout', err);
             Utils.showToast("Checkout failed. Check console.", "error");
+            if (receiptWindow) receiptWindow.close();
         }
+    },
+
+    // --- Split Payment Logic ---
+
+    openSplitPaymentModal() {
+        // Calculate current total
+        let subtotal = 0;
+        this.state.cart.forEach(item => subtotal += item.price * item.qty);
+        let runningTotal = subtotal;
+
+        const allModifiers = (this.state.modifiers || []).concat(this.state.cartModifiers || []);
+        allModifiers.forEach(mod => {
+            let amount = 0;
+            if (mod.type === 'percent') amount = subtotal * (mod.value / 100);
+            else amount = mod.value;
+            if (mod.rate === 'subtract') runningTotal -= amount;
+            else runningTotal += amount;
+        });
+        if (runningTotal < 0) runningTotal = 0;
+
+        // Reset if starting fresh, or keep if editing? 
+        // Let's keep existing split state if method is 'split', else init empty.
+        if (this.state.paymentMethod !== 'split') {
+            this.state.payments = [];
+            this.state.paymentMethod = 'split';
+        }
+
+        // Render Modal content dynamically
+        this.renderSplitPaymentModalContent(runningTotal);
+
+        document.getElementById('pos-split-modal').classList.remove('hidden');
+    },
+
+    renderSplitPaymentModalContent(totalDue) {
+        const listObj = document.getElementById('pos-split-list');
+        const remainingObj = document.getElementById('pos-split-remaining');
+
+        if (!listObj) return;
+
+        // Calculate paid
+        const totalPaid = this.state.payments.reduce((sum, p) => sum + p.amount, 0);
+        const remaining = totalDue - totalPaid;
+
+        remainingObj.innerText = Utils.formatCurrency(remaining > 0 ? remaining : 0, this.state.settings.currencySymbol);
+
+        // Render List
+        listObj.innerHTML = '';
+        this.state.payments.forEach((p, index) => {
+            const div = document.createElement('div');
+            div.className = "flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded mb-2";
+            div.innerHTML = `
+                <span class="capitalize font-bold text-gray-700 dark:text-gray-300">${p.method}</span>
+                <div class="flex items-center gap-2">
+                    <span class="font-mono text-gray-800 dark:text-gray-200">${Utils.formatCurrency(p.amount, this.state.settings.currencySymbol)}</span>
+                    <button onclick="app.removeSplitPayment(${index}, ${totalDue})" class="text-red-500 hover:text-red-700">&times;</button>
+                </div>
+            `;
+            listObj.appendChild(div);
+        });
+
+        // Update Summary in Cart
+        this.updateSplitSummary(totalDue, totalPaid);
+    },
+
+    addSplitPayment() {
+        // Check input
+        const methodEl = document.getElementById('split-method-select');
+        const amountEl = document.getElementById('split-amount-input');
+
+        const method = methodEl.value;
+        const amount = parseFloat(amountEl.value);
+
+        if (!amount || amount <= 0) {
+            Utils.showToast("Invalid Amount", "error");
+            return;
+        }
+
+        // Recalculate total for limit check
+        let subtotal = 0;
+        this.state.cart.forEach(item => subtotal += item.price * item.qty);
+        let runningTotal = subtotal;
+        const allModifiers = (this.state.modifiers || []).concat(this.state.cartModifiers || []);
+        allModifiers.forEach(mod => {
+            let val = (mod.type === 'percent') ? subtotal * (mod.value / 100) : mod.value;
+            if (mod.rate === 'subtract') runningTotal -= val;
+            else runningTotal += val;
+        });
+        if (runningTotal < 0) runningTotal = 0;
+
+        // Check if overpaying? (Allowed for cash, maybe not for others, but let's just add it)
+        this.state.payments.push({ method, amount });
+
+        amountEl.value = '';
+        this.renderSplitPaymentModalContent(runningTotal);
+    },
+
+    removeSplitPayment(index, totalDue) {
+        this.state.payments.splice(index, 1);
+        this.renderSplitPaymentModalContent(totalDue);
+    },
+
+    closeSplitModal() {
+        document.getElementById('pos-split-modal').classList.add('hidden');
+        this.renderCart();
+    },
+
+    updateSplitSummary(total, paid) {
+        const summary = document.getElementById('split-payment-summary');
+        if (!summary) return;
+
+        const remaining = total - paid;
+        let text = '';
+        let colorClass = '';
+
+        if (Math.abs(remaining) < 0.01) {
+            text = "Fully Paid";
+            colorClass = "text-green-600 dark:text-green-400";
+        } else if (remaining > 0) {
+            text = `Remaining: ${Utils.formatCurrency(remaining, this.state.settings.currencySymbol)}`;
+            colorClass = "text-red-600 dark:text-red-400";
+        } else {
+            text = `Change: ${Utils.formatCurrency(Math.abs(remaining), this.state.settings.currencySymbol)}`;
+            colorClass = "text-blue-600 dark:text-blue-400";
+        }
+
+        summary.innerHTML = `<div class="font-bold cursor-pointer ${colorClass}" onclick="app.openSplitPaymentModal()">${text}</div>`;
+        summary.classList.remove('hidden');
     }
 
 };
