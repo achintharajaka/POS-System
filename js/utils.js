@@ -209,7 +209,12 @@ window.Utils = {
                     </div>
                     <div class="border-bottom"></div>
                     <div class="text-center py-2" style="font-size: 0.9em;">
-                        <strong>Payment Method:</strong> ${(order.paymentMethod || 'Cash').toUpperCase()}
+                        ${order.paymentMethod === 'split' && order.payments ?
+                '<strong>Payment Method: Split</strong><br>' +
+                order.payments.map(p => `<span>${p.method.toUpperCase()}: ${Utils.formatCurrency(p.amount, settings.currencySymbol)}</span>`).join('<br>')
+                :
+                `<strong>Payment Method:</strong> ${(order.paymentMethod || 'Cash').toUpperCase()}`
+            }
                     </div>
                     <div class="border-bottom"></div>
                     <table>
