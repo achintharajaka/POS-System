@@ -125,7 +125,9 @@ This is where you'll spend most of your time.
 
 ### Processing an Order
 1.  **Add Items:** Click on product cards in the grid.
-    - You can **Search** by name or **Filter** by category.
+    - You can **Search** by name (now typo-tolerant, so approximate matches will work!) or **Filter** by category.
+    - **Favorites:** Click the ⭐/☆ icon on any product card to mark it as a favorite. 
+    - **Quick Filters:** Use the category dropdown to filter by **"⭐ Favorites"** or **"🕒 Recently Sold"** for faster checkout.
     - Clicking multiple times increases quantity.
 2.  **Manage Cart & Customers:**
     - **Select Customer:** Click **+ Select Customer** to link the order.

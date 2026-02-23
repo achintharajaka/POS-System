@@ -22,9 +22,24 @@ window.POS = {
         const select = document.getElementById(DOM.POS.CATEGORY_FILTER);
         if (!select) return;
         select.innerHTML = '<option value="">All Categories</option>';
+        select.innerHTML += '<option value="__favorites__">⭐ Favorites</option>';
+        select.innerHTML += '<option value="__recent__">🕒 Recently Sold</option>';
         this.state.categories.forEach(cat => {
             select.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
         });
+    },
+
+    async toggleFavorite(productId, currentlyFavorite) {
+        try {
+            await DB.updateProduct(productId, { isFavorite: !currentlyFavorite });
+            // Re-render
+            const searchInput = document.getElementById(DOM.POS.SEARCH);
+            const catFilter = document.getElementById(DOM.POS.CATEGORY_FILTER);
+            this.filterProducts(searchInput ? searchInput.value : '', catFilter ? catFilter.value : '');
+        } catch (e) {
+            console.error("Failed to toggle favorite", e);
+            Utils.showToast("Failed to update favorite status", "error");
+        }
     },
 
     // Customer Selection Logic
@@ -151,7 +166,7 @@ window.POS = {
 
             products.forEach(prod => {
                 const card = document.createElement('div');
-                card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm";
+                card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm relative";
                 card.onclick = () => this.addToCart(prod);
 
                 let imageHtml = `
@@ -165,6 +180,10 @@ window.POS = {
                 }
 
                 card.innerHTML = `
+                    <button class="absolute top-2 right-2 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm hover:scale-110 transition-transform ${prod.isFavorite ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}" 
+                            onclick="event.stopPropagation(); app.toggleFavorite(${prod.id}, ${!!prod.isFavorite})">
+                        ${prod.isFavorite ? '★' : '☆'}
+                    </button>
                     ${imageHtml}
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 line-clamp-2 text-sm">${Utils.sanitize(prod.name)}</h4>
                     <p class="text-blue-600 dark:text-blue-400 font-bold mt-1">${Utils.formatCurrency(prod.price, currencySymbol)}</p>
@@ -246,14 +265,25 @@ window.POS = {
             let collection = db.products.toCollection();
 
             if (categoryId) {
-                collection = db.products.where('categoryId').equals(parseInt(categoryId));
+                if (categoryId === '__favorites__') {
+                    collection = db.products.filter(p => !!p.isFavorite);
+                } else if (categoryId === '__recent__') {
+                    let recentIds = [];
+                    try {
+                        const recentIdsStr = localStorage.getItem('pos_recent_products');
+                        recentIds = JSON.parse(recentIdsStr) || [];
+                    } catch (e) { }
+                    collection = db.products.filter(p => recentIds.includes(p.id));
+                } else {
+                    collection = db.products.where('categoryId').equals(parseInt(categoryId));
+                }
             }
 
             if (searchTerm) {
                 const term = searchTerm.toLowerCase();
                 // if we used index for category, we need to filter for name
                 collection = collection.filter(p =>
-                    p.name.toLowerCase().includes(term) ||
+                    Utils.fuzzyMatch(term, p.name) ||
                     (p.barcode && p.barcode.includes(term))
                 );
             }
@@ -625,6 +655,15 @@ window.POS = {
 
             // Generate QR Code state logic... (reused)
             let qrCodeDataUri = null;
+
+            // Save Recent Products
+            try {
+                const currentRecentStr = localStorage.getItem('pos_recent_products');
+                let recentIds = currentRecentStr ? JSON.parse(currentRecentStr) : [];
+                const newIds = this.state.cart.map(i => i.id);
+                recentIds = [...new Set([...newIds, ...recentIds])].slice(0, 20);
+                localStorage.setItem('pos_recent_products', JSON.stringify(recentIds));
+            } catch (e) { console.error("Could not save recent products", e); }
             if (this.state.settings.receiptShowQrCode && this.state.settings.receiptQrCodeUrl) {
                 try {
                     qrCodeDataUri = await Utils.generateQRCode(this.state.settings.receiptQrCodeUrl);
