@@ -9,7 +9,8 @@ window.POS = {
         // ... other state
         currentCustomer: null,
         cartModifiers: [],
-        payments: [] // For split payments
+        payments: [], // For split payments
+        heldOrders: [] // For Order Hold / Park
     },
 
     async renderPOS() {
@@ -334,6 +335,25 @@ window.POS = {
         const container = document.getElementById(DOM.POS.CART_ITEMS);
         if (!container) return;
         container.innerHTML = '';
+
+        // --- Render cart header action buttons ---
+        const headerActions = document.getElementById('pos-cart-header-actions');
+        if (headerActions) {
+            const heldCount = (this.state.heldOrders || []).length;
+            headerActions.innerHTML = `
+                <button onclick="app.holdOrder()" title="Hold current order"
+                    class="flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 border border-amber-200 dark:border-amber-700 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Hold
+                </button>
+                ${heldCount > 0 ? `
+                <button onclick="app.openHeldOrdersModal()" title="View held orders"
+                    class="flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 border border-blue-200 dark:border-blue-700 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                    Held (${heldCount})
+                </button>` : ''}
+            `;
+        }
 
         // Render Customer Section
         const customerSection = document.createElement('div');
@@ -782,6 +802,113 @@ window.POS = {
 
         summary.innerHTML = `<div class="font-bold cursor-pointer ${colorClass}" onclick="app.openSplitPaymentModal()">${text}</div>`;
         summary.classList.remove('hidden');
+    },
+
+    // --- Order Hold / Park ---
+
+    holdOrder() {
+        if (!this.state.cart || this.state.cart.length === 0) {
+            Utils.showToast('Cart is empty — nothing to hold.', 'error');
+            return;
+        }
+
+        if (!this.state.heldOrders) this.state.heldOrders = [];
+
+        // Snapshot the current cart state
+        this.state.heldOrders.push({
+            heldAt: Date.now(),
+            cart: JSON.parse(JSON.stringify(this.state.cart)),
+            cartModifiers: JSON.parse(JSON.stringify(this.state.cartModifiers || [])),
+            currentCustomer: this.state.currentCustomer ? { ...this.state.currentCustomer } : null,
+            paymentMethod: this.state.paymentMethod || 'cash',
+            payments: JSON.parse(JSON.stringify(this.state.payments || []))
+        });
+
+        // Clear current cart
+        this.state.cart = [];
+        this.state.cartModifiers = [];
+        this.state.currentCustomer = null;
+        this.state.paymentMethod = 'cash';
+        this.state.payments = [];
+
+        this.renderCart();
+        Utils.showToast(`Order held! (${this.state.heldOrders.length} on hold)`);
+    },
+
+    openHeldOrdersModal() {
+        if (!this.state.heldOrders) this.state.heldOrders = [];
+        const listEl = document.getElementById('held-orders-list');
+        if (!listEl) return;
+
+        const { currencySymbol } = this.state.settings;
+        listEl.innerHTML = '';
+
+        if (this.state.heldOrders.length === 0) {
+            listEl.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 py-10">No held orders</div>';
+        } else {
+            this.state.heldOrders.forEach((held, index) => {
+                const subtotal = held.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+                const itemCount = held.cart.reduce((sum, item) => sum + item.qty, 0);
+                const previewNames = held.cart.slice(0, 3).map(i => Utils.sanitize(i.name)).join(', ');
+                const timeDiff = Math.round((Date.now() - held.heldAt) / 1000);
+                const timeLabel = timeDiff < 60 ? `${timeDiff}s ago` : `${Math.round(timeDiff / 60)}m ago`;
+
+                const card = document.createElement('div');
+                card.className = 'p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-100 dark:border-gray-600 flex flex-col gap-2';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-gray-800 dark:text-white text-sm">Hold #${index + 1}</div>
+                            <div class="text-xs text-gray-400 dark:text-gray-500">${timeLabel}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-blue-600 dark:text-blue-400">${Utils.formatCurrency(subtotal, currencySymbol)}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">${itemCount} item${itemCount !== 1 ? 's' : ''}</div>
+                        </div>
+                    </div>
+                    ${held.currentCustomer ? `<div class="text-xs text-blue-700 dark:text-blue-300 font-medium">👤 ${Utils.sanitize(held.currentCustomer.name)}</div>` : ''}
+                    <div class="text-xs text-gray-500 dark:text-gray-400 truncate">${previewNames}${held.cart.length > 3 ? ` +${held.cart.length - 3} more` : ''}</div>
+                    <div class="flex gap-2 mt-1">
+                        <button onclick="app.resumeHeldOrder(${index})" class="flex-1 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-colors">Resume</button>
+                        <button onclick="app.deleteHeldOrder(${index})" class="py-1.5 px-3 bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-800 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg transition-colors">Delete</button>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        document.getElementById('pos-held-orders-modal').classList.remove('hidden');
+    },
+
+    resumeHeldOrder(index) {
+        if (!this.state.heldOrders || !this.state.heldOrders[index]) return;
+
+        // Warn if current cart has items
+        if (this.state.cart && this.state.cart.length > 0) {
+            if (!confirm('Current cart has items. Hold it first or discard? Click OK to discard current cart and resume selected order.')) {
+                return;
+            }
+        }
+
+        const held = this.state.heldOrders.splice(index, 1)[0];
+
+        this.state.cart = held.cart;
+        this.state.cartModifiers = held.cartModifiers;
+        this.state.currentCustomer = held.currentCustomer;
+        this.state.paymentMethod = held.paymentMethod;
+        this.state.payments = held.payments;
+
+        document.getElementById('pos-held-orders-modal').classList.add('hidden');
+        this.renderCart();
+        Utils.showToast('Order resumed!');
+    },
+
+    deleteHeldOrder(index) {
+        if (!this.state.heldOrders) return;
+        this.state.heldOrders.splice(index, 1);
+        this.openHeldOrdersModal(); // Re-render modal
+        this.renderCart(); // Update badge
+        Utils.showToast('Held order deleted.', 'warning');
     }
 
 };
