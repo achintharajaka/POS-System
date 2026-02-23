@@ -7,11 +7,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 ## 🔴 High-Priority — New Features
 
 
-### 4. Payment Method Selection at Checkout
-- Currently hardcoded to `'cash'` — the UI has Cash/Card/Online options but they're **not wired up**
-- Add **split payment** support (e.g. part cash, part card)
-- Record payment method properly in orders
-
 ### 5. Barcode Scanner Integration (Improved)
 - The system mentions barcode support but there's **no keyboard listener** for scanner input
 - Add a global barcode listener that auto-adds products to cart when scanned
