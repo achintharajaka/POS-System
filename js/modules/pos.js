@@ -22,9 +22,24 @@ window.POS = {
         const select = document.getElementById(DOM.POS.CATEGORY_FILTER);
         if (!select) return;
         select.innerHTML = '<option value="">All Categories</option>';
+        select.innerHTML += '<option value="__favorites__">⭐ Favorites</option>';
+        select.innerHTML += '<option value="__recent__">🕒 Recently Sold</option>';
         this.state.categories.forEach(cat => {
             select.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
         });
+    },
+
+    async toggleFavorite(productId, currentlyFavorite) {
+        try {
+            await DB.updateProduct(productId, { isFavorite: !currentlyFavorite });
+            // Re-render
+            const searchInput = document.getElementById(DOM.POS.SEARCH);
+            const catFilter = document.getElementById(DOM.POS.CATEGORY_FILTER);
+            this.filterProducts(searchInput ? searchInput.value : '', catFilter ? catFilter.value : '');
+        } catch (e) {
+            console.error("Failed to toggle favorite", e);
+            Utils.showToast("Failed to update favorite status", "error");
+        }
     },
 
     // Customer Selection Logic
@@ -372,14 +387,25 @@ window.POS = {
             let collection = db.products.toCollection();
 
             if (categoryId) {
-                collection = db.products.where('categoryId').equals(parseInt(categoryId));
+                if (categoryId === '__favorites__') {
+                    collection = db.products.filter(p => !!p.isFavorite);
+                } else if (categoryId === '__recent__') {
+                    let recentIds = [];
+                    try {
+                        const recentIdsStr = localStorage.getItem('pos_recent_products');
+                        recentIds = JSON.parse(recentIdsStr) || [];
+                    } catch (e) { }
+                    collection = db.products.filter(p => recentIds.includes(p.id));
+                } else {
+                    collection = db.products.where('categoryId').equals(parseInt(categoryId));
+                }
             }
 
             if (searchTerm) {
                 const term = searchTerm.toLowerCase();
                 // if we used index for category, we need to filter for name
                 collection = collection.filter(p =>
-                    p.name.toLowerCase().includes(term) ||
+                    Utils.fuzzyMatch(term, p.name) ||
                     (p.barcode && p.barcode.includes(term))
                 );
             }
@@ -728,6 +754,15 @@ window.POS = {
 
             // Generate QR Code state logic... (reused)
             let qrCodeDataUri = null;
+
+            // Save Recent Products
+            try {
+                const currentRecentStr = localStorage.getItem('pos_recent_products');
+                let recentIds = currentRecentStr ? JSON.parse(currentRecentStr) : [];
+                const newIds = this.state.cart.map(i => i.id);
+                recentIds = [...new Set([...newIds, ...recentIds])].slice(0, 20);
+                localStorage.setItem('pos_recent_products', JSON.stringify(recentIds));
+            } catch (e) { console.error("Could not save recent products", e); }
             if (this.state.settings.receiptShowQrCode && this.state.settings.receiptQrCodeUrl) {
                 try {
                     qrCodeDataUri = await Utils.generateQRCode(this.state.settings.receiptQrCodeUrl);
