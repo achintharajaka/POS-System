@@ -328,16 +328,56 @@
                             <option value="" data-i18n="pos_all_categories">All Categories</option>
                         </select>
                     </div>
-                    <div id="pos-products-grid"
-                        class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-900">
-                        <!-- Products injected here -->
+                    <div class="overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-900" id="pos-main-scroll-area">
+                        <!-- Recently Sold Section -->
+                        <div id="pos-recently-sold-section"
+                            class="hidden p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 text-sm flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Recently Sold
+                            </h3>
+                            <div id="pos-recently-sold-grid" class="flex gap-4 overflow-x-auto pb-2 snap-x">
+                                <!-- Items injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Favorites Section -->
+                        <div id="pos-favorites-section"
+                            class="hidden p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-3 text-sm flex items-center gap-2">
+                                <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                                Quick Access / Favorites
+                            </h3>
+                            <div id="pos-favorites-grid" class="flex gap-4 overflow-x-auto pb-2 snap-x">
+                                <!-- Items injected here -->
+                            </div>
+                        </div>
+
+                        <!-- All Products Grid -->
+                        <div class="px-4 pt-4 pb-2">
+                            <h3 id="pos-all-products-title"
+                                class="font-bold text-gray-700 dark:text-gray-300 text-sm mb-2 hidden">All Products</h3>
+                        </div>
+                        <div id="pos-products-grid"
+                            class="p-4 pt-0 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <!-- Products injected here -->
+                        </div>
                     </div>
                 </div>
 
                 <!-- Right: Cart -->
                 <div
                     class="w-full md:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
-                    <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center gap-2">
+                    <div
+                        class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center gap-2">
                         <h3 class="font-bold text-lg text-gray-800 dark:text-white" data-i18n="pos_current_order">
                             Current Order</h3>
                         <div class="flex gap-2 flex-shrink-0" id="pos-cart-header-actions">
@@ -1579,15 +1619,21 @@
     </div>
 
     <!-- Held Orders Modal -->
-    <div id="pos-held-orders-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+    <div id="pos-held-orders-modal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+        <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-700">
                 <div>
                     <h3 class="font-bold text-lg text-gray-800 dark:text-white">Held Orders</h3>
                     <p class="text-xs text-gray-400 dark:text-gray-500">Click Resume to restore an order to the cart</p>
                 </div>
-                <button onclick="document.getElementById('pos-held-orders-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                <button onclick="document.getElementById('pos-held-orders-modal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
             </div>
             <div id="held-orders-list" class="p-4 flex-1 overflow-y-auto space-y-3">
@@ -1595,40 +1641,51 @@
                 <div class="text-center text-gray-400 dark:text-gray-500 py-10">No held orders</div>
             </div>
             <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-end">
-                <button onclick="document.getElementById('pos-held-orders-modal').classList.add('hidden')" class="px-6 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 font-medium">Close</button>
+                <button onclick="document.getElementById('pos-held-orders-modal').classList.add('hidden')"
+                    class="px-6 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 font-medium">Close</button>
             </div>
         </div>
     </div>
 
     <!-- Split Payment Modal -->
-    <div id="pos-split-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+    <div id="pos-split-modal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+        <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-700">
                 <h3 class="font-bold text-lg text-gray-800 dark:text-white">Split Payment</h3>
-                <button onclick="app.closeSplitModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <button onclick="app.closeSplitModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
             <div class="p-4 flex-1 overflow-y-auto">
-                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center mb-4 border border-blue-100 dark:border-blue-800">
+                <div
+                    class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center mb-4 border border-blue-100 dark:border-blue-800">
                     <span class="font-bold text-blue-800 dark:text-blue-300">Remaining to Pay:</span>
-                    <span id="pos-split-remaining" class="text-2xl font-bold text-blue-600 dark:text-blue-400">$0.00</span>
+                    <span id="pos-split-remaining"
+                        class="text-2xl font-bold text-blue-600 dark:text-blue-400">$0.00</span>
                 </div>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Add Payment</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Add
+                            Payment</label>
                         <div class="flex gap-2">
-                            <select id="split-method-select" class="flex-1 px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            <select id="split-method-select"
+                                class="flex-1 px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                                 <option value="cash">Cash</option>
                                 <option value="card">Card</option>
                                 <option value="online">Online</option>
                             </select>
-                            <input type="number" id="split-amount-input" placeholder="Amount" class="w-24 px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
-                            <button onclick="app.addSplitPayment()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-bold">+</button>
+                            <input type="number" id="split-amount-input" placeholder="Amount"
+                                class="w-24 px-3 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            <button onclick="app.addSplitPayment()"
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-bold">+</button>
                         </div>
                     </div>
 
@@ -1643,7 +1700,8 @@
             </div>
 
             <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-end">
-                <button onclick="app.closeSplitModal()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Done</button>
+                <button onclick="app.closeSplitModal()"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Done</button>
             </div>
         </div>
     </div>

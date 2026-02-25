@@ -348,7 +348,7 @@ window.Inventory = {
             this.closeProductModal();
             await this.loadData();
             // renderInventory included in loadData flow usually if state updated, but here we manually refresh
-            if (this.state.activeTab === 'products') {
+            if (!this.state.activeTab || this.state.activeTab === 'products') {
                 this.renderInventory();
             } else {
                 // If we were on another tab, maybe switch back? Nah.

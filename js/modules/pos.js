@@ -125,56 +125,101 @@ window.POS = {
 
     async renderProducts(overrideProducts = null) {
         const grid = document.getElementById(DOM.POS.PRODUCTS_GRID);
+        const favGrid = document.getElementById('pos-favorites-grid');
+        const recentGrid = document.getElementById('pos-recently-sold-grid');
+        const favSection = document.getElementById('pos-favorites-section');
+        const recentSection = document.getElementById('pos-recently-sold-section');
+        const allTitle = document.getElementById('pos-all-products-title');
+
         if (!grid) return;
         grid.innerHTML = '';
+        if (favGrid) favGrid.innerHTML = '';
+        if (recentGrid) recentGrid.innerHTML = '';
+
         Utils.showLoading();
 
         try {
             let products = [];
+            const page = this.state.posPage || 1;
 
             if (overrideProducts) {
                 products = overrideProducts;
+                if (favSection) favSection.classList.add('hidden');
+                if (recentSection) recentSection.classList.add('hidden');
+                if (allTitle) allTitle.classList.add('hidden');
             } else {
-                // Default view (Paginated 50 items for grid)
-                // We could add pagination controls, but for now let's just show top 50 
-                // or implement infinite scroll if requested.
-                // User asked for pagination. Let's add simple Next/Prev at bottom of grid.
-                const page = this.state.posPage || 1;
                 const result = await DB.getProducts(page, 50);
                 products = result.data;
 
                 // We need to render pagination controls
                 this.renderPosPagination(result.total, page);
+
+                // Only show favorites and recent on page 1 of default view
+                if (page === 1) {
+                    if (allTitle) allTitle.classList.remove('hidden');
+
+                    // Render Favorites
+                    const allFavs = products.filter(p => p.isFavorite);
+                    if (allFavs.length > 0 && favSection) {
+                        favSection.classList.remove('hidden');
+                        allFavs.forEach(prod => {
+                            favGrid.appendChild(this.buildProductCard(prod));
+                        });
+                    } else if (favSection) {
+                        favSection.classList.add('hidden');
+                    }
+
+                    // Render Recently Sold
+                    try {
+                        const recentOrders = await DB.getOrders(1, 15);
+                        let recentItems = [];
+                        const seenIds = new Set();
+
+                        if (recentOrders.data && recentOrders.data.length > 0) {
+                            recentOrders.data.forEach(order => {
+                                if (order.items) {
+                                    order.items.forEach(item => {
+                                        if (!seenIds.has(item.id)) {
+                                            seenIds.add(item.id);
+                                            // Find the actual product object to get current stock and isFavorite status
+                                            // The item in order is a snapshot, but we just use the ID to lookup in our loaded array or DB
+                                            const fullProd = products.find(p => p.id === item.id);
+                                            if (fullProd) recentItems.push(fullProd);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
+                        recentItems = recentItems.slice(0, 10); // Top 10 recently sold unique items
+
+                        if (recentItems.length > 0 && recentSection) {
+                            recentSection.classList.remove('hidden');
+                            recentItems.forEach(prod => {
+                                recentGrid.appendChild(this.buildProductCard(prod));
+                            });
+                        } else if (recentSection) {
+                            recentSection.classList.add('hidden');
+                        }
+                    } catch (e) { console.error("Error loading recently sold", e); }
+
+                } else {
+                    if (favSection) favSection.classList.add('hidden');
+                    if (recentSection) recentSection.classList.add('hidden');
+                    if (allTitle) allTitle.classList.add('hidden');
+                }
             }
 
             const { currencySymbol } = this.state.settings;
 
             products.forEach(prod => {
-                const card = document.createElement('div');
-                card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm";
-                card.onclick = () => this.addToCart(prod);
-
-                let imageHtml = `
-                    <div class="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 mb-2">
-                        ${prod.name.charAt(0).toUpperCase()}
-                    </div>
-                `;
-
-                if (prod.image) {
-                    imageHtml = `<img src="${prod.image}" class="h-24 w-full object-cover rounded-lg mb-2" alt="${Utils.sanitize(prod.name)}">`;
-                }
-
-                card.innerHTML = `
-                    ${imageHtml}
-                    <h4 class="font-bold text-gray-800 dark:text-gray-200 line-clamp-2 text-sm">${Utils.sanitize(prod.name)}</h4>
-                    <p class="text-blue-600 dark:text-blue-400 font-bold mt-1">${Utils.formatCurrency(prod.price, currencySymbol)}</p>
-                    <div class="text-xs text-gray-400 mt-1">Stock: ${prod.stock}</div>
-                `;
-                grid.appendChild(card);
+                grid.appendChild(this.buildProductCard(prod));
             });
 
-            if (products.length === 0) {
-                grid.innerHTML = '<p class="text-center text-gray-500 col-span-full mt-10">No products found</p>';
+            if (products.length === 0 && !overrideProducts) {
+                grid.innerHTML = '<p class="text-center text-gray-500 col-span-full mt-10">No products found. Add products in Inventory.</p>';
+            } else if (products.length === 0 && overrideProducts) {
+                grid.innerHTML = '<p class="text-center text-gray-500 col-span-full mt-10">No matching products found.</p>';
             }
 
         } catch (e) {
@@ -182,6 +227,87 @@ window.POS = {
         } finally {
             Utils.hideLoading();
         }
+    },
+
+    buildProductCard(prod) {
+        const card = document.createElement('div');
+        // snap-align-start flex-shrink-0 for horizontal scrolling lists, and normal grid for grid
+        card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm relative shrink-0 min-w-[140px]";
+
+        let imageHtml = `
+            <div class="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 mb-2 pointer-events-none">
+                ${prod.name.charAt(0).toUpperCase()}
+            </div>
+        `;
+
+        if (prod.image) {
+            imageHtml = `<img src="${prod.image}" class="h-24 w-full object-cover rounded-lg mb-2 pointer-events-none" alt="${Utils.sanitize(prod.name)}">`;
+        }
+
+        const favColor = prod.isFavorite ? 'text-yellow-400 hover:text-yellow-500' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400';
+
+        card.innerHTML = `
+            <button class="absolute top-2 right-2 p-1 z-10 ${favColor} transition-colors favorite-btn" title="Toggle Favorite">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+            </button>
+            <div class="w-full h-full flex flex-col items-center justify-between" onclick="app.addToCart(${prod.id})">
+                <div class="w-full flex justify-center">${imageHtml}</div>
+                <h4 class="font-bold text-gray-800 dark:text-gray-200 line-clamp-2 text-sm pointer-events-none w-full">${Utils.sanitize(prod.name)}</h4>
+                <div class="mt-auto pt-1 pointer-events-none">
+                    <p class="text-blue-600 dark:text-blue-400 font-bold">${Utils.formatCurrency(prod.price, this.state.settings.currencySymbol)}</p>
+                    <div class="text-xs text-gray-400">Stock: ${prod.stock}</div>
+                </div>
+            </div>
+        `;
+
+        // Favorite toggle event
+        card.querySelector('.favorite-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            prod.isFavorite = !prod.isFavorite;
+            try {
+                await DB.updateProduct(prod.id, { isFavorite: prod.isFavorite });
+                this.renderProducts();
+            } catch (e) {
+                console.error("Failed to update favorite status", e);
+            }
+        });
+
+        return card;
+    },
+
+    addToCart(productIdOrObj) {
+        let product;
+        if (typeof productIdOrObj === 'object') {
+            product = productIdOrObj;
+            this.addToCartLogic(product);
+        } else {
+            // It's an ID
+            DB.getProduct(productIdOrObj).then(p => {
+                if (p) this.addToCartLogic(p);
+            });
+        }
+    },
+
+    addToCartLogic(product) {
+        if (product.stock <= 0) {
+            Utils.showToast("Out of Stock!", "error");
+            return;
+        }
+
+        const existingItem = this.state.cart.find(item => item.id === product.id);
+
+        if (existingItem) {
+            if (existingItem.qty >= product.stock) {
+                Utils.showToast("Max stock reached!", "error");
+                return;
+            }
+            existingItem.qty++;
+        } else {
+            this.state.cart.push({ ...product, qty: 1 });
+        }
+
+        this.renderCart();
+        Utils.showToast("Added to Cart");
     },
 
     renderPosPagination(total, page) {
@@ -272,29 +398,6 @@ window.POS = {
         } finally {
             Utils.hideLoading();
         }
-    },
-
-    addToCart(product) {
-        // ... (Logic remains mostly same, just checking passed product)
-        if (product.stock <= 0) {
-            Utils.showToast("Out of Stock!", "error");
-            return;
-        }
-
-        const existingItem = this.state.cart.find(item => item.id === product.id);
-
-        if (existingItem) {
-            if (existingItem.qty >= product.stock) {
-                Utils.showToast("Max stock reached!", "error");
-                return;
-            }
-            existingItem.qty++;
-        } else {
-            this.state.cart.push({ ...product, qty: 1 });
-        }
-
-        this.renderCart();
-        Utils.showToast("Added to Cart");
     },
 
     removeFromCart(productId) {
