@@ -54,11 +54,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 ### 18. Scheduled Reports
 - Auto-generate daily/weekly summary and save or notify
 
-### 19. Product Search Improvements
-- Fuzzy search (typo-tolerant)
-- Recently sold items section in POS view
-- "Favorites" or "Quick Access" product grid
-
 ### 20. Audit Log
 - Track all system actions (product edits, order deletions, data imports/exports)
 - Useful for accountability and security

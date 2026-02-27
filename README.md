@@ -70,6 +70,8 @@ The system uses `IndexedDB` for storage.
 
 ### C. Point of Sale (POS)
 - **Cart Logic:** In-memory array (`state.cart`).
+- **Product Search:** Typo-tolerant fuzzy search matches names even with slight typos.
+- **Quick Access:** Mark products as favorites (⭐) and quickly filter by "Favorites" or "Recently Sold" via the category dropdown.
 - **Stock Deduction:** Upon checkout, stock is deducted atomically from the `products` store.
 - **Receipts:** Generated on-the-fly using `Utils.generateReceipt()` which creates a printable HTML window. Past order receipts can be reviewed from the Dashboard by clicking "View" on any order in the transaction history.
 
