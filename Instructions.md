@@ -26,10 +26,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 - Size/Color variants for a single product (e.g. T-Shirt: S/M/L/XL)
 - **Product bundles** — sell a group of products as one item at a bundle price
 
-### 11. Order Hold / Park
-- "Hold" the current cart and start a new order
-- Resume held orders later — useful when customer steps away
-
 ### 12. PWA (Progressive Web App) Support
 - Add a `manifest.json` and service worker for installability
 - Full offline capability (currently CDN libs require initial internet)
