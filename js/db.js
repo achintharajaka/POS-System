@@ -1,7 +1,8 @@
 // DB Module (Global)
 // Depends on: utils.js (loaded before this)
 
-const db = new Dexie("POSDatabase");
+const activeStore = localStorage.getItem('pos_active_store') || 'POSDatabase';
+const db = new Dexie(activeStore);
 
 db.version(1).stores({
     products: '++id, name, barcode, price, costPrice, stock, categoryId',

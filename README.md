@@ -119,6 +119,15 @@ The system uses `IndexedDB` for storage.
 - **Implementation:** Global keydown listener in `shortcuts.js`. 
 - **Features:** View navigation (F1-F5), Quick Checkout (F9/Enter), Modal control (Esc), and Quick Quantity Entry (Number keys).
 
+### K. Multi-Store Support
+- **Isolation:** Switch between different store databases directly from Settings.
+- **Implementation:** Uses dynamic `IndexedDB` names based on `localStorage` to keep data isolated per store location.
+
+### L. Google Drive Sync
+- **Backup:** Uploads the complete JSON data dump directly to Google Drive as a backup.
+- **Implementation:** Uses Google Identity Services (GSI) and the Drive API for secure OAuth authentication and file upload.
+- **Setup:** See `GoogleDriveInstructions.md` for a step-by-step guide on how to configure your Google API credentials for this feature.
+
 ## 5. Setup & Deployment
 Since this is a static web application:
 1.  **Local:** Simply open `index.html` in any modern web browser (Chrome/Edge/Firefox).

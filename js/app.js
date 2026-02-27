@@ -146,6 +146,7 @@ const App = {
                 this.updateStoreDetails();
                 if (this.renderCategoryList) this.renderCategoryList();
                 if (this.renderModifiersList) this.renderModifiersList();
+                if (this.renderStoresList) this.renderStoresList();
 
                 // User management (admin only)
                 const userMgmt = document.getElementById('user-management-section');

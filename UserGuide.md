@@ -202,6 +202,8 @@ Track how your business is doing.
 - **Loyalty Program:** Configure the Earning Rate (points per currency unit) and Redemption Rate (points required for 1 currency unit discount).
 - **Order Modifiers:** Configure taxes, discounts, and other adjustments that apply to every order.
 - **Category Management:** Add or remove product categories.
+- **Multi-Store Management:** Add a new store name or switch between existing stores to keep separate inventory and sales data for different physical locations.
+- **Google Drive Sync:** Click "Login & Sync to Google Drive" to authenticate with your Google account and upload a backup of your active store's data directly to your Google Drive. *(See `GoogleDriveInstructions.md` for a complete step-by-step guide on how to configure this feature).*
 - **Data Management:**
     - **Export Data:** Download a backup of your entire database (includes users and shifts). **Do this regularly!**
     - **Import Data:** Restore from a backup file.
