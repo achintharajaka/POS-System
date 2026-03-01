@@ -39,10 +39,6 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 
 ## 🟢 Lower-Priority — Nice-to-Have Features
 
-### 15. Multi-Store Support
-- Separate databases per store location
-- Switch between stores from settings
-
 ### 16. Email / WhatsApp Receipt
 - Send digital receipts via email or WhatsApp link
 - Reduce paper waste
