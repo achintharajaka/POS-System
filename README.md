@@ -11,6 +11,7 @@ The application follows a modular, client-side architecture using standard JavaS
 - **UI/Styling:** Tailwind CSS (via CDN) for rapid, utility-first styling.
 - **Database:** `Dexie.js` (Wrapper for IndexedDB) for robust, persistent client-side storage.
 - **Visualization:** `Chart.js` for financial reporting charts.
+- **PDF Generation:** `html2pdf.js` for on-the-fly digital receipts formatting.
 - **Icons:** FontAwesome (via CDN).
 
 ### File Structure
@@ -73,7 +74,7 @@ The system uses `IndexedDB` for storage.
 - **Product Search:** Typo-tolerant fuzzy search matches names even with slight typos.
 - **Quick Access:** Mark products as favorites (⭐) and quickly filter by "Favorites" or "Recently Sold" via the category dropdown.
 - **Stock Deduction:** Upon checkout, stock is deducted atomically from the `products` store.
-- **Receipts:** Generated on-the-fly using `Utils.generateReceipt()` which creates a printable HTML window. Past order receipts can be reviewed from the Dashboard by clicking "View" on any order in the transaction history.
+- **Receipts & Digital Receipts:** Generated on-the-fly using `Utils.generateReceipt()`. Printed automatically, but can also be exported as a PDF and shared via WhatsApp or Email if the customer's contact info is registered. Past order receipts can be reviewed from the Dashboard.
 
 ### D. Customer Management (CRM)
 - **Customer Database:** Manage customer details (Name, Phone, Email).
