@@ -139,8 +139,9 @@ This is where you'll spend most of your time.
     - Click **Pay Now**.
     - **Taxes & Discounts:** Any global adjustments (configured in Settings) will be applied automatically.
     - **Payment Method:** Click the icon button for **Cash**, **Card**, or **Online**. 
+    - **Digital Receipt (Optional):** If the selected customer has a phone number or email, check the "WhatsApp" or "Email" box before clicking Pay Now to download a PDF receipt and safely share it.
     - Click **Complete Order**.
-4.  **Receipt:** A receipt will automatically generate for printing.
+4.  **Receipt:** A receipt will automatically generate for printing or digital sharing.
 5.  **Review Past Orders:** Go to the **Dashboard** and click **View** next to any order in the Recent Transactions table to open its receipt in a popup window.
 
 ---
