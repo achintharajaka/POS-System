@@ -279,8 +279,18 @@
                 <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 dark:text-white" data-i18n="dash_recent_transactions">
                         Recent Transactions</h3>
-                    <button id="dash-refresh-btn" class="text-blue-600 text-sm hover:underline"
-                        data-i18n="dash_refresh">Refresh</button>
+                    <div class="flex gap-4">
+                        <button id="dash-export-btn"
+                            class="text-blue-600 text-sm hover:underline flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Export CSV
+                        </button>
+                        <button id="dash-refresh-btn" class="text-blue-600 text-sm hover:underline"
+                            data-i18n="dash_refresh">Refresh</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -432,6 +442,14 @@
                         <button id="inv-add-po-btn"
                             class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 hidden">
                             <span>+ Purchase Order</span>
+                        </button>
+                        <button id="inv-export-btn"
+                            class="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
+                            <svg class="w-4 h-4" outline="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            <span class="hidden sm:inline">Export CSV</span>
                         </button>
                     </div>
                 </div>
@@ -612,8 +630,18 @@
                         <input type="date" id="report-filter-to"
                             class="px-3 py-1.5 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
-                    <button id="report-filter-btn"
-                        class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Filter</button>
+                    <div class="flex gap-2">
+                        <button id="report-filter-btn"
+                            class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Filter</button>
+                        <button id="report-export-btn"
+                            class="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 px-4 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2 transition-colors text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Export CSV
+                        </button>
+                    </div>
                 </div>
             </div>
 

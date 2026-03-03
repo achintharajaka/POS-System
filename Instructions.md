@@ -31,17 +31,9 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 - Full offline capability (currently CDN libs require initial internet)
 - Home screen icon on mobile/tablet
 
-### 14. CSV / Excel Export
-- Currently only JSON export — add **CSV/Excel** export for orders, inventory, and financial reports
-- More useful for accountants and spreadsheet users
-
 ---
 
 ## 🟢 Lower-Priority — Nice-to-Have Features
-
-### 16. Email / WhatsApp Receipt
-- Send digital receipts via email or WhatsApp link
-- Reduce paper waste
 
 ### 17. Sales Targets & Goals
 - Set daily/weekly/monthly sales targets

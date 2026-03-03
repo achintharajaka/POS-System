@@ -114,6 +114,43 @@ window.Inventory = {
                 this.renderInventory();
             };
         }
+
+        const exportBtn = document.getElementById('inv-export-btn');
+        if (exportBtn) {
+            exportBtn.onclick = () => this.exportProducts();
+        }
+    },
+
+    async exportProducts() {
+        Utils.showLoading();
+        try {
+            const products = await DB.getProducts();
+            if (!products || products.length === 0) {
+                Utils.showToast("No products to export", "error");
+                return;
+            }
+
+            const headers = ["Product ID", "Name", "Barcode", "Price", "Cost Price", "Stock Level", "Total Value", "Category ID", "Supplier ID"];
+            const rows = products.map(p => [
+                p.id,
+                p.name,
+                p.barcode || '',
+                p.price.toFixed(2),
+                p.costPrice.toFixed(2),
+                p.stock,
+                (p.price * p.stock).toFixed(2),
+                p.categoryId || '',
+                p.supplierId || ''
+            ]);
+
+            Utils.exportToCSV("exported_inventory", headers, rows);
+            Utils.showToast("Inventory exported successfully");
+        } catch (error) {
+            console.error(error);
+            Utils.showToast("Error exporting inventory", "error");
+        } finally {
+            Utils.hideLoading();
+        }
     },
 
     async openProductModal(productId = null) {
