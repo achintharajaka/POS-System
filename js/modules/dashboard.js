@@ -75,9 +75,46 @@ window.Dashboard = {
                 if (action === 'delete') this.deleteOrder(id);
             };
 
+            // Export CSV Button
+            const exportBtn = document.getElementById('dash-export-btn');
+            if (exportBtn) {
+                exportBtn.onclick = () => this.exportOrders();
+            }
+
         } catch (error) {
             console.error(error);
             Utils.showToast("Error loading dashboard", "error");
+        } finally {
+            Utils.hideLoading();
+        }
+    },
+
+    async exportOrders() {
+        Utils.showLoading();
+        try {
+            const orders = await DB.getOrders();
+            if (!orders || orders.length === 0) {
+                Utils.showToast("No orders to export", "error");
+                return;
+            }
+
+            const headers = ["Order ID", "Date", "Status", "Items Count", "Subtotal", "Tax", "Total", "Payment Method"];
+            const rows = orders.map(o => [
+                o.id,
+                Utils.formatDate(o.timestamp),
+                o.status || 'Completed',
+                o.items ? o.items.length : 0,
+                o.subtotal.toFixed(2),
+                (o.total - o.subtotal).toFixed(2), // Simplistic tax calculation
+                o.total.toFixed(2),
+                o.paymentMethod || 'Cash'
+            ]);
+
+            Utils.exportToCSV("exported_orders", headers, rows);
+            Utils.showToast("Orders exported successfully");
+        } catch (error) {
+            console.error(error);
+            Utils.showToast("Error exporting orders", "error");
         } finally {
             Utils.hideLoading();
         }

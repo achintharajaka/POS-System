@@ -207,6 +207,10 @@ Track how your business is doing.
 - **Data Management:**
     - **Export Data:** Download a backup of your entire database (includes users and shifts). **Do this regularly!**
     - **Import Data:** Restore from a backup file.
+    - **CSV Export:** Export your business data to CSV format for external analysis in spreadsheet software like Excel or Google Sheets.
+        - **Orders:** Go to Dashboard -> Recent Transactions -> Click **Export CSV**.
+        - **Inventory:** Go to Inventory -> Products -> Click **Export CSV**.
+        - **Financial Reports:** Go to Reports -> Select Date Range -> Click **Export CSV** next to the Filter button.
     - **Reset System:** WIPE everything. Use with extreme caution.
 
 ---

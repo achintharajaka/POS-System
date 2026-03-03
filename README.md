@@ -92,6 +92,7 @@ The system uses `IndexedDB` for storage.
     - `Net Profit` (Overall) = `Total Revenue` (Sales + Extra Income) - `Total COGS` - `Total Expenses`.
 - **Date-Range Filtering:** All reports (cards, lists, and charts) can be filtered by Today, This Week, This Month, or a Custom Range.
 - **Charts:** Renders a dynamic Bar chart comparing Revenue vs Expenses (COGS + Manual Expenses) for the selected period.
+- **Export:** Export comprehensive financial summaries, filtered by date range, to CSV for external analysis.
 
 ### F. User Authentication & Role Management
 - **PIN-Based Login:** Users authenticate with a 4–6 digit numeric PIN (hashed with SHA-256 via `crypto.subtle`).
@@ -110,6 +111,7 @@ The system uses `IndexedDB` for storage.
 ### H. Data Management
 - **Import/Export:** The system exports the entire IndexedDB contents (including users and shifts) as a JSON file for backup/migration.
 - **Import:** The system imports the entire IndexedDB contents (including users and shifts) from a JSON file for backup/migration.
+- **CSV Export:** The system supports exporting Orders, Inventory, and Financial Reports to CSV format for external analysis in spreadsheet software.
 
 ### I. Multi-language Support (Localization)
 - **Multi-language:** The system supports multiple languages including English, Sinhala, and Tamil.

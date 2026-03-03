@@ -20,9 +20,136 @@ window.Reports = {
             }
         });
 
+        const exportBtn = document.getElementById('report-export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.exportFinancials());
+        }
+
         // Set initial range if not set
         if (!this.reportRange.start) {
             this.setReportRange('this_month', null, null, false);
+        }
+    },
+
+    async exportFinancials() {
+        Utils.showLoading();
+        try {
+            if (!this.reportRange.start) this.setReportRange('this_month', null, null, false);
+
+            const startDate = new Date(this.reportRange.start);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(this.reportRange.end);
+            endDate.setHours(23, 59, 59, 999);
+
+            const allOrders = await DB.getOrders();
+            const allExpenses = await DB.getExpenses();
+            const allIncome = await DB.getIncome();
+
+            let allReturns = [];
+            try {
+                if (DB.getReturns) allReturns = await DB.getReturns();
+            } catch (e) { }
+
+            const orders = allOrders.filter(o => o.timestamp >= startDate.getTime() && o.timestamp <= endDate.getTime());
+            const expenses = allExpenses.filter(e => new Date(e.date) >= startDate && new Date(e.date) <= endDate);
+            const income = allIncome.filter(i => new Date(i.date) >= startDate && new Date(i.date) <= endDate);
+            const returns = allReturns.filter(r => r.timestamp >= startDate.getTime() && r.timestamp <= endDate.getTime());
+
+            // Compile Data for CSV
+            const headers = ["Date", "Type", "Category/ID", "Description", "Amount", "Notes"];
+            const rows = [];
+            const { currencySymbol } = this.state.settings;
+
+            // Orders
+            orders.forEach(o => {
+                rows.push([
+                    Utils.formatDate(o.timestamp),
+                    "Revenue",
+                    `Order #${o.id}`,
+                    `${o.items?.length || 0} items`,
+                    o.total.toFixed(2),
+                    o.paymentMethod || 'Cash'
+                ]);
+            });
+
+            // Extra Income
+            income.forEach(i => {
+                rows.push([
+                    Utils.formatDate(i.date),
+                    "Extra Income",
+                    "-",
+                    i.description,
+                    i.amount.toFixed(2),
+                    ""
+                ]);
+            });
+
+            // Expenses
+            expenses.forEach(e => {
+                rows.push([
+                    Utils.formatDate(e.date),
+                    "Expense",
+                    "-",
+                    e.description,
+                    (-e.amount).toFixed(2), // Negative to indicate cost
+                    ""
+                ]);
+            });
+
+            // Returns
+            returns.forEach(r => {
+                rows.push([
+                    Utils.formatDate(r.timestamp),
+                    "Refund",
+                    `Order #${r.orderId}`,
+                    r.reason || "Return",
+                    (-(r.totalRefund || 0)).toFixed(2),
+                    r.restocked ? "Restocked" : ""
+                ]);
+            });
+
+            // Summary Rows
+            const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0) + income.reduce((sum, i) => sum + i.amount, 0);
+            const totalRefunds = returns.reduce((sum, r) => sum + (r.totalRefund || 0), 0);
+            const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+            let cogs = 0;
+            let cogsReduction = 0;
+            orders.forEach(o => o.items.forEach(i => cogs += (parseFloat(i.costPrice) || 0) * i.qty));
+
+            returns.forEach(ret => {
+                if (ret.restocked && ret.items) {
+                    const originalOrder = allOrders.find(o => o.id === ret.orderId);
+                    if (originalOrder) {
+                        ret.items.forEach(retItem => {
+                            const originalItem = originalOrder.items.find(i => i.id === retItem.id);
+                            if (originalItem) cogsReduction += (parseFloat(originalItem.costPrice) || 0) * retItem.qty;
+                        });
+                    }
+                }
+            });
+
+            const netCogs = Math.max(0, cogs - cogsReduction);
+            const totalNetRevenue = totalRevenue - totalRefunds;
+            const netProfit = totalNetRevenue - netCogs - totalExpenses;
+
+            rows.push([], ["--- SUMMARY ---", "", "", "", "", ""]);
+            rows.push(["", "Gross Revenue", "", "", totalRevenue.toFixed(2), ""]);
+            rows.push(["", "Total Refunds", "", "", (-totalRefunds).toFixed(2), ""]);
+            rows.push(["", "Net Revenue", "", "", totalNetRevenue.toFixed(2), ""]);
+            rows.push(["", "Cost of Goods Sold (COGS)", "", "", (-netCogs).toFixed(2), ""]);
+            rows.push(["", "Total Expenses", "", "", (-totalExpenses).toFixed(2), ""]);
+            rows.push(["", "NET PROFIT", "", "", netProfit.toFixed(2), ""]);
+
+            const filename = `financial_report_${this.reportRange.start}_to_${this.reportRange.end}`;
+            Utils.exportToCSV(filename, headers, rows);
+            Utils.showToast("Financial Report exported");
+
+        } catch (error) {
+            console.error(error);
+            Utils.showToast("Error exporting report", "error");
+        } finally {
+            Utils.hideLoading();
         }
     },
 
