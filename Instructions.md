@@ -45,16 +45,3 @@ After a complete review of the codebase (`index.html`, `app.js`, `db.js`, `utils
 ### 20. Audit Log
 - Track all system actions (product edits, order deletions, data imports/exports)
 - Useful for accountability and security
-
----
-
-
-## Summary: Top 5 Recommendations
-
-| # | Item | Impact |
-|:---|:---|:---|
-| 1 | **Fix the inventory filter bug & hardcoded payment method** | 🐛 Bug fix |
-| 2 | **Wire up payment method selection at checkout** | High — core checkout feature is broken |
-| 3 | **Add barcode scanner keyboard listener** | High — key advertised feature is incomplete |
-| 4 | **Add return/refund system** | High — essential for any real retail POS |
-| 5 | **Split `app.js` into modules + add error handling** | High — maintainability & stability |
