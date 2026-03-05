@@ -61,6 +61,8 @@ The system uses `IndexedDB` for storage.
 - **CRUD Operations:** Managed in `app.js` requesting `db.js`.
 - **Image Support:** Images are converted to Base64 strings and stored directly in the `products` store. Size limited to 500KB.
 - **Validation:** Logic ensures `stock` cannot be negative and `barcode` must be unique across the inventory.
+- **Product Variants:** Configure size, color, or other options for a single product. Each variant has its own price and stock.
+- **Product Bundles:** Group existing products together to sell them as a single packaged item. Bundle stock is calculated dynamically based on its components.
 
 ### B. Enhanced Stock Control
 - **Suppliers:** Manage supplier details and link products to derived sources.

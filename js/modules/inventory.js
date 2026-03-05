@@ -229,6 +229,22 @@ window.Inventory = {
                 base64Input.value = prod.image;
             }
 
+            // Populate Variants & Bundles
+            const hasVariantsCheck = document.getElementById('prod-hasVariants');
+            const isBundleCheck = document.getElementById('prod-isBundle');
+            hasVariantsCheck.checked = !!prod.hasVariants;
+            isBundleCheck.checked = !!prod.isBundle;
+
+            document.getElementById('variants-list').innerHTML = '';
+            document.getElementById('bundle-items-list').innerHTML = '';
+
+            if (prod.hasVariants && prod.variants) {
+                prod.variants.forEach(v => Inventory.addVariantRow(v));
+            }
+            if (prod.isBundle && prod.bundleItems) {
+                prod.bundleItems.forEach(b => Inventory.addBundleRow(b));
+            }
+
         } else {
             title.innerText = "Add Product";
             form.reset();
@@ -237,9 +253,70 @@ window.Inventory = {
             if (document.getElementById(DOM.MODALS.PRODUCT.INPUT_THRESHOLD)) {
                 document.getElementById(DOM.MODALS.PRODUCT.INPUT_THRESHOLD).value = 5;
             }
+            document.getElementById('prod-hasVariants').checked = false;
+            document.getElementById('prod-isBundle').checked = false;
+            document.getElementById('variants-list').innerHTML = '';
+            document.getElementById('bundle-items-list').innerHTML = '';
         }
 
+        Inventory.toggleProductSections();
         modal.classList.remove('hidden');
+    },
+
+    toggleProductSections() {
+        const hasVariants = document.getElementById('prod-hasVariants').checked;
+        const isBundle = document.getElementById('prod-isBundle').checked;
+        const variantsSection = document.getElementById('variants-section');
+        const bundleSection = document.getElementById('bundle-section');
+        const stockInputDiv = document.getElementById('prod-stock').closest('div');
+        const costInputDiv = document.getElementById('prod-costPrice').closest('div');
+
+        // Hide stock input if variants or bundles handle it
+        if (stockInputDiv) stockInputDiv.style.display = (hasVariants || isBundle) ? 'none' : 'block';
+        if (costInputDiv) costInputDiv.style.display = (isBundle) ? 'none' : 'block';
+
+        if (hasVariants) variantsSection.classList.remove('hidden');
+        else variantsSection.classList.add('hidden');
+
+        if (isBundle) bundleSection.classList.remove('hidden');
+        else bundleSection.classList.add('hidden');
+    },
+
+    addVariantRow(variant = null) {
+        const list = document.getElementById('variants-list');
+        const div = document.createElement('div');
+        div.className = 'flex gap-2 items-center variant-row';
+        div.innerHTML = `
+            <input type="text" placeholder="Size/Color" class="variant-name flex-1 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" value="${variant ? variant.name : ''}" required>
+            <input type="number" placeholder="Price" step="0.01" class="variant-price w-20 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" value="${variant ? variant.price : ''}" required>
+            <input type="number" placeholder="Stock" min="0" class="variant-stock w-20 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" value="${variant !== null && variant.stock !== undefined ? variant.stock : 0}" required>
+            <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 font-bold px-2">&times;</button>
+        `;
+        list.appendChild(div);
+    },
+
+    addBundleRow(bundleItem = null) {
+        const list = document.getElementById('bundle-items-list');
+        const div = document.createElement('div');
+        div.className = 'flex gap-2 items-center bundle-row';
+
+        let optionsHtml = '<option value="">Select Product...</option>';
+        if (this.state && this.state.products) {
+            this.state.products.forEach(p => {
+                if (!p.isBundle) {
+                    optionsHtml += `<option value="${p.id}" ${bundleItem && bundleItem.productId === p.id ? 'selected' : ''}>${Utils.sanitize(p.name)}</option>`;
+                }
+            });
+        }
+
+        div.innerHTML = `
+            <select class="bundle-product flex-1 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" required>
+                ${optionsHtml}
+            </select>
+            <input type="number" placeholder="Qty" min="1" class="bundle-qty w-16 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" value="${bundleItem ? bundleItem.quantity : 1}" required>
+            <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 font-bold px-2">&times;</button>
+        `;
+        list.appendChild(div);
     },
 
     async handleProductImageUpload(event) {
@@ -304,6 +381,9 @@ window.Inventory = {
         const supplierId = supplierInput ? parseInt(supplierInput.value) || null : null;
         const lowStockThreshold = thresholdInput ? parseInt(thresholdInput.value) || 5 : 5;
 
+        const hasVariants = document.getElementById('prod-hasVariants').checked;
+        const isBundle = document.getElementById('prod-isBundle').checked;
+
         // Validation based on fields
         let isValid = true;
 
@@ -317,23 +397,64 @@ window.Inventory = {
             isValid = false;
         }
 
-        if (isNaN(stock)) {
+        if (!hasVariants && !isBundle && isNaN(stock)) {
             Utils.showFormError(stockInput, "Valid stock quantity is required");
             isValid = false;
         }
 
         if (!isValid) return;
 
+        // Collect Variants
+        let variants = [];
+        let calculatedStock = 0;
+        if (hasVariants) {
+            document.querySelectorAll('.variant-row').forEach(row => {
+                const vName = row.querySelector('.variant-name').value.trim();
+                const vPrice = parseFloat(row.querySelector('.variant-price').value);
+                const vStock = parseInt(row.querySelector('.variant-stock').value) || 0;
+                if (vName && !isNaN(vPrice)) {
+                    variants.push({ name: vName, price: vPrice, stock: vStock });
+                    calculatedStock += vStock;
+                }
+            });
+            if (variants.length === 0) {
+                Utils.showToast("Add at least one variant", "error");
+                return;
+            }
+        }
+
+        // Collect Bundle Items
+        let bundleItems = [];
+        if (isBundle) {
+            document.querySelectorAll('.bundle-row').forEach(row => {
+                const pId = parseInt(row.querySelector('.bundle-product').value);
+                const bQty = parseInt(row.querySelector('.bundle-qty').value) || 1;
+                if (pId && bQty > 0) {
+                    bundleItems.push({ productId: pId, quantity: bQty });
+                }
+            });
+            if (bundleItems.length === 0) {
+                Utils.showToast("Add at least one product to bundle", "error");
+                return;
+            }
+        }
+
+        const finalStock = hasVariants ? calculatedStock : (isBundle ? 0 : stock);
+
         const product = {
             name,
             barcode,
             price,
             costPrice: parseFloat(document.getElementById(DOM.MODALS.PRODUCT.INPUT_COST).value) || 0,
-            stock,
+            stock: finalStock,
             categoryId: parseInt(document.getElementById(DOM.MODALS.PRODUCT.INPUT_CATEGORY).value),
             image: document.getElementById(DOM.MODALS.PRODUCT.IMAGE_BASE64).value,
             supplierId,
-            lowStockThreshold
+            lowStockThreshold,
+            hasVariants,
+            isBundle,
+            variants,
+            bundleItems
         };
 
         // Check for duplicate barcode

@@ -90,6 +90,23 @@ db.version(6).stores({
     returns: '++id, orderId, timestamp, totalRefund, items, reason, userId, customerId'
 });
 
+// Version 7: Variants and Bundles Support
+db.version(7).stores({
+    products: '++id, name, barcode, price, costPrice, stock, categoryId, supplierId, lowStockThreshold, isFavorite, hasVariants, isBundle',
+    categories: '++id, name',
+    orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod, userId, shiftId, customerId, status',
+    settings: 'key',
+    expenses: '++id, description, amount, date, category',
+    income: '++id, description, amount, date, category',
+    users: '++id, name, pin, role, active',
+    shifts: '++id, userId, clockIn, clockOut, status',
+    suppliers: '++id, name, contact, email, phone, address',
+    purchaseOrders: '++id, supplierId, date, status, totalCost, items, receivedDate',
+    stockLogs: '++id, productId, changeAmount, reason, timestamp, note, userId',
+    customers: '++id, name, phone, email, points, tier, totalSpent',
+    returns: '++id, orderId, timestamp, totalRefund, items, reason, userId, customerId'
+});
+
 // PIN hashing utility (SHA-256 via crypto.subtle)
 async function hashPin(pin) {
     const encoder = new TextEncoder();
