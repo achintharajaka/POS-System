@@ -74,7 +74,10 @@ The Inventory section is now divided into tabs for better organization:
     - **Stock:** Current quantity.
     - **Category:** Group items (Manage categories in settings).
     - **Product Image:** Upload a small image to help identify the item.
-4.  Click **Save**.
+4. **Variants & Bundles (Optional):**
+    - Enable **"Has Variants"** to add multiple options (e.g., sizes like S, M, L) for the product. You can set individual prices and stock amounts for each variant.
+    - Enable **"Is Bundle"** to combine existing products into a single package. Stock availability for bundles is calculated automatically based on the availability of its ingredient products.
+5.  Click **Save**.
 
 ### Managing Stock
 - **Low Stock Filter:** If an item's stock drops below its **Low Stock Alert** threshold (default 5), it will be highlighted in Red. Click the **Low Stock Items** card on the Dashboard to filter the inventory view.
