@@ -78,6 +78,7 @@ The Inventory section is now divided into tabs for better organization:
 
 ### Managing Stock
 - **Low Stock Filter:** If an item's stock drops below its **Low Stock Alert** threshold (default 5), it will be highlighted in Red. Click the **Low Stock Items** card on the Dashboard to filter the inventory view.
+- **Printing Barcodes:** Click "Print" on any item that has a barcode to open a print-ready window with a generated barcode label.
 - **Editing:** Click "Edit" on any item to update its price, stock, threshold, or image.
 - **Deleting:** Click "Delete" to remove an item permanently.
 

@@ -61,6 +61,7 @@ The system uses `IndexedDB` for storage.
 - **CRUD Operations:** Managed in `app.js` requesting `db.js`.
 - **Image Support:** Images are converted to Base64 strings and stored directly in the `products` store. Size limited to 500KB.
 - **Validation:** Logic ensures `stock` cannot be negative and `barcode` must be unique across the inventory.
+- **Barcode Printing:** Automatically generate and print Code128 barcode labels for products directly from the inventory table.
 
 ### B. Enhanced Stock Control
 - **Suppliers:** Manage supplier details and link products to derived sources.
