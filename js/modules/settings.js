@@ -245,5 +245,72 @@ window.Settings = {
                 await DB.reset();
             }
         }
+    },
+
+    // Multi-Store Management
+    getStoresList() {
+        try {
+            const stores = JSON.parse(localStorage.getItem('pos_stores_list') || '["POSDatabase"]');
+            return [...new Set(stores)]; // ensure unique
+        } catch (e) {
+            return ['POSDatabase'];
+        }
+    },
+
+    saveStoresList(stores) {
+        localStorage.setItem('pos_stores_list', JSON.stringify([...new Set(stores)]));
+    },
+
+    renderStoresList() {
+        const select = document.getElementById('setting-active-store');
+        if (!select) return;
+
+        const stores = this.getStoresList();
+        const activeStore = localStorage.getItem('pos_active_store') || 'POSDatabase';
+
+        select.innerHTML = '';
+        stores.forEach(store => {
+            const option = document.createElement('option');
+            option.value = store;
+            option.textContent = store;
+            if (store === activeStore) option.selected = true;
+            select.appendChild(option);
+        });
+    },
+
+    addStore() {
+        const input = document.getElementById('new-store-name');
+        let name = input.value.trim();
+        if (!name) return;
+
+        // Remove spaces and special chars to make it a safe DB name
+        name = name.replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!name) {
+            Utils.showToast("Invalid store name", "error");
+            return;
+        }
+
+        const stores = this.getStoresList();
+        if (stores.includes(name)) {
+            Utils.showToast("Store already exists", "error");
+            return;
+        }
+
+        stores.push(name);
+        this.saveStoresList(stores);
+        input.value = '';
+        this.renderStoresList();
+        this.switchStore(name);
+    },
+
+    switchStore(storeName) {
+        const stores = this.getStoresList();
+        if (stores.includes(storeName)) {
+            localStorage.setItem('pos_active_store', storeName);
+            Utils.showToast(`Switched to ${storeName}. Reloading...`);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
     }
 };

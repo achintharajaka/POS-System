@@ -144,7 +144,7 @@ window.Utils = {
         if (!query || !text) return false;
         query = query.toLowerCase();
         text = text.toLowerCase();
-        
+
         if (text.includes(query)) return true;
 
         if (query.length <= 3) return text.includes(query);
@@ -158,7 +158,7 @@ window.Utils = {
                 }
             }
         }
-        
+
         return false;
     },
 
@@ -391,6 +391,32 @@ window.Utils = {
         if (!form) return;
         const inputs = form.querySelectorAll('.border-red-500');
         inputs.forEach(input => this.removeFormError(input));
+    },
+
+    // CSV Export Utility
+    exportToCSV(filename, headers, dataRows) {
+        // Construct CSV string
+        let csvContent = headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n";
+
+        dataRows.forEach(row => {
+            const rowString = row.map(cell => {
+                const cellStr = cell !== null && cell !== undefined ? String(cell) : "";
+                // Escape quotes
+                return `"${cellStr.replace(/"/g, '""')}"`;
+            }).join(",");
+            csvContent += rowString + "\n";
+        });
+
+        // Create Blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename.endsWith('.csv') ? filename : filename + '.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 };
 

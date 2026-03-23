@@ -11,6 +11,7 @@ The application follows a modular, client-side architecture using standard JavaS
 - **UI/Styling:** Tailwind CSS (via CDN) for rapid, utility-first styling.
 - **Database:** `Dexie.js` (Wrapper for IndexedDB) for robust, persistent client-side storage.
 - **Visualization:** `Chart.js` for financial reporting charts.
+- **PDF Generation:** `html2pdf.js` for on-the-fly digital receipts formatting.
 - **Icons:** FontAwesome (via CDN).
 
 ### File Structure
@@ -74,7 +75,7 @@ The system uses `IndexedDB` for storage.
 - **Product Search:** Typo-tolerant fuzzy search matches names even with slight typos.
 - **Quick Access:** Mark products as favorites (⭐) and quickly filter by "Favorites" or "Recently Sold" via the category dropdown.
 - **Stock Deduction:** Upon checkout, stock is deducted atomically from the `products` store.
-- **Receipts:** Generated on-the-fly using `Utils.generateReceipt()` which creates a printable HTML window. Past order receipts can be reviewed from the Dashboard by clicking "View" on any order in the transaction history.
+- **Receipts & Digital Receipts:** Generated on-the-fly using `Utils.generateReceipt()`. Printed automatically, but can also be exported as a PDF and shared via WhatsApp or Email if the customer's contact info is registered. Past order receipts can be reviewed from the Dashboard.
 
 ### D. Customer Management (CRM)
 - **Customer Database:** Manage customer details (Name, Phone, Email).
@@ -93,6 +94,7 @@ The system uses `IndexedDB` for storage.
     - `Net Profit` (Overall) = `Total Revenue` (Sales + Extra Income) - `Total COGS` - `Total Expenses`.
 - **Date-Range Filtering:** All reports (cards, lists, and charts) can be filtered by Today, This Week, This Month, or a Custom Range.
 - **Charts:** Renders a dynamic Bar chart comparing Revenue vs Expenses (COGS + Manual Expenses) for the selected period.
+- **Export:** Export comprehensive financial summaries, filtered by date range, to CSV for external analysis.
 
 ### F. User Authentication & Role Management
 - **PIN-Based Login:** Users authenticate with a 4–6 digit numeric PIN (hashed with SHA-256 via `crypto.subtle`).
@@ -111,6 +113,7 @@ The system uses `IndexedDB` for storage.
 ### H. Data Management
 - **Import/Export:** The system exports the entire IndexedDB contents (including users and shifts) as a JSON file for backup/migration.
 - **Import:** The system imports the entire IndexedDB contents (including users and shifts) from a JSON file for backup/migration.
+- **CSV Export:** The system supports exporting Orders, Inventory, and Financial Reports to CSV format for external analysis in spreadsheet software.
 
 ### I. Multi-language Support (Localization)
 - **Multi-language:** The system supports multiple languages including English, Sinhala, and Tamil.
@@ -119,6 +122,15 @@ The system uses `IndexedDB` for storage.
 ### J. Keyboard Shortcuts
 - **Implementation:** Global keydown listener in `shortcuts.js`. 
 - **Features:** View navigation (F1-F5), Quick Checkout (F9/Enter), Modal control (Esc), and Quick Quantity Entry (Number keys).
+
+### K. Multi-Store Support
+- **Isolation:** Switch between different store databases directly from Settings.
+- **Implementation:** Uses dynamic `IndexedDB` names based on `localStorage` to keep data isolated per store location.
+
+### L. Google Drive Sync
+- **Backup:** Uploads the complete JSON data dump directly to Google Drive as a backup.
+- **Implementation:** Uses Google Identity Services (GSI) and the Drive API for secure OAuth authentication and file upload.
+- **Setup:** See `GoogleDriveInstructions.md` for a step-by-step guide on how to configure your Google API credentials for this feature.
 
 ## 5. Setup & Deployment
 Since this is a static web application:

@@ -74,7 +74,10 @@ The Inventory section is now divided into tabs for better organization:
     - **Stock:** Current quantity.
     - **Category:** Group items (Manage categories in settings).
     - **Product Image:** Upload a small image to help identify the item.
-4.  Click **Save**.
+4. **Variants & Bundles (Optional):**
+    - Enable **"Has Variants"** to add multiple options (e.g., sizes like S, M, L) for the product. You can set individual prices and stock amounts for each variant.
+    - Enable **"Is Bundle"** to combine existing products into a single package. Stock availability for bundles is calculated automatically based on the availability of its ingredient products.
+5.  Click **Save**.
 
 ### Managing Stock
 - **Low Stock Filter:** If an item's stock drops below its **Low Stock Alert** threshold (default 5), it will be highlighted in Red. Click the **Low Stock Items** card on the Dashboard to filter the inventory view.
@@ -140,8 +143,9 @@ This is where you'll spend most of your time.
     - Click **Pay Now**.
     - **Taxes & Discounts:** Any global adjustments (configured in Settings) will be applied automatically.
     - **Payment Method:** Click the icon button for **Cash**, **Card**, or **Online**. 
+    - **Digital Receipt (Optional):** If the selected customer has a phone number or email, check the "WhatsApp" or "Email" box before clicking Pay Now to download a PDF receipt and safely share it.
     - Click **Complete Order**.
-4.  **Receipt:** A receipt will automatically generate for printing.
+4.  **Receipt:** A receipt will automatically generate for printing or digital sharing.
 5.  **Review Past Orders:** Go to the **Dashboard** and click **View** next to any order in the Recent Transactions table to open its receipt in a popup window.
 
 ---
@@ -203,9 +207,15 @@ Track how your business is doing.
 - **Loyalty Program:** Configure the Earning Rate (points per currency unit) and Redemption Rate (points required for 1 currency unit discount).
 - **Order Modifiers:** Configure taxes, discounts, and other adjustments that apply to every order.
 - **Category Management:** Add or remove product categories.
+- **Multi-Store Management:** Add a new store name or switch between existing stores to keep separate inventory and sales data for different physical locations.
+- **Google Drive Sync:** Click "Login & Sync to Google Drive" to authenticate with your Google account and upload a backup of your active store's data directly to your Google Drive. *(See `GoogleDriveInstructions.md` for a complete step-by-step guide on how to configure this feature).*
 - **Data Management:**
     - **Export Data:** Download a backup of your entire database (includes users and shifts). **Do this regularly!**
     - **Import Data:** Restore from a backup file.
+    - **CSV Export:** Export your business data to CSV format for external analysis in spreadsheet software like Excel or Google Sheets.
+        - **Orders:** Go to Dashboard -> Recent Transactions -> Click **Export CSV**.
+        - **Inventory:** Go to Inventory -> Products -> Click **Export CSV**.
+        - **Financial Reports:** Go to Reports -> Select Date Range -> Click **Export CSV** next to the Filter button.
     - **Reset System:** WIPE everything. Use with extreme caution.
 
 ---

@@ -303,7 +303,45 @@ window.POS = {
         }
     },
 
-    addToCartLogic(product) {
+    async addToCartLogic(product) {
+        // If Bundle, check max available stock of components
+        if (product.isBundle && product.bundleItems && product.bundleItems.length > 0) {
+            let maxBundleStock = Infinity;
+            for (let bi of product.bundleItems) {
+                let p = await DB.getProduct(bi.productId);
+                if (p) {
+                    let possible = Math.floor(p.stock / bi.quantity);
+                    if (possible < maxBundleStock) maxBundleStock = possible;
+                }
+            }
+            if (maxBundleStock <= 0) {
+                Utils.showToast("Bundle components out of stock!", "error");
+                return;
+            }
+
+            const existingItem = this.state.cart.find(item => item.id === product.id);
+            if (existingItem && existingItem.qty >= maxBundleStock) {
+                Utils.showToast("Max bundle stock reached based on components!", "error");
+                return;
+            }
+
+            if (existingItem) {
+                existingItem.qty++;
+            } else {
+                this.state.cart.push({ ...product, qty: 1, maxStock: maxBundleStock });
+            }
+            this.renderCart();
+            Utils.showToast("Added Bundle to Cart");
+            return;
+        }
+
+        // If Variants, show Variant Selection Modal
+        if (product.hasVariants && product.variants && product.variants.length > 0) {
+            this.openVariantModal(product);
+            return;
+        }
+
+        // Normal Product
         if (product.stock <= 0) {
             Utils.showToast("Out of Stock!", "error");
             return;
@@ -323,6 +361,71 @@ window.POS = {
 
         this.renderCart();
         Utils.showToast("Added to Cart");
+    },
+
+    openVariantModal(product) {
+        const modal = document.getElementById('pos-variant-modal');
+        const title = document.getElementById('pos-variant-title');
+        const list = document.getElementById('pos-variant-list');
+
+        if (!modal) return;
+
+        title.innerText = `Select Variant: ${product.name}`;
+        list.innerHTML = '';
+
+        product.variants.forEach((v, index) => {
+            const div = document.createElement('div');
+            const isOutOfStock = v.stock <= 0;
+            div.className = `p-3 border dark:border-gray-700 rounded-lg flex justify-between items-center ${isOutOfStock ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700'}`;
+
+            div.innerHTML = `
+                <div>
+                    <div class="font-bold dark:text-gray-200">${Utils.sanitize(v.name)}</div>
+                    <div class="text-sm text-gray-500">${v.stock} in stock</div>
+                </div>
+                <div class="font-bold text-blue-600 dark:text-blue-400">
+                    ${Utils.formatCurrency(v.price, this.state.settings.currencySymbol)}
+                </div>
+            `;
+
+            if (!isOutOfStock) {
+                div.onclick = () => {
+                    this.addVariantToCart(product, v, index);
+                    modal.classList.add('hidden');
+                };
+            }
+
+            list.appendChild(div);
+        });
+
+        modal.classList.remove('hidden');
+    },
+
+    addVariantToCart(product, variant, variantIndex) {
+        const cartItemId = `${product.id}-${variantIndex}`;
+        const existingItem = this.state.cart.find(item => item.cartItemId === cartItemId);
+
+        if (existingItem) {
+            if (existingItem.qty >= variant.stock) {
+                Utils.showToast("Max variant stock reached!", "error");
+                return;
+            }
+            existingItem.qty++;
+        } else {
+            this.state.cart.push({
+                ...product,
+                cartItemId: cartItemId,
+                name: `${product.name} - ${variant.name}`,
+                price: variant.price,
+                stock: variant.stock,
+                isVariant: true,
+                variantIndex: variantIndex,
+                qty: 1
+            });
+        }
+
+        this.renderCart();
+        Utils.showToast(`Added ${variant.name} to Cart`);
     },
 
     renderPosPagination(total, page) {
@@ -426,20 +529,22 @@ window.POS = {
         }
     },
 
-    removeFromCart(productId) {
-        this.state.cart = this.state.cart.filter(item => item.id !== productId);
+    removeFromCart(identifier) {
+        this.state.cart = this.state.cart.filter(item => item.cartItemId !== identifier && item.id !== identifier);
         this.renderCart();
     },
 
-    updateCartQty(productId, change) {
-        const item = this.state.cart.find(i => i.id === productId);
+    updateCartQty(identifier, change) {
+        const item = this.state.cart.find(i => i.cartItemId === identifier || i.id === identifier);
         if (!item) return;
 
         const newQty = item.qty + change;
 
+        let maxAllowed = item.maxStock !== undefined ? item.maxStock : item.stock;
+
         if (newQty <= 0) {
-            this.removeFromCart(productId);
-        } else if (newQty > item.stock) {
+            this.removeFromCart(identifier);
+        } else if (newQty > maxAllowed) {
             Utils.showToast("Exceeds available stock!", "error");
         } else {
             item.qty = newQty;
@@ -534,10 +639,10 @@ window.POS = {
                         <p class="text-xs text-gray-500 dark:text-gray-400">${Utils.formatCurrency(item.price, currencySymbol)} x ${item.qty}</p>
                     </div>
                     <div class="flex items-center gap-1 flex-shrink-0">
-                        <button onclick="app.updateCartQty(${item.id}, -1)" class="w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold">-</button>
+                        <button onclick="app.updateCartQty('${item.cartItemId || item.id}', -1)" class="w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold">-</button>
                         <span class="font-bold text-sm w-5 text-center dark:text-white">${item.qty}</span>
-                        <button onclick="app.updateCartQty(${item.id}, 1)" class="w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold">+</button>
-                        <button onclick="app.removeFromCart(${item.id})" class="w-7 h-7 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-800 ml-1 flex-shrink-0" title="Remove">&times;</button>
+                        <button onclick="app.updateCartQty('${item.cartItemId || item.id}', 1)" class="w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold">+</button>
+                        <button onclick="app.removeFromCart('${item.cartItemId || item.id}')" class="w-7 h-7 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-800 ml-1 flex-shrink-0" title="Remove">&times;</button>
                     </div>
                 </div>
             `;
@@ -580,6 +685,41 @@ window.POS = {
         const subtotalEl = document.getElementById(DOM.POS.CART_SUBTOTAL);
         if (subtotalEl) {
             const parent = subtotalEl.parentElement.parentElement;
+
+            let digitalReceiptHtml = '';
+            if (this.state.currentCustomer) {
+                const tempDivs = [];
+                if (this.state.currentCustomer.phone) {
+                    tempDivs.push(`
+                        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                            <input type="checkbox" id="digital-receipt-whatsapp" class="w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500">
+                            <span>WhatsApp to <strong>${Utils.sanitize(this.state.currentCustomer.phone)}</strong></span>
+                        </label>
+                    `);
+                }
+                if (this.state.currentCustomer.email) {
+                    tempDivs.push(`
+                        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                            <input type="checkbox" id="digital-receipt-email" class="w-4 h-4 text-blue-500 rounded border-gray-300 focus:ring-blue-500">
+                            <span>Email to <strong>${Utils.sanitize(this.state.currentCustomer.email)}</strong></span>
+                        </label>
+                    `);
+                }
+                if (tempDivs.length > 0) {
+                    digitalReceiptHtml = `
+                        <div class="mt-4 mb-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm">
+                            <div class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide flex justify-between">
+                                <span>Digital Receipt</span>
+                                <span class="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded dark:bg-blue-900/50 dark:text-blue-200">Optional</span>
+                            </div>
+                            <div class="space-y-2.5">
+                                ${tempDivs.join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
             parent.innerHTML = `
                 <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Subtotal:</span> <span id="${DOM.POS.CART_SUBTOTAL}">${Utils.formatCurrency(subtotal, currencySymbol)}</span></div>
                 ${modsHtml}
@@ -614,8 +754,11 @@ window.POS = {
                         <!-- Summary injected here -->
                     </div>
                 </div>
-                <button onclick="app.checkout()" class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2">Pay Now</button>
-                <button onclick="app.clearCart()" class="w-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors mt-2">Clear Cart</button>
+                
+                ${digitalReceiptHtml}
+
+                <button onclick="app.checkout()" class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2 shadow-sm">Pay Now</button>
+                <button onclick="app.clearCart()" class="w-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors mt-2">Clear Cart</button>
             `;
         }
     },
@@ -625,6 +768,9 @@ window.POS = {
             Utils.showToast("Cart is empty!", "error");
             return;
         }
+
+        const optWhatsApp = document.getElementById('digital-receipt-whatsapp')?.checked;
+        const optEmail = document.getElementById('digital-receipt-email')?.checked;
 
         const subtotal = this.state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
         let runningTotal = subtotal;
@@ -734,18 +880,51 @@ window.POS = {
                 try {
                     const product = await DB.getProduct(item.id);
                     if (product) {
-                        const newStock = product.stock - item.qty;
-                        await DB.updateProduct(product.id, { stock: newStock });
+                        if (item.isVariant) {
+                            product.variants[item.variantIndex].stock -= item.qty;
+                            product.stock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+                            await DB.updateProduct(product.id, product);
 
-                        // Log Stock Change
-                        await DB.addStockLog({
-                            productId: product.id,
-                            changeAmount: -item.qty,
-                            reason: 'Sale',
-                            timestamp: Date.now(),
-                            note: `Order #${orderId}`,
-                            userId: this.state.currentUser ? this.state.currentUser.id : null
-                        });
+                            await DB.addStockLog({
+                                productId: product.id,
+                                changeAmount: -item.qty,
+                                reason: 'Sale',
+                                timestamp: Date.now(),
+                                note: `Order #${orderId} (Variant: ${item.name.split(' - ')[1] || 'Variant'})`,
+                                userId: this.state.currentUser ? this.state.currentUser.id : null
+                            });
+                        } else if (product.isBundle && product.bundleItems) {
+                            for (let bi of product.bundleItems) {
+                                let compProduct = await DB.getProduct(bi.productId);
+                                if (compProduct) {
+                                    let deductQty = item.qty * bi.quantity;
+                                    compProduct.stock -= deductQty;
+                                    await DB.updateProduct(compProduct.id, { stock: compProduct.stock });
+
+                                    await DB.addStockLog({
+                                        productId: compProduct.id,
+                                        changeAmount: -deductQty,
+                                        reason: 'Sale',
+                                        timestamp: Date.now(),
+                                        note: `Order #${orderId} (Part of Bundle: ${product.name})`,
+                                        userId: this.state.currentUser ? this.state.currentUser.id : null
+                                    });
+                                }
+                            }
+                        } else {
+                            const newStock = product.stock - item.qty;
+                            await DB.updateProduct(product.id, { stock: newStock });
+
+                            // Log Stock Change
+                            await DB.addStockLog({
+                                productId: product.id,
+                                changeAmount: -item.qty,
+                                reason: 'Sale',
+                                timestamp: Date.now(),
+                                note: `Order #${orderId}`,
+                                userId: this.state.currentUser ? this.state.currentUser.id : null
+                            });
+                        }
                     }
                 } catch (stockErr) {
                     console.error("Failed to update stock for item:", item.id, stockErr);
@@ -784,6 +963,64 @@ window.POS = {
                 receiptWindow.document.open();
                 receiptWindow.document.write(receiptHtml);
                 receiptWindow.document.close();
+
+                // Digital Receipt Generation
+                if (optWhatsApp || optEmail) {
+                    try {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = receiptHtml;
+                        tempDiv.style.width = '340px';
+                        tempDiv.style.padding = '20px';
+                        tempDiv.style.background = 'white';
+                        tempDiv.style.color = 'black';
+                        tempDiv.style.position = 'absolute';
+                        tempDiv.style.left = '-9999px';
+                        document.body.appendChild(tempDiv);
+
+                        const opt = {
+                            margin: 0.2,
+                            filename: `Receipt_${orderId}.pdf`,
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { scale: 2 },
+                            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                        };
+
+                        const pdfBlob = await window.html2pdf().set(opt).from(tempDiv).output('blob');
+                        document.body.removeChild(tempDiv);
+
+                        const file = new File([pdfBlob], `Receipt_${orderId}.pdf`, { type: "application/pdf" });
+
+                        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: `Receipt for Order #${orderId}`,
+                                text: 'Thank you for your purchase!'
+                            });
+                        } else {
+                            const url = URL.createObjectURL(pdfBlob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `Receipt_${orderId}.pdf`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+
+                            Utils.showToast("Receipt downloaded. You can now attach it.");
+
+                            setTimeout(() => {
+                                if (optWhatsApp && this.state.currentCustomer?.phone) {
+                                    const waUrl = `https://wa.me/${this.state.currentCustomer.phone.replace(/[^0-9+]/g, '')}?text=${encodeURIComponent('Please find your receipt attached.')}`;
+                                    window.open(waUrl, '_blank');
+                                } else if (optEmail && this.state.currentCustomer?.email) {
+                                    const emailUrl = `mailto:${this.state.currentCustomer.email}?subject=${encodeURIComponent('Receipt for Order #' + orderId)}&body=${encodeURIComponent('Please find your receipt attached as a download.')}`;
+                                    window.open(emailUrl, '_blank');
+                                }
+                            }, 500);
+                        }
+                    } catch (err) {
+                        console.error("Failed to generate digital receipt:", err);
+                        Utils.showToast("Failed to generate digital receipt", "error");
+                    }
+                }
             }
 
             // Update Customer Points

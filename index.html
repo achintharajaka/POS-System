@@ -14,6 +14,8 @@
     <!-- <script src="js/lib/chart.js"></script> -->
     <!-- QRCode.js for Receipts -->
     <script src="js/lib/qrcode.js"></script>
+    <!-- HTML2PDF for Digital Receipts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <!-- Localization -->
     <script src="js/lang/en.js"></script>
@@ -277,8 +279,18 @@
                 <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 dark:text-white" data-i18n="dash_recent_transactions">
                         Recent Transactions</h3>
-                    <button id="dash-refresh-btn" class="text-blue-600 text-sm hover:underline"
-                        data-i18n="dash_refresh">Refresh</button>
+                    <div class="flex gap-4">
+                        <button id="dash-export-btn"
+                            class="text-blue-600 text-sm hover:underline flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Export CSV
+                        </button>
+                        <button id="dash-refresh-btn" class="text-blue-600 text-sm hover:underline"
+                            data-i18n="dash_refresh">Refresh</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -430,6 +442,14 @@
                         <button id="inv-add-po-btn"
                             class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 hidden">
                             <span>+ Purchase Order</span>
+                        </button>
+                        <button id="inv-export-btn"
+                            class="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
+                            <svg class="w-4 h-4" outline="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            <span class="hidden sm:inline">Export CSV</span>
                         </button>
                     </div>
                 </div>
@@ -610,8 +630,18 @@
                         <input type="date" id="report-filter-to"
                             class="px-3 py-1.5 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
-                    <button id="report-filter-btn"
-                        class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Filter</button>
+                    <div class="flex gap-2">
+                        <button id="report-filter-btn"
+                            class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">Filter</button>
+                        <button id="report-export-btn"
+                            class="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 px-4 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2 transition-colors text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Export CSV
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1119,6 +1149,56 @@
                             System (Factory Reset)</button>
                     </div>
                 </div>
+
+                <!-- Multi-Store Management -->
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                        Multi-Store Management</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Switch between different store databases or
+                        create a new one.</p>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex gap-2 items-center">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Active
+                                Store:</label>
+                            <select id="setting-active-store"
+                                class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                                onchange="Settings.switchStore(this.value)">
+                                <!-- Injected -->
+                            </select>
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <input type="text" id="new-store-name" placeholder="New Store Name"
+                                class="flex-1 px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
+                            <button onclick="Settings.addStore()"
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Add
+                                Store</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Drive Sync -->
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">
+                        Google Drive Sync</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Backup your active store data directly to
+                        Google Drive.</p>
+                    <div class="flex flex-col gap-3">
+                        <button id="gdrive-login-btn" onclick="window.DriveSync && DriveSync.handleAuthClick()"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-center flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M12.02 0L3.11 15.44h5.3l8.91-15.44h-5.3zm9.33 16.51H10.74l4.45 7.49h10.61l-4.45-7.49zm-.44-1.07l-4.44-7.48H5.86l4.44 7.48h10.61z" />
+                            </svg>
+                            Login & Sync to Google Drive
+                        </button>
+                        <button id="gdrive-logout-btn" onclick="window.DriveSync && DriveSync.handleSignoutClick()"
+                            class="hidden bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-center">Sign
+                            Out of Google</button>
+                        <p id="gdrive-status" class="text-xs text-gray-500 dark:text-gray-400 text-center"></p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1283,6 +1363,40 @@
                             </select>
                         </div>
                     </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 mt-3">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="prod-hasVariants" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Has Variants (Size/Color)</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="prod-isBundle" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Is Product Bundle</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Variants Section -->
+                    <div id="variants-section" class="hidden border border-gray-200 dark:border-gray-700 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 mt-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-bold text-sm text-gray-700 dark:text-gray-300">Product Variants</h4>
+                            <button type="button" onclick="Inventory.addVariantRow()" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 px-2 py-1 rounded">Add Variant</button>
+                        </div>
+                        <div id="variants-list" class="space-y-2">
+                            <!-- Variants injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Bundles Section -->
+                    <div id="bundle-section" class="hidden border border-gray-200 dark:border-gray-700 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 mt-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-bold text-sm text-gray-700 dark:text-gray-300">Bundle Items</h4>
+                            <button type="button" onclick="Inventory.addBundleRow()" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 px-2 py-1 rounded">Add Product</button>
+                        </div>
+                        <div id="bundle-items-list" class="space-y-2">
+                            <!-- Bundle items injected here -->
+                        </div>
+                    </div>
+
                 </div>
                 <div class="space-y-3 mt-3">
                     <div>
@@ -1619,6 +1733,24 @@
         </div>
     </div>
 
+    <!-- Variant Selection Modal -->
+    <div id="pos-variant-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white" id="pos-variant-title">Select Variant</h3>
+                <button onclick="document.getElementById('pos-variant-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div id="pos-variant-list" class="p-4 flex-1 overflow-y-auto space-y-2">
+                <!-- Variants injected here -->
+            </div>
+            <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-end">
+                <button onclick="document.getElementById('pos-variant-modal').classList.add('hidden')" class="px-6 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 font-medium">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Held Orders Modal -->
     <div id="pos-held-orders-modal"
         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
@@ -1719,6 +1851,9 @@
     <script src="js/modules/stock.js"></script>
     <script src="js/modules/customers.js"></script>
     <script src="js/modules/returns.js"></script>
+    <script src="js/modules/drive-sync.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <!-- Main App -->
     <script src="js/app.js"></script>

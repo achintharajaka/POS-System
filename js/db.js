@@ -1,7 +1,8 @@
 // DB Module (Global)
 // Depends on: utils.js (loaded before this)
 
-const db = new Dexie("POSDatabase");
+const activeStore = localStorage.getItem('pos_active_store') || 'POSDatabase';
+const db = new Dexie(activeStore);
 
 db.version(1).stores({
     products: '++id, name, barcode, price, costPrice, stock, categoryId',
@@ -75,6 +76,23 @@ db.version(5).stores({
 // Version 6: Favorites Support
 db.version(6).stores({
     products: '++id, name, barcode, price, costPrice, stock, categoryId, supplierId, lowStockThreshold, isFavorite',
+    categories: '++id, name',
+    orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod, userId, shiftId, customerId, status',
+    settings: 'key',
+    expenses: '++id, description, amount, date, category',
+    income: '++id, description, amount, date, category',
+    users: '++id, name, pin, role, active',
+    shifts: '++id, userId, clockIn, clockOut, status',
+    suppliers: '++id, name, contact, email, phone, address',
+    purchaseOrders: '++id, supplierId, date, status, totalCost, items, receivedDate',
+    stockLogs: '++id, productId, changeAmount, reason, timestamp, note, userId',
+    customers: '++id, name, phone, email, points, tier, totalSpent',
+    returns: '++id, orderId, timestamp, totalRefund, items, reason, userId, customerId'
+});
+
+// Version 7: Variants and Bundles Support
+db.version(7).stores({
+    products: '++id, name, barcode, price, costPrice, stock, categoryId, supplierId, lowStockThreshold, isFavorite, hasVariants, isBundle',
     categories: '++id, name',
     orders: '++id, timestamp, total, subtotal, modifiers, items, paymentMethod, userId, shiftId, customerId, status',
     settings: 'key',
