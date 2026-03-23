@@ -75,6 +75,7 @@ window.Inventory = {
                     <td class="p-4 dark:text-white">${Utils.formatCurrency(prod.price, currencySymbol)}</td>
                     <td class="p-4 ${prod.stock < 5 ? 'text-red-500 font-bold' : 'dark:text-white'}">${prod.stock}</td>
                     <td class="p-4 flex gap-2">
+                        ${prod.barcode ? `<button onclick="app.printProductBarcode('${Utils.sanitize(prod.barcode)}', '${Utils.sanitize(prod.name).replace(/'/g, "\\'")}')" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">Print</button>` : ''}
                         <button onclick="app.openProductModal(${prod.id})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">Edit</button>
                         <button onclick="app.deleteProduct(${prod.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
                     </td>
