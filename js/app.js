@@ -388,6 +388,52 @@ const App = {
         bindClick(DOM.MODALS.ORDER.CLOSE_X, () => this.closeOrderModal());
         bindClick(DOM.MODALS.ORDER.CLOSE_BTN, () => this.closeOrderModal());
         bindClick(DOM.MODALS.ORDER.PRINT_BTN, () => this.printOrder());
+    },
+
+    printProductBarcode(barcode, name) {
+        if (!barcode) return;
+        const printWindow = window.open('', '_blank', 'width=400,height=300');
+        if (!printWindow) {
+            Utils.showToast("Please allow popups to print barcodes", "error");
+            return;
+        }
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Print Barcode - ${name}</title>
+                    <style>
+                        body { text-align: center; font-family: sans-serif; padding-top: 20px; }
+                        svg { max-width: 100%; height: auto; }
+                    </style>
+                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+                </head>
+                <body>
+                    <h4>${name}</h4>
+                    <svg id="barcode"></svg>
+                    <script>
+                        window.onload = function() {
+                            if (window.JsBarcode) {
+                                JsBarcode("#barcode", "${barcode}", {
+                                    format: "CODE128",
+                                    lineColor: "#000",
+                                    width: 2,
+                                    height: 50,
+                                    displayValue: true
+                                });
+                                setTimeout(() => {
+                                    window.print();
+                                    window.close();
+                                }, 500);
+                            } else {
+                                document.body.innerHTML = "Error loading barcode library.";
+                            }
+                        };
+                    </script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 };
 
