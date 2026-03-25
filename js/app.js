@@ -52,6 +52,7 @@ const App = {
         if (window.Settings) mixin(window.Settings);
         if (window.Suppliers) mixin(window.Suppliers); // Mixin, though mainly accessed via Global
         if (window.Stock) mixin(window.Stock);
+        if (window.AI) mixin(window.AI);
         if (this.initReportsUI) this.initReportsUI();
         if (window.Customers) mixin(window.Customers);
         if (window.Returns) mixin(window.Returns);
@@ -96,6 +97,9 @@ const App = {
                     createdAt: Date.now()
                 });
             }
+
+            // Initialize AI UI bindings
+            if (this.initAI) this.initAI();
 
             // Show login screen
             this.showLoginScreen();
@@ -236,6 +240,9 @@ const App = {
 
             const qrUrl = document.getElementById(DOM.SETTINGS.RECEIPT_QR_URL);
             if (qrUrl) qrUrl.value = settings.receiptQrCodeUrl || '';
+
+            const geminiApi = document.getElementById('setting-geminiApiKey');
+            if (geminiApi) geminiApi.value = settings.geminiApiKey || '';
 
             // Language
             const langSelect = document.getElementById('setting-language');
