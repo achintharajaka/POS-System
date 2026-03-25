@@ -133,6 +133,7 @@ db.on("populate", async () => {
         { key: "loyaltyEnabled", value: true },
         { key: "loyaltyPointsPerCurrency", value: 1 }, // 1 point per $1
         { key: "loyaltyRedemptionRate", value: 0.05 }, // 100 points = $5
+        { key: "geminiApiKey", value: "" }, // Gemini API Key
     ]);
 
     // Default Modifier (10% Tax)

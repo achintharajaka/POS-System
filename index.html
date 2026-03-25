@@ -23,6 +23,7 @@
     <script src="js/lang/ta.js"></script>
     <script src="js/modules/i18n.js"></script>
     <script src="js/modules/shortcuts.js"></script>
+    <script src="js/modules/ai.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -913,14 +914,17 @@
         <div id="view-settings" class="view-section h-full overflow-y-auto hidden">
             <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white" data-i18n="set_title">Settings</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form id="settings-form">
+            <div class="flex flex-col gap-4 max-w-4xl">
                 <!-- General Settings -->
-                <div
-                    class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2"
+                <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 group overflow-hidden" open>
+                    <summary class="text-lg font-bold p-5 text-gray-800 dark:text-white border-b dark:border-gray-700 cursor-pointer flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition list-none [&::-webkit-details-marker]:hidden"
                         data-i18n="set_general_config">
-                        General Configuration</h3>
-                    <form id="settings-form" class="space-y-4">
+                        General Configuration
+                        <svg class="w-5 h-5 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <div class="p-6">
+                        <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                                 data-i18n="set_language">Language</label>
@@ -930,6 +934,11 @@
                                 <option value="si">සිංහල</option>
                                 <option value="ta">தமிழ்</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gemini AI API Key</label>
+                            <input type="password" name="geminiApiKey" id="setting-geminiApiKey"
+                                class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg" placeholder="Enter Gemini Studio Key">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -971,11 +980,17 @@
                                     placeholder="$">
                             </div>
                         </div>
-                </div>
+                        </div>
+                    </div>
+                </details>
 
                 <!-- Loyalty Program Configuration -->
-                <div class="border-t dark:border-gray-700 pt-4 mt-2">
-                    <h4 class="font-bold text-gray-800 dark:text-white mb-2">Loyalty Program</h4>
+                <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 group overflow-hidden">
+                    <summary class="text-lg font-bold p-5 text-gray-800 dark:text-white border-b dark:border-gray-700 cursor-pointer flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition list-none [&::-webkit-details-marker]:hidden">
+                        Loyalty Program
+                        <svg class="w-5 h-5 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <div class="p-6">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Earning Rate
@@ -992,12 +1007,15 @@
                                 class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg">
                         </div>
                     </div>
-                </div>
+                </details>
 
                 <!-- Order Modifiers (Tax, Discount, Fees) -->
-                <div class="border-t dark:border-gray-700 pt-4 mt-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Global Order
-                        Adjustments (Taxes, Fees, Discounts)</label>
+                <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 group overflow-hidden">
+                    <summary class="text-lg font-bold p-5 text-gray-800 dark:text-white border-b dark:border-gray-700 cursor-pointer flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition list-none [&::-webkit-details-marker]:hidden">
+                        Order Adjustments (Taxes, Fees, Discounts)
+                        <svg class="w-5 h-5 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <div class="p-6">
                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                         <table class="w-full text-sm text-left mb-3">
                             <thead class="text-gray-500 dark:text-gray-400 font-medium border-b dark:border-gray-600">
@@ -1035,11 +1053,14 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </details>
 
-                <div class="pt-4 border-t dark:border-gray-700 mt-4">
-                    <h4 class="font-bold text-gray-800 dark:text-white mb-2" data-i18n="set_receipt_config">
-                        Receipt Configuration</h4>
+                <details class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 group overflow-hidden">
+                    <summary class="text-lg font-bold p-5 text-gray-800 dark:text-white border-b dark:border-gray-700 cursor-pointer flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition list-none [&::-webkit-details-marker]:hidden" data-i18n="set_receipt_config">
+                        Receipt Configuration
+                        <svg class="w-5 h-5 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <div class="p-6 space-y-4">
                     <div class="space-y-2">
                         <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                             <input type="checkbox" name="receiptShowLogo" id="setting-receiptShowLogo"
@@ -1089,18 +1110,21 @@
                         class="w-full px-4 py-2 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
                         rows="2"></textarea>
                 </div>
-
-                <div class="pt-4 flex gap-3">
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                        data-i18n="set_save">Save
-                        Settings</button>
-                    <button type="button" id="setting-preview-receipt-btn"
-                        class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
-                        data-i18n="set_preview_receipt">Preview
-                        Receipt</button>
                 </div>
-                </form>
+                </details>
+
+                <!-- Save Action inside Form -->
+                <div class="sticky bottom-0 bg-white dark:bg-gray-900 pt-4 pb-2 z-10 border-t dark:border-gray-800">
+                    <div class="flex gap-3">
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                            data-i18n="set_save">Save Settings</button>
+                        <button type="button" id="setting-preview-receipt-btn"
+                            class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                            data-i18n="set_preview_receipt">Preview Receipt</button>
+                    </div>
+                </div>
             </div>
+            </form>
 
             <!-- Category & Data Management -->
             <div class="space-y-6">
@@ -1200,9 +1224,8 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- User Management (Admin Only) -->
+            <!-- User Management (Admin Only) -->
         <div id="user-management-section" class="mt-6">
             <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white" data-i18n="set_user_mgmt">User
                 Management</h2>
@@ -1298,6 +1321,42 @@
         </div>
 
     </main>
+
+    <!-- AI Assistant Floating Button -->
+    <button id="ai-open-btn" class="fixed bottom-6 right-6 z-[100] bg-indigo-600 text-white p-4 rounded-full shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 hover:scale-105 transition-all flex items-center justify-center group">
+        <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        <span class="absolute overflow-hidden whitespace-nowrap opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto group-hover:ml-3 bg-gray-800 text-white text-xs px-2 py-1 rounded transition-all right-16 pointer-events-none">Ask AI</span>
+    </button>
+
+    <!-- AI Chat Modal Side Panel -->
+    <div id="ai-chat-modal" class="fixed bottom-24 right-6 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-[105] flex flex-col translate-y-full opacity-0 pointer-events-none transition-all duration-300 max-h-[600px] h-[80vh]">
+        <!-- Header -->
+        <div class="p-4 bg-indigo-600 text-white rounded-t-2xl flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                <h3 class="font-bold">Gemini Assistant</h3>
+            </div>
+            <button id="ai-close-btn" class="text-indigo-200 hover:text-white">&times;</button>
+        </div>
+        
+        <!-- Messages Area -->
+        <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-900 border-b dark:border-gray-700 space-y-4">
+            <!-- Welcome Message -->
+            <div class="flex w-full justify-start">
+                <div class="max-w-[80%] rounded-xl p-3 text-sm bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none">
+                    Hello! I'm your POS Assistant. You can ask me about today's sales, low stock items, or performance summaries.
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-white dark:bg-gray-800 rounded-b-2xl flex gap-2">
+            <input type="text" id="ai-chat-input" placeholder="Ask about sales, stock..." class="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 border-transparent focus:border-indigo-500 focus:bg-white dark:focus:bg-gray-900 focus:ring-0 dark:text-white rounded-xl text-sm transition-all outline-none">
+            <button id="ai-submit-btn" class="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 transition-colors">
+                <svg class="w-5 h-5 -rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            </button>
+        </div>
+    </div>
 
     <!-- Product Modal -->
     <div id="product-modal"
