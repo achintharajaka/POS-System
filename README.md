@@ -132,6 +132,11 @@ The system uses `IndexedDB` for storage.
 - **Implementation:** Uses Google Identity Services (GSI) and the Drive API for secure OAuth authentication and file upload.
 - **Setup:** See `GoogleDriveInstructions.md` for a step-by-step guide on how to configure your Google API credentials for this feature.
 
+### M. AI Assistant (Gemini)
+- **Integration:** Powered directly by the Google Gemini SDK (`gemini-2.5-flash`) handling fully client-side conversational AI.
+- **System-Awareness:** The AI is injected with a real-time, comprehensive snapshot of the system (`IndexedDB` dump of active orders, inventory count, staff roster, configuration, and CRM data) acting as its context.
+- **Support:** Users can chat with the assistant using natural language to query metrics (e.g., "What are my top selling items?", "Does John have an active shift?") without navigating away from their current view.
+
 ## 5. Setup & Deployment
 Since this is a static web application:
 1.  **Local:** Simply open `index.html` in any modern web browser (Chrome/Edge/Firefox).

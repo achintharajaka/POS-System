@@ -11,8 +11,9 @@ Welcome to the Point of Sale (POS) System! This guide will help you understand h
 6.  [Reports & Finances](#reports--finances)
 7.  [Settings & Data](#settings--data)
 8.  [User Management (Admin)](#user-management-admin)
-8.  [Keyboard Shortcuts](#keyboard-shortcuts)
-9.  [Troubleshooting & Debugging](#troubleshooting--debugging)
+9.  [AI Assistant (Gemini)](#ai-assistant-gemini)
+10. [Keyboard Shortcuts](#keyboard-shortcuts)
+11. [Troubleshooting & Debugging](#troubleshooting--debugging)
 
 ---
 
@@ -245,7 +246,27 @@ Only visible to Admin users, found at the bottom of the **Settings** page.
 
 ---
 
-## 8. Keyboard Shortcuts
+## 9. AI Assistant (Gemini)
+
+The POS features a fully context-aware, embedded AI chatbot that can answer detailed questions about your store's live data.
+
+### Setup
+1. Go to **Settings** -> **General Configuration**.
+2. Enter your Gemini API key in the **Gemini AI API Key** field.
+3. Click **Save Settings**. 
+
+### Using the Assistant
+- Click the floating **Ask AI** button at the bottom-right corner of any screen.
+- The assistant is instantly injected with your live database. Ask questions such as:
+    - *"What are my total sales today?"*
+    - *"List the top 3 low stock items."*
+    - *"Who is currently clocked in?"*
+    - *"Do we have any active taxes configured?"*
+- The AI will evaluate your real-world local data and give you exact, accurate figures from your current store.
+
+---
+
+## 10. Keyboard Shortcuts
 
 Boost your efficiency with these shortcuts:
 
@@ -265,7 +286,7 @@ Boost your efficiency with these shortcuts:
 
 ---
 
-## 9. Troubleshooting & Debugging
+## 11. Troubleshooting & Debugging
 
 If you encounter any issues or the system behaves unexpectedly:
 
