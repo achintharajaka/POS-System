@@ -95,22 +95,65 @@ window.AI = {
             const today = new Date();
             today.setHours(0,0,0,0);
             
-            // Get data snippets
-            const salesToday = await DB.getOrdersSince(today.getTime());
-            const totalSales = salesToday.reduce((sum, order) => sum + order.total, 0);
-            const lowStockCount = await DB.getLowStockCount();
+            const settings = this.state.settings;
+            const storeName = settings.storeName || "My POS Store";
             
-            // Fetch top 10 low stock items
-            const products = await DB.getProducts(null, null, "", true); // true = lowStock filter
-            const lowStockText = products.slice(0, 10).map(p => p.name + ": " + p.stock + " left").join(", ");
+            // Promise.all to fetch deep context efficiently
+            const [
+                allProducts, 
+                allCategories, 
+                salesToday, 
+                allExpenses, 
+                allCustomers,
+                allUsers
+            ] = await Promise.all([
+                window.DB.getProducts(),
+                window.DB.getCategories(),
+                window.DB.getOrdersSince(today.getTime()),
+                window.DB.getExpenses(),
+                window.DB.getCustomers ? window.DB.getCustomers() : Promise.resolve([]),
+                window.DB.getUsers ? window.DB.getUsers() : Promise.resolve([])
+            ]);
+            
+            const lowStockProducts = allProducts.filter(p => p.stock < (p.lowStockThreshold || 5));
+            const totalSalesToday = salesToday.reduce((sum, order) => sum + order.total, 0);
 
-            const currencySymbol = this.state.settings.currencySymbol || "$";
-            const systemPrompt = "You are an AI assistant for a POS (Point of Sale) system.\n" +
-                "Here is the current system context:\n" +
-                "- Today's Total Sales: " + currencySymbol + totalSales.toFixed(2) + " from " + salesToday.length + " orders\n" +
-                "- Low Stock Items Count: " + lowStockCount + "\n" +
-                "- Top Low Stock Items: " + (lowStockText || "None") + "\n\n" +
-                "Please answer the user's question concisely based on this data. Do not invent data that is not provided.";
+            const systemFeatures = [
+               "POS Terminal checkout", "Inventory Management", "Categories", 
+               "Reporting (Sales/Profit)", "Customer CRM & Loyalty", 
+               "Shift Tracking", "Multi-Store & Google Drive Sync"
+            ].join(", ");
+
+            const currencySymbol = settings.currencySymbol || "$";
+            
+            const systemPrompt = `You are the AI assistant inside a Point of Sale (POS) system named "${storeName}". 
+You have COMPLETE access to the store's latest local database snapshot. You MUST answer the user's questions based strictly on this provided data.
+You can answer questions regarding sales, products, stock levels, expenses, customer loyalty, staff, and system functionality. 
+
+=== SYSTEM CAPABILITIES ===
+Features available: ${systemFeatures}
+
+=== METRICS & SETTINGS ===
+Currency: ${currencySymbol}
+Loyalty Program: ${settings.loyaltyEnabled ? 'Yes' : 'No'}
+Today's Total Sales: ${currencySymbol}${totalSalesToday.toFixed(2)} (${salesToday.length} orders today)
+Total Products: ${allProducts.length} (Low Stock: ${lowStockProducts.length})
+Total Customers registered: ${allCustomers.length}
+Total Staff Users: ${allUsers.length}
+
+=== STORE DATABASE EXTRACT (JSON) ===
+Products List (ID, Name, Stock, Price): ${JSON.stringify(allProducts.map(p => ({id: p.id, name: p.name, stock: p.stock, price: p.price})))}
+Categories: ${JSON.stringify(allCategories.map(c => c.name))}
+Low Stock Items: ${JSON.stringify(lowStockProducts.map(p => p.name))}
+Top 10 Customers: ${JSON.stringify(allCustomers.slice(0, 10).map(c=> ({name: c.name, points: c.points, spent: c.totalSpent})))}
+Staff Users: ${JSON.stringify(allUsers.map(u => ({name: u.name, role: u.role, active: u.active})))}
+Order Modifiers: ${JSON.stringify(settings.orderModifiers || [])}
+
+INSTRUCTIONS: 
+- Answer the user's internal queries concisely.
+- Do NOT hallucinate data. If you don't know, state it clearly.
+- If asked "what can you do?" summarize the data you have.
+- If they ask about "how" to do something (e.g., how to sync), infer based on standard UI features in the Capabilities list.`;
 
             // Prepare Gemini Request
             const payload = {
