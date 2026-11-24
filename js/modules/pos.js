@@ -258,7 +258,7 @@ window.POS = {
     buildProductCard(prod) {
         const card = document.createElement('div');
         // snap-align-start flex-shrink-0 for horizontal scrolling lists, and normal grid for grid
-        card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm relative shrink-0 min-w-[140px]";
+        card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all flex flex-col items-center text-center shadow-sm hover:shadow-md relative shrink-0 min-w-[140px]";
 
         const favColor = prod.isFavorite ? 'text-yellow-400 hover:text-yellow-500' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400';
         const favBtn = document.createElement('button');

@@ -140,3 +140,156 @@
 .shake {
     animation: shake 0.5s ease;
 }
+
+/* ==========================================================================
+   Light Mode Contrast, Border & Elevation Enhancements
+   Makes all cards, panels, tables, buttons, inputs, and modals clearly visible
+   with well-defined borders, outlines, and elevation shadows across the whole system.
+   ========================================================================== */
+
+/* 1. Global border color overrides in light mode */
+html:not(.dark) .border-gray-100,
+html:not(.dark) .border-gray-200 {
+    border-color: #cbd5e1 !important; /* slate-300: distinct from #f3f4f6 page background */
+}
+
+html:not(.dark) .border-gray-300 {
+    border-color: #94a3b8 !important; /* slate-400 */
+}
+
+/* Default uncolored .border elements in light mode */
+html:not(.dark) .border:not([class*="border-blue-"]):not([class*="border-red-"]):not([class*="border-green-"]):not([class*="border-yellow-"]):not([class*="border-indigo-"]):not([class*="border-transparent"]):not([class*="border-purple-"]) {
+    border-color: #cbd5e1;
+}
+
+/* 2. Elevated card containers and layout panels in light mode */
+html:not(.dark) .bg-white.rounded-xl,
+html:not(.dark) .bg-white.rounded-lg,
+html:not(.dark) .bg-white.rounded-2xl {
+    border-color: #cbd5e1;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Views card wrappers */
+html:not(.dark) #view-dashboard .bg-white,
+html:not(.dark) #view-pos .bg-white,
+html:not(.dark) #view-inventory .bg-white,
+html:not(.dark) #view-settings .bg-white,
+html:not(.dark) #view-reports .bg-white,
+html:not(.dark) #view-customers .bg-white,
+html:not(.dark) #view-returns .bg-white {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* 3. Shadow enhancements in light mode */
+html:not(.dark) .shadow-sm {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+html:not(.dark) .shadow,
+html:not(.dark) .shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark) .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* 4. Table headers and row dividers in light mode */
+html:not(.dark) thead.bg-gray-50,
+html:not(.dark) thead {
+    background-color: #f1f5f9; /* slate-100: crisp contrast from white card */
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+
+html:not(.dark) thead th {
+    color: #475569 !important; /* slate-600 */
+    font-weight: 600;
+}
+
+html:not(.dark) .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #e2e8f0 !important; /* slate-200 */
+}
+
+html:not(.dark) tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* 5. Pagination and secondary buttons in light mode */
+html:not(.dark) button.border,
+html:not(.dark) #dash-prev-btn,
+html:not(.dark) #dash-next-btn,
+html:not(.dark) #inv-prev-btn,
+html:not(.dark) #inv-next-btn,
+html:not(.dark) #customers-prev-btn,
+html:not(.dark) #customers-next-btn,
+html:not(.dark) #pos-prev,
+html:not(.dark) #pos-next {
+    border-color: #cbd5e1;
+    background-color: #ffffff;
+    color: #374151;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.15s ease;
+}
+
+html:not(.dark) button.border:hover:not(:disabled),
+html:not(.dark) #dash-prev-btn:hover:not(:disabled),
+html:not(.dark) #dash-next-btn:hover:not(:disabled),
+html:not(.dark) #inv-prev-btn:hover:not(:disabled),
+html:not(.dark) #inv-next-btn:hover:not(:disabled),
+html:not(.dark) #customers-prev-btn:hover:not(:disabled),
+html:not(.dark) #customers-next-btn:hover:not(:disabled),
+html:not(.dark) #pos-prev:hover:not(:disabled),
+html:not(.dark) #pos-next:hover:not(:disabled) {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+/* 6. Form inputs and dropdown selects in light mode */
+html:not(.dark) input[type="text"],
+html:not(.dark) input[type="number"],
+html:not(.dark) input[type="search"],
+html:not(.dark) input[type="password"],
+html:not(.dark) input[type="date"],
+html:not(.dark) select,
+html:not(.dark) textarea {
+    border-color: #cbd5e1;
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+}
+
+html:not(.dark) input:focus,
+html:not(.dark) select:focus,
+html:not(.dark) textarea:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+/* 7. Product cards in POS terminal in light mode */
+html:not(.dark) #pos-products-grid > div,
+html:not(.dark) #pos-favorites-grid > div,
+html:not(.dark) #pos-recently-sold-grid > div {
+    border-color: #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+}
+
+html:not(.dark) #pos-products-grid > div:hover,
+html:not(.dark) #pos-favorites-grid > div:hover,
+html:not(.dark) #pos-recently-sold-grid > div:hover {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.15), 0 2px 4px -2px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 8. Modals in light mode */
+html:not(.dark) .fixed.inset-0 > div[class*="bg-white"],
+html:not(.dark) .modal-content {
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+}
+
+/* 9. Top Navigation in light mode */
+html:not(.dark) nav {
+    border-bottom: 1px solid #e2e8f0;
+}
