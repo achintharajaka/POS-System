@@ -17,15 +17,20 @@ window.Stock = {
             suppliers.forEach(s => supplierMap[s.id] = s.name);
 
             if (pos.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="p-8 text-center text-gray-500 dark:text-gray-400">
-                            <p>No purchase orders found.</p>
-                        </td>
-                    </tr>`;
+                tbody.replaceChildren();
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 6;
+                td.className = "p-8 text-center text-gray-500 dark:text-gray-400";
+                const p = document.createElement('p');
+                p.textContent = "No purchase orders found.";
+                td.appendChild(p);
+                tr.appendChild(td);
+                tbody.appendChild(tr);
                 return;
             }
 
+            tbody.replaceChildren();
             pos.forEach(po => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
@@ -35,17 +40,50 @@ window.Stock = {
                 if (po.status === 'received') statusColor = 'bg-green-100 text-green-800';
                 if (po.status === 'cancerlled') statusColor = 'bg-red-100 text-red-800';
 
-                tr.innerHTML = `
-                    <td class="p-4 font-mono text-sm dark:text-gray-300">#${po.id}</td>
-                    <td class="p-4 dark:text-white">${po.date}</td>
-                    <td class="p-4 dark:text-white">${Utils.sanitize(supplierMap[po.supplierId] || 'Unknown')}</td>
-                    <td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${statusColor}">${po.status.toUpperCase()}</span></td>
-                    <td class="p-4 dark:text-white">${Utils.formatCurrency(po.totalCost)}</td>
-                    <td class="p-4 flex gap-2">
-                        ${po.status === 'ordered' ? `<button onclick="Stock.receiveGenericPO(${po.id})" class="text-green-600 hover:text-green-800 text-sm font-bold">Receive</button>` : ''}
-                        <button onclick="Stock.viewPO(${po.id})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400">View</button>
-                    </td>
-                `;
+                const tdId = document.createElement('td');
+                tdId.className = "p-4 font-mono text-sm dark:text-gray-300";
+                tdId.textContent = `#${po.id}`;
+
+                const tdDate = document.createElement('td');
+                tdDate.className = "p-4 dark:text-white";
+                tdDate.textContent = po.date;
+
+                const tdSup = document.createElement('td');
+                tdSup.className = "p-4 dark:text-white";
+                tdSup.textContent = supplierMap[po.supplierId] || 'Unknown';
+
+                const tdStatus = document.createElement('td');
+                tdStatus.className = "p-4";
+                const statusBadge = document.createElement('span');
+                statusBadge.className = `px-2 py-1 rounded-full text-xs font-bold ${statusColor}`;
+                statusBadge.textContent = (po.status || '').toUpperCase();
+                tdStatus.appendChild(statusBadge);
+
+                const tdTotal = document.createElement('td');
+                tdTotal.className = "p-4 dark:text-white";
+                tdTotal.textContent = Utils.formatCurrency(po.totalCost);
+
+                const tdActions = document.createElement('td');
+                tdActions.className = "p-4 flex gap-2";
+                if (po.status === 'ordered') {
+                    const recBtn = document.createElement('button');
+                    recBtn.onclick = () => Stock.receiveGenericPO(po.id);
+                    recBtn.className = "text-green-600 hover:text-green-800 text-sm font-bold";
+                    recBtn.textContent = "Receive";
+                    tdActions.appendChild(recBtn);
+                }
+                const viewBtn = document.createElement('button');
+                viewBtn.onclick = () => Stock.viewPO(po.id);
+                viewBtn.className = "text-blue-600 hover:text-blue-800 dark:text-blue-400";
+                viewBtn.textContent = "View";
+                tdActions.appendChild(viewBtn);
+
+                tr.appendChild(tdId);
+                tr.appendChild(tdDate);
+                tr.appendChild(tdSup);
+                tr.appendChild(tdStatus);
+                tr.appendChild(tdTotal);
+                tr.appendChild(tdActions);
                 tbody.appendChild(tr);
             });
 
@@ -68,9 +106,9 @@ window.Stock = {
 
         // Load Suppliers
         const suppliers = await DB.getSuppliers();
-        supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+        supplierSelect.replaceChildren(new Option('Select Supplier', ''));
         suppliers.forEach(s => {
-            supplierSelect.innerHTML += `<option value="${s.id}">${Utils.sanitize(s.name)}</option>`;
+            supplierSelect.appendChild(new Option(s.name, s.id));
         });
 
         // Add first empty item row
@@ -86,19 +124,44 @@ window.Stock = {
         const div = document.createElement('div');
         div.className = "flex gap-2 items-center mb-2 po-item-row";
 
-        let productOptions = '<option value="">Select Product</option>';
+        const select = document.createElement('select');
+        select.className = "flex-1 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white po-item-select";
+        select.onchange = () => Stock.updatePORowCost(select);
+        select.appendChild(new Option('Select Product', ''));
         products.forEach(p => {
-            productOptions += `<option value="${p.id}" data-cost="${p.costPrice}">${Utils.sanitize(p.name)}</option>`;
+            const opt = new Option(p.name, p.id);
+            opt.dataset.cost = p.costPrice;
+            select.appendChild(opt);
         });
 
-        div.innerHTML = `
-            <select class="flex-1 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white po-item-select" onchange="Stock.updatePORowCost(this)">
-                ${productOptions}
-            </select>
-            <input type="number" class="w-20 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white po-item-qty" placeholder="Qty" min="1" value="1" onchange="Stock.calculatePOTotal()">
-             <input type="number" class="w-24 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white po-item-cost" placeholder="Cost" step="0.01" onchange="Stock.calculatePOTotal()">
-            <button type="button" onclick="this.parentElement.remove(); Stock.calculatePOTotal()" class="text-red-500 hover:text-red-700">X</button>
-        `;
+        const qtyInput = document.createElement('input');
+        qtyInput.type = "number";
+        qtyInput.className = "w-20 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white po-item-qty";
+        qtyInput.placeholder = "Qty";
+        qtyInput.min = "1";
+        qtyInput.value = "1";
+        qtyInput.onchange = () => Stock.calculatePOTotal();
+
+        const costInput = document.createElement('input');
+        costInput.type = "number";
+        costInput.className = "w-24 p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white po-item-cost";
+        costInput.placeholder = "Cost";
+        costInput.step = "0.01";
+        costInput.onchange = () => Stock.calculatePOTotal();
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = "button";
+        removeBtn.className = "text-red-500 hover:text-red-700 font-bold px-2";
+        removeBtn.innerHTML = "&times;";
+        removeBtn.onclick = () => {
+            div.remove();
+            Stock.calculatePOTotal();
+        };
+
+        div.appendChild(select);
+        div.appendChild(qtyInput);
+        div.appendChild(costInput);
+        div.appendChild(removeBtn);
         container.appendChild(div);
     },
 
@@ -238,10 +301,18 @@ window.Stock = {
             products.forEach(p => productMap[p.id] = p.name);
 
             if (logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">No stock history found.</td></tr>`;
+                tbody.replaceChildren();
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 5;
+                td.className = "p-8 text-center text-gray-500";
+                td.textContent = "No stock history found.";
+                tr.appendChild(td);
+                tbody.appendChild(tr);
                 return;
             }
 
+            tbody.replaceChildren();
             logs.forEach(log => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700";
@@ -250,13 +321,31 @@ window.Stock = {
                 const color = isPositive ? 'text-green-600' : 'text-red-600';
                 const sign = isPositive ? '+' : '';
 
-                tr.innerHTML = `
-                    <td class="p-4 dark:text-gray-300">${new Date(log.timestamp).toLocaleString()}</td>
-                    <td class="p-4 font-bold dark:text-white">${Utils.sanitize(productMap[log.productId] || 'Unknown')}</td>
-                    <td class="p-4 ${color} font-mono font-bold">${sign}${log.changeAmount}</td>
-                    <td class="p-4 dark:text-gray-300">${Utils.sanitize(log.reason)}</td>
-                    <td class="p-4 text-sm text-gray-500">${Utils.sanitize(log.note || '-')}</td>
-                 `;
+                const tdDate = document.createElement('td');
+                tdDate.className = "p-4 dark:text-gray-300";
+                tdDate.textContent = new Date(log.timestamp).toLocaleString();
+
+                const tdProd = document.createElement('td');
+                tdProd.className = "p-4 font-bold dark:text-white";
+                tdProd.textContent = productMap[log.productId] || 'Unknown';
+
+                const tdChange = document.createElement('td');
+                tdChange.className = `p-4 ${color} font-mono font-bold`;
+                tdChange.textContent = `${sign}${log.changeAmount}`;
+
+                const tdReason = document.createElement('td');
+                tdReason.className = "p-4 dark:text-gray-300";
+                tdReason.textContent = log.reason;
+
+                const tdNote = document.createElement('td');
+                tdNote.className = "p-4 text-sm text-gray-500";
+                tdNote.textContent = log.note || '-';
+
+                tr.appendChild(tdDate);
+                tr.appendChild(tdProd);
+                tr.appendChild(tdChange);
+                tr.appendChild(tdReason);
+                tr.appendChild(tdNote);
                 tbody.appendChild(tr);
             });
         } catch (e) {

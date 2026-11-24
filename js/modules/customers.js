@@ -19,18 +19,24 @@ window.Customers = {
             const customers = result.data;
             const totalItems = result.total;
 
+            tbody.textContent = '';
+
             if (customers.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="p-8 text-center text-gray-500 dark:text-gray-400">
-                            <div class="flex flex-col items-center justify-center">
-                                <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                                <p>No customers found.</p>
-                            </div>
-                        </td>
-                    </tr>`;
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 5;
+                td.className = "p-8 text-center text-gray-500 dark:text-gray-400";
+                const div = document.createElement('div');
+                div.className = "flex flex-col items-center justify-center";
+                div.innerHTML = DOMPurify.sanitize(`
+                    <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <p>No customers found.</p>
+                `);
+                td.appendChild(div);
+                tr.appendChild(td);
+                tbody.appendChild(tr);
                 this.updateCustomerPagination(0, 0, 1);
                 return;
             }
@@ -41,24 +47,49 @@ window.Customers = {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
 
-                tr.innerHTML = `
-                    <td class="p-4 font-medium dark:text-white">${Utils.sanitize(customer.name)}</td>
-                    <td class="p-4 text-gray-500 dark:text-gray-400">${Utils.sanitize(customer.phone || '-')}</td>
-                    <td class="p-4 text-gray-500 dark:text-gray-400">${Utils.sanitize(customer.email || '-')}</td>
-                    <td class="p-4">
-                        <span class="px-2 py-1 rounded-full text-xs font-semibold
-                            ${customer.points > 100 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                            ${customer.points || 0} pts
-                        </span>
-                         <span class="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                            ${customer.tier || 'Standard'}
-                        </span>
-                    </td>
-                    <td class="p-4 flex gap-2">
-                        <button onclick="Customers.openCustomerModal(${customer.id})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">Edit</button>
-                        <button onclick="Customers.deleteCustomer(${customer.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
-                    </td>
-                `;
+                const tdName = document.createElement('td');
+                tdName.className = "p-4 font-medium dark:text-white";
+                tdName.textContent = customer.name;
+
+                const tdPhone = document.createElement('td');
+                tdPhone.className = "p-4 text-gray-500 dark:text-gray-400";
+                tdPhone.textContent = customer.phone || '-';
+
+                const tdEmail = document.createElement('td');
+                tdEmail.className = "p-4 text-gray-500 dark:text-gray-400";
+                tdEmail.textContent = customer.email || '-';
+
+                const tdPoints = document.createElement('td');
+                tdPoints.className = "p-4";
+                const pointsSpan = document.createElement('span');
+                pointsSpan.className = `px-2 py-1 rounded-full text-xs font-semibold ${customer.points > 100 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`;
+                pointsSpan.textContent = `${customer.points || 0} pts`;
+                const tierSpan = document.createElement('span');
+                tierSpan.className = "ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800";
+                tierSpan.textContent = customer.tier || 'Standard';
+                tdPoints.appendChild(pointsSpan);
+                tdPoints.appendChild(tierSpan);
+
+                const tdActions = document.createElement('td');
+                tdActions.className = "p-4 flex gap-2";
+                const editBtn = document.createElement('button');
+                editBtn.className = "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300";
+                editBtn.textContent = "Edit";
+                editBtn.onclick = () => Customers.openCustomerModal(customer.id);
+
+                const delBtn = document.createElement('button');
+                delBtn.className = "text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300";
+                delBtn.textContent = "Delete";
+                delBtn.onclick = () => Customers.deleteCustomer(customer.id);
+
+                tdActions.appendChild(editBtn);
+                tdActions.appendChild(delBtn);
+
+                tr.appendChild(tdName);
+                tr.appendChild(tdPhone);
+                tr.appendChild(tdEmail);
+                tr.appendChild(tdPoints);
+                tr.appendChild(tdActions);
                 tbody.appendChild(tr);
             });
 

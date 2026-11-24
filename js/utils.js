@@ -101,6 +101,9 @@ window.Utils = {
     // Input Sanitization
     sanitize(str) {
         if (!str) return '';
+        if (typeof DOMPurify !== 'undefined') {
+            return DOMPurify.sanitize(str);
+        }
         const temp = document.createElement('div');
         temp.textContent = str;
         return temp.innerHTML;

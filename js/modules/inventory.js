@@ -34,17 +34,22 @@ window.Inventory = {
 
             // Empty State
             if (products.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="p-8 text-center text-gray-500 dark:text-gray-400">
-                            <div class="flex flex-col items-center justify-center">
-                                <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                                </svg>
-                                <p>No products found.</p>
-                            </div>
-                        </td>
-                    </tr>`;
+                tbody.textContent = '';
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 5;
+                td.className = "p-8 text-center text-gray-500 dark:text-gray-400";
+                const div = document.createElement('div');
+                div.className = "flex flex-col items-center justify-center";
+                div.innerHTML = DOMPurify.sanitize(`
+                    <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                    <p>No products found.</p>
+                `);
+                td.appendChild(div);
+                tr.appendChild(td);
+                tbody.appendChild(tr);
                 this.updateInventoryPagination(0, 0, 1);
                 return;
             }
@@ -57,29 +62,67 @@ window.Inventory = {
                 // Refetch? Or just let it be next time.
             }
 
+            tbody.textContent = '';
             products.forEach(prod => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
 
-                let imgContent = '<div class="w-8 h-8 bg-gray-200 rounded-full"></div>';
+                const tdName = document.createElement('td');
+                tdName.className = "p-4 flex items-center gap-3 dark:text-white";
                 if (prod.image) {
-                    imgContent = `<img src="${prod.image}" class="w-8 h-8 object-cover rounded-full">`;
+                    const img = document.createElement('img');
+                    img.src = prod.image;
+                    img.className = "w-8 h-8 object-cover rounded-full";
+                    img.alt = prod.name;
+                    tdName.appendChild(img);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = "w-8 h-8 bg-gray-200 rounded-full";
+                    tdName.appendChild(placeholder);
                 }
+                const nameSpan = document.createElement('span');
+                nameSpan.className = "font-medium";
+                nameSpan.textContent = prod.name;
+                tdName.appendChild(nameSpan);
 
-                tr.innerHTML = `
-                    <td class="p-4 flex items-center gap-3 dark:text-white">
-                        ${imgContent}
-                        <span class="font-medium">${Utils.sanitize(prod.name)}</span>
-                    </td>
-                    <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">${Utils.sanitize(prod.barcode || '-')}</td>
-                    <td class="p-4 dark:text-white">${Utils.formatCurrency(prod.price, currencySymbol)}</td>
-                    <td class="p-4 ${prod.stock < 5 ? 'text-red-500 font-bold' : 'dark:text-white'}">${prod.stock}</td>
-                    <td class="p-4 flex gap-2">
-                        ${prod.barcode ? `<button onclick="app.printProductBarcode('${Utils.sanitize(prod.barcode)}', '${Utils.sanitize(prod.name).replace(/'/g, "\\'")}')" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">Print</button>` : ''}
-                        <button onclick="app.openProductModal(${prod.id})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">Edit</button>
-                        <button onclick="app.deleteProduct(${prod.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
-                    </td>
-                `;
+                const tdBarcode = document.createElement('td');
+                tdBarcode.className = "p-4 font-mono text-sm text-gray-500 dark:text-gray-400";
+                tdBarcode.textContent = prod.barcode || '-';
+
+                const tdPrice = document.createElement('td');
+                tdPrice.className = "p-4 dark:text-white";
+                tdPrice.textContent = Utils.formatCurrency(prod.price, currencySymbol);
+
+                const tdStock = document.createElement('td');
+                tdStock.className = `p-4 ${prod.stock < 5 ? 'text-red-500 font-bold' : 'dark:text-white'}`;
+                tdStock.textContent = prod.stock;
+
+                const tdActions = document.createElement('td');
+                tdActions.className = "p-4 flex gap-2";
+                if (prod.barcode) {
+                    const printBtn = document.createElement('button');
+                    printBtn.className = "text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300";
+                    printBtn.textContent = "Print";
+                    printBtn.onclick = () => app.printProductBarcode(prod.barcode, prod.name);
+                    tdActions.appendChild(printBtn);
+                }
+                const editBtn = document.createElement('button');
+                editBtn.className = "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300";
+                editBtn.textContent = "Edit";
+                editBtn.onclick = () => app.openProductModal(prod.id);
+                tdActions.appendChild(editBtn);
+
+                const delBtn = document.createElement('button');
+                delBtn.className = "text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300";
+                delBtn.textContent = "Delete";
+                delBtn.onclick = () => app.deleteProduct(prod.id);
+                tdActions.appendChild(delBtn);
+
+                tr.appendChild(tdName);
+                tr.appendChild(tdBarcode);
+                tr.appendChild(tdPrice);
+                tr.appendChild(tdStock);
+                tr.appendChild(tdActions);
                 tbody.appendChild(tr);
             });
 
@@ -176,19 +219,19 @@ window.Inventory = {
 
         // Ensure categories are refreshed
         const categorySelect = document.getElementById(DOM.MODALS.PRODUCT.INPUT_CATEGORY);
-        categorySelect.innerHTML = '';
+        categorySelect.replaceChildren();
         this.state.categories.forEach(cat => {
-            categorySelect.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
+            categorySelect.appendChild(new Option(cat.name, cat.id));
         });
 
         // Ensure Suppliers are refreshed
         const supplierSelect = document.getElementById(DOM.MODALS.PRODUCT.INPUT_SUPPLIER);
         if (supplierSelect) {
-            supplierSelect.innerHTML = '<option value="">None</option>';
+            supplierSelect.replaceChildren(new Option('None', ''));
             try {
                 const suppliers = await DB.getSuppliers();
                 suppliers.forEach(s => {
-                    supplierSelect.innerHTML += `<option value="${s.id}">${Utils.sanitize(s.name)}</option>`;
+                    supplierSelect.appendChild(new Option(s.name, s.id));
                 });
             } catch (e) { console.error("Error loading suppliers for modal", e); }
         }
@@ -287,12 +330,40 @@ window.Inventory = {
         const list = document.getElementById('variants-list');
         const div = document.createElement('div');
         div.className = 'flex gap-2 items-center variant-row';
-        div.innerHTML = `
-            <input type="text" placeholder="Size/Color" class="variant-name flex-1 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" value="${variant ? variant.name : ''}" required>
-            <input type="number" placeholder="Price" step="0.01" class="variant-price w-20 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" value="${variant ? variant.price : ''}" required>
-            <input type="number" placeholder="Stock" min="0" class="variant-stock w-20 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" value="${variant !== null && variant.stock !== undefined ? variant.stock : 0}" required>
-            <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 font-bold px-2">&times;</button>
-        `;
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.placeholder = 'Size/Color';
+        nameInput.className = 'variant-name flex-1 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded';
+        nameInput.value = variant ? variant.name : '';
+        nameInput.required = true;
+
+        const priceInput = document.createElement('input');
+        priceInput.type = 'number';
+        priceInput.placeholder = 'Price';
+        priceInput.step = '0.01';
+        priceInput.className = 'variant-price w-20 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded';
+        priceInput.value = variant ? variant.price : '';
+        priceInput.required = true;
+
+        const stockInput = document.createElement('input');
+        stockInput.type = 'number';
+        stockInput.placeholder = 'Stock';
+        stockInput.min = '0';
+        stockInput.className = 'variant-stock w-20 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded';
+        stockInput.value = variant !== null && variant.stock !== undefined ? variant.stock : 0;
+        stockInput.required = true;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'text-red-500 hover:text-red-700 font-bold px-2';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.onclick = () => div.remove();
+
+        div.appendChild(nameInput);
+        div.appendChild(priceInput);
+        div.appendChild(stockInput);
+        div.appendChild(removeBtn);
         list.appendChild(div);
     },
 
@@ -301,22 +372,40 @@ window.Inventory = {
         const div = document.createElement('div');
         div.className = 'flex gap-2 items-center bundle-row';
 
-        let optionsHtml = '<option value="">Select Product...</option>';
+        const select = document.createElement('select');
+        select.className = 'bundle-product flex-1 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded';
+        select.required = true;
+        select.appendChild(new Option('Select Product...', ''));
+
         if (this.state && this.state.products) {
             this.state.products.forEach(p => {
                 if (!p.isBundle) {
-                    optionsHtml += `<option value="${p.id}" ${bundleItem && bundleItem.productId === p.id ? 'selected' : ''}>${Utils.sanitize(p.name)}</option>`;
+                    const opt = new Option(p.name, p.id);
+                    if (bundleItem && bundleItem.productId === p.id) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
                 }
             });
         }
 
-        div.innerHTML = `
-            <select class="bundle-product flex-1 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" required>
-                ${optionsHtml}
-            </select>
-            <input type="number" placeholder="Qty" min="1" class="bundle-qty w-16 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded" value="${bundleItem ? bundleItem.quantity : 1}" required>
-            <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 font-bold px-2">&times;</button>
-        `;
+        const qtyInput = document.createElement('input');
+        qtyInput.type = 'number';
+        qtyInput.placeholder = 'Qty';
+        qtyInput.min = '1';
+        qtyInput.className = 'bundle-qty w-16 px-2 py-1 text-sm border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded';
+        qtyInput.value = bundleItem ? bundleItem.quantity : 1;
+        qtyInput.required = true;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'text-red-500 hover:text-red-700 font-bold px-2';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.onclick = () => div.remove();
+
+        div.appendChild(select);
+        div.appendChild(qtyInput);
+        div.appendChild(removeBtn);
         list.appendChild(div);
     },
 

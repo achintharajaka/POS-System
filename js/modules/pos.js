@@ -21,11 +21,12 @@ window.POS = {
     populateCategoryFilter() {
         const select = document.getElementById(DOM.POS.CATEGORY_FILTER);
         if (!select) return;
-        select.innerHTML = '<option value="">All Categories</option>';
-        select.innerHTML += '<option value="__favorites__">⭐ Favorites</option>';
-        select.innerHTML += '<option value="__recent__">🕒 Recently Sold</option>';
+        select.replaceChildren();
+        select.appendChild(new Option('All Categories', ''));
+        select.appendChild(new Option('⭐ Favorites', '__favorites__'));
+        select.appendChild(new Option('🕒 Recently Sold', '__recent__'));
         this.state.categories.forEach(cat => {
-            select.innerHTML += `<option value="${cat.id}">${Utils.sanitize(cat.name)}</option>`;
+            select.appendChild(new Option(cat.name, cat.id));
         });
     },
 
@@ -70,13 +71,23 @@ window.POS = {
                 this.selectCustomer(c);
                 document.getElementById('pos-customer-modal').classList.add('hidden');
             };
-            li.innerHTML = `
-                <div>
-                    <div class="font-bold dark:text-gray-200">${Utils.sanitize(c.name)}</div>
-                    <div class="text-xs text-gray-500">${Utils.sanitize(c.phone || '')}</div>
-                </div>
-                <div class="text-blue-600 dark:text-blue-400 font-bold text-sm">${c.points || 0} pts</div>
-             `;
+
+            const infoDiv = document.createElement('div');
+            const nameDiv = document.createElement('div');
+            nameDiv.className = "font-bold dark:text-gray-200";
+            nameDiv.textContent = c.name;
+            const phoneDiv = document.createElement('div');
+            phoneDiv.className = "text-xs text-gray-500";
+            phoneDiv.textContent = c.phone || '';
+            infoDiv.appendChild(nameDiv);
+            infoDiv.appendChild(phoneDiv);
+
+            const pointsDiv = document.createElement('div');
+            pointsDiv.className = "text-blue-600 dark:text-blue-400 font-bold text-sm";
+            pointsDiv.textContent = `${c.points || 0} pts`;
+
+            li.appendChild(infoDiv);
+            li.appendChild(pointsDiv);
             list.appendChild(li);
         });
     },
@@ -249,43 +260,62 @@ window.POS = {
         // snap-align-start flex-shrink-0 for horizontal scrolling lists, and normal grid for grid
         card.className = "bg-white dark:bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 border border-transparent transition-all flex flex-col items-center text-center shadow-sm relative shrink-0 min-w-[140px]";
 
-        let imageHtml = `
-            <div class="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 mb-2 pointer-events-none">
-                ${prod.name.charAt(0).toUpperCase()}
-            </div>
-        `;
-
-        if (prod.image) {
-            imageHtml = `<img src="${prod.image}" class="h-24 w-full object-cover rounded-lg mb-2 pointer-events-none" alt="${Utils.sanitize(prod.name)}">`;
-        }
-
         const favColor = prod.isFavorite ? 'text-yellow-400 hover:text-yellow-500' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400';
-
-        card.innerHTML = `
-            <button class="absolute top-2 right-2 p-1 z-10 ${favColor} transition-colors favorite-btn" title="Toggle Favorite">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
-            </button>
-            <div class="w-full h-full flex flex-col items-center justify-between" onclick="app.addToCart(${prod.id})">
-                <div class="w-full flex justify-center">${imageHtml}</div>
-                <h4 class="font-bold text-gray-800 dark:text-gray-200 line-clamp-2 text-sm pointer-events-none w-full">${Utils.sanitize(prod.name)}</h4>
-                <div class="mt-auto pt-1 pointer-events-none">
-                    <p class="text-blue-600 dark:text-blue-400 font-bold">${Utils.formatCurrency(prod.price, this.state.settings.currencySymbol)}</p>
-                    <div class="text-xs text-gray-400">Stock: ${prod.stock}</div>
-                </div>
-            </div>
-        `;
-
-        // Favorite toggle event
-        card.querySelector('.favorite-btn').addEventListener('click', async (e) => {
+        const favBtn = document.createElement('button');
+        favBtn.className = `absolute top-2 right-2 p-1 z-10 ${favColor} transition-colors favorite-btn`;
+        favBtn.title = "Toggle Favorite";
+        favBtn.innerHTML = DOMPurify.sanitize('<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>');
+        favBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             prod.isFavorite = !prod.isFavorite;
             try {
                 await DB.updateProduct(prod.id, { isFavorite: prod.isFavorite });
                 this.renderProducts();
-            } catch (e) {
-                console.error("Failed to update favorite status", e);
+            } catch (err) {
+                console.error("Failed to toggle favorite", err);
+                Utils.showToast("Failed to update favorite status", "error");
             }
         });
+        card.appendChild(favBtn);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = "w-full h-full flex flex-col items-center justify-between";
+        contentDiv.onclick = () => app.addToCart(prod.id);
+
+        const imgWrapper = document.createElement('div');
+        imgWrapper.className = "w-full flex justify-center";
+        if (prod.image) {
+            const img = document.createElement('img');
+            img.src = prod.image;
+            img.className = "h-24 w-full object-cover rounded-lg mb-2 pointer-events-none";
+            img.alt = prod.name;
+            imgWrapper.appendChild(img);
+        } else {
+            const initialDiv = document.createElement('div');
+            initialDiv.className = "h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 mb-2 pointer-events-none";
+            initialDiv.textContent = prod.name.charAt(0).toUpperCase();
+            imgWrapper.appendChild(initialDiv);
+        }
+        contentDiv.appendChild(imgWrapper);
+
+        const titleH4 = document.createElement('h4');
+        titleH4.className = "font-bold text-gray-800 dark:text-gray-200 line-clamp-2 text-sm pointer-events-none w-full";
+        titleH4.textContent = prod.name;
+        contentDiv.appendChild(titleH4);
+
+        const priceStockDiv = document.createElement('div');
+        priceStockDiv.className = "mt-auto pt-1 pointer-events-none";
+        const priceP = document.createElement('p');
+        priceP.className = "text-blue-600 dark:text-blue-400 font-bold";
+        priceP.textContent = Utils.formatCurrency(prod.price, this.state.settings.currencySymbol);
+        const stockDiv = document.createElement('div');
+        stockDiv.className = "text-xs text-gray-400";
+        stockDiv.textContent = `Stock: ${prod.stock}`;
+        priceStockDiv.appendChild(priceP);
+        priceStockDiv.appendChild(stockDiv);
+        contentDiv.appendChild(priceStockDiv);
+
+        card.appendChild(contentDiv);
 
         return card;
     },
@@ -378,15 +408,22 @@ window.POS = {
             const isOutOfStock = v.stock <= 0;
             div.className = `p-3 border dark:border-gray-700 rounded-lg flex justify-between items-center ${isOutOfStock ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : 'cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700'}`;
 
-            div.innerHTML = `
-                <div>
-                    <div class="font-bold dark:text-gray-200">${Utils.sanitize(v.name)}</div>
-                    <div class="text-sm text-gray-500">${v.stock} in stock</div>
-                </div>
-                <div class="font-bold text-blue-600 dark:text-blue-400">
-                    ${Utils.formatCurrency(v.price, this.state.settings.currencySymbol)}
-                </div>
-            `;
+            const infoDiv = document.createElement('div');
+            const nameDiv = document.createElement('div');
+            nameDiv.className = "font-bold dark:text-gray-200";
+            nameDiv.textContent = v.name;
+            const stockDiv = document.createElement('div');
+            stockDiv.className = "text-sm text-gray-500";
+            stockDiv.textContent = `${v.stock} in stock`;
+            infoDiv.appendChild(nameDiv);
+            infoDiv.appendChild(stockDiv);
+
+            const priceDiv = document.createElement('div');
+            priceDiv.className = "font-bold text-blue-600 dark:text-blue-400";
+            priceDiv.textContent = Utils.formatCurrency(v.price, this.state.settings.currencySymbol);
+
+            div.appendChild(infoDiv);
+            div.appendChild(priceDiv);
 
             if (!isOutOfStock) {
                 div.onclick = () => {
@@ -439,28 +476,36 @@ window.POS = {
         const container = document.createElement('div');
         container.id = 'pos-pagination';
         container.className = "col-span-full flex justify-center gap-4 mt-4 p-4";
-        container.innerHTML = `
-            <button id="pos-prev" ${page <= 1 ? 'disabled' : ''} class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50">Prev</button>
-            <span class="text-gray-600 dark:text-gray-300 self-center">Page ${page} of ${totalPages || 1}</span>
-            <button id="pos-next" ${page >= totalPages ? 'disabled' : ''} class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50">Next</button>
-        `;
 
-        grid.parentNode.appendChild(container); // Append after grid (grid is inside a flex-col, so this works nicely)
-        // Wait, grid is inside a div.
-        // POS layout: Left: Products Grid (flex-1 ... flex-col).
-        // Inside: Search Bar (div), Grid (div id=pos-products-grid).
-        // So I can append to grid (as last child? No grid layout). 
-        // Better append to grid.parentNode (the container).
-
-        // Bind events
-        container.querySelector('#pos-prev').onclick = () => {
+        const prevBtn = document.createElement('button');
+        prevBtn.id = 'pos-prev';
+        prevBtn.disabled = page <= 1;
+        prevBtn.className = "px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50";
+        prevBtn.textContent = 'Prev';
+        prevBtn.onclick = () => {
             this.state.posPage = page - 1;
             this.renderProducts();
         };
-        container.querySelector('#pos-next').onclick = () => {
+
+        const span = document.createElement('span');
+        span.className = "text-gray-600 dark:text-gray-300 self-center";
+        span.textContent = `Page ${page} of ${totalPages || 1}`;
+
+        const nextBtn = document.createElement('button');
+        nextBtn.id = 'pos-next';
+        nextBtn.disabled = page >= totalPages;
+        nextBtn.className = "px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50";
+        nextBtn.textContent = 'Next';
+        nextBtn.onclick = () => {
             this.state.posPage = page + 1;
             this.renderProducts();
         };
+
+        container.appendChild(prevBtn);
+        container.appendChild(span);
+        container.appendChild(nextBtn);
+
+        grid.parentNode.appendChild(container);
     },
 
     async filterProducts(searchTerm, categoryId) {
@@ -573,49 +618,74 @@ window.POS = {
         // --- Render cart header action buttons ---
         const headerActions = document.getElementById('pos-cart-header-actions');
         if (headerActions) {
+            headerActions.replaceChildren();
             const heldCount = (this.state.heldOrders || []).length;
-            headerActions.innerHTML = `
-                <button onclick="app.holdOrder()" title="Hold current order"
-                    class="flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 border border-amber-200 dark:border-amber-700 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Hold
-                </button>
-                ${heldCount > 0 ? `
-                <button onclick="app.openHeldOrdersModal()" title="View held orders"
-                    class="flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 border border-blue-200 dark:border-blue-700 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                    Held (${heldCount})
-                </button>` : ''}
-            `;
+            const holdBtn = document.createElement('button');
+            holdBtn.onclick = () => app.holdOrder();
+            holdBtn.title = "Hold current order";
+            holdBtn.className = "flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 border border-amber-200 dark:border-amber-700 transition-colors";
+            holdBtn.innerHTML = DOMPurify.sanitize('<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>');
+            holdBtn.appendChild(document.createTextNode(' Hold'));
+            headerActions.appendChild(holdBtn);
+
+            if (heldCount > 0) {
+                const heldBtn = document.createElement('button');
+                heldBtn.onclick = () => app.openHeldOrdersModal();
+                heldBtn.title = "View held orders";
+                heldBtn.className = "flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 border border-blue-200 dark:border-blue-700 transition-colors";
+                heldBtn.innerHTML = DOMPurify.sanitize('<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>');
+                heldBtn.appendChild(document.createTextNode(` Held (${heldCount})`));
+                headerActions.appendChild(heldBtn);
+            }
         }
 
         // Render Customer Section
         const customerSection = document.createElement('div');
         customerSection.className = "mb-4 pb-4 border-b dark:border-gray-700";
         if (this.state.currentCustomer) {
-            customerSection.innerHTML = `
-                <div class="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
-                    <div>
-                        <div class="font-bold text-blue-800 dark:text-blue-300 text-sm overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]">${Utils.sanitize(this.state.currentCustomer.name)}</div>
-                        <div class="text-xs text-blue-600 dark:text-blue-400">Points: ${this.state.currentCustomer.points || 0}</div>
-                    </div>
-                    <div class="flex gap-1">
-                        <button onclick="app.redeemPoints()" class="text-green-600 hover:text-green-800 text-xs font-bold border border-green-200 bg-green-50 rounded px-2 py-1">Redeem</button>
-                        <button onclick="app.removeCustomer()" class="text-red-500 hover:text-red-700 p-1 text-sm">X</button>
-                    </div>
-                </div>
-            `;
+            const card = document.createElement('div');
+            card.className = "flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800";
+
+            const info = document.createElement('div');
+            const nameEl = document.createElement('div');
+            nameEl.className = "font-bold text-blue-800 dark:text-blue-300 text-sm overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]";
+            nameEl.textContent = this.state.currentCustomer.name;
+            const pointsEl = document.createElement('div');
+            pointsEl.className = "text-xs text-blue-600 dark:text-blue-400";
+            pointsEl.textContent = `Points: ${this.state.currentCustomer.points || 0}`;
+            info.appendChild(nameEl);
+            info.appendChild(pointsEl);
+
+            const btns = document.createElement('div');
+            btns.className = "flex gap-1";
+            const redeemBtn = document.createElement('button');
+            redeemBtn.onclick = () => app.redeemPoints();
+            redeemBtn.className = "text-green-600 hover:text-green-800 text-xs font-bold border border-green-200 bg-green-50 rounded px-2 py-1";
+            redeemBtn.textContent = "Redeem";
+            const removeBtn = document.createElement('button');
+            removeBtn.onclick = () => app.removeCustomer();
+            removeBtn.className = "text-red-500 hover:text-red-700 p-1 text-sm";
+            removeBtn.textContent = "X";
+            btns.appendChild(redeemBtn);
+            btns.appendChild(removeBtn);
+
+            card.appendChild(info);
+            card.appendChild(btns);
+            customerSection.appendChild(card);
         } else {
-            customerSection.innerHTML = `
-                <button onclick="app.openCustomerSelection()" class="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 transition-colors text-sm font-medium">
-                    + Select Customer
-                </button>
-            `;
+            const selectBtn = document.createElement('button');
+            selectBtn.onclick = () => app.openCustomerSelection();
+            selectBtn.className = "w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 transition-colors text-sm font-medium";
+            selectBtn.textContent = "+ Select Customer";
+            customerSection.appendChild(selectBtn);
         }
         container.appendChild(customerSection);
 
         if (this.state.cart.length === 0) {
-            container.innerHTML = '<div class="text-center text-gray-400 dark:text-gray-500 mt-10">Cart is empty</div>';
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = "text-center text-gray-400 dark:text-gray-500 mt-10";
+            emptyDiv.textContent = "Cart is empty";
+            container.appendChild(emptyDiv);
             this.updateTotals();
             return;
         }
@@ -626,26 +696,60 @@ window.POS = {
             const div = document.createElement('div');
             div.className = "bg-gray-50 dark:bg-gray-700 p-2 rounded-lg";
 
-            let imgHtml = '';
+            const row = document.createElement('div');
+            row.className = "flex items-center gap-2";
+
             if (item.image) {
-                imgHtml = `<img src="${item.image}" class="w-10 h-10 object-cover rounded mr-2 flex-shrink-0">`;
+                const img = document.createElement('img');
+                img.src = item.image;
+                img.className = "w-10 h-10 object-cover rounded mr-2 flex-shrink-0";
+                img.alt = item.name;
+                row.appendChild(img);
             }
 
-            div.innerHTML = `
-                <div class="flex items-center gap-2">
-                    ${imgHtml}
-                    <div class="flex-1 min-w-0">
-                        <h5 class="font-bold text-sm text-gray-800 dark:text-white truncate">${Utils.sanitize(item.name)}</h5>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">${Utils.formatCurrency(item.price, currencySymbol)} x ${item.qty}</p>
-                    </div>
-                    <div class="flex items-center gap-1 flex-shrink-0">
-                        <button onclick="app.updateCartQty('${item.cartItemId || item.id}', -1)" class="w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold">-</button>
-                        <span class="font-bold text-sm w-5 text-center dark:text-white">${item.qty}</span>
-                        <button onclick="app.updateCartQty('${item.cartItemId || item.id}', 1)" class="w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold">+</button>
-                        <button onclick="app.removeFromCart('${item.cartItemId || item.id}')" class="w-7 h-7 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-800 ml-1 flex-shrink-0" title="Remove">&times;</button>
-                    </div>
-                </div>
-            `;
+            const info = document.createElement('div');
+            info.className = "flex-1 min-w-0";
+            const titleH5 = document.createElement('h5');
+            titleH5.className = "font-bold text-sm text-gray-800 dark:text-white truncate";
+            titleH5.textContent = item.name;
+            const priceP = document.createElement('p');
+            priceP.className = "text-xs text-gray-500 dark:text-gray-400";
+            priceP.textContent = `${Utils.formatCurrency(item.price, currencySymbol)} x ${item.qty}`;
+            info.appendChild(titleH5);
+            info.appendChild(priceP);
+            row.appendChild(info);
+
+            const actions = document.createElement('div');
+            actions.className = "flex items-center gap-1 flex-shrink-0";
+
+            const itemKey = item.cartItemId || item.id;
+            const decBtn = document.createElement('button');
+            decBtn.onclick = () => app.updateCartQty(itemKey, -1);
+            decBtn.className = "w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold";
+            decBtn.textContent = "-";
+
+            const qtySpan = document.createElement('span');
+            qtySpan.className = "font-bold text-sm w-5 text-center dark:text-white";
+            qtySpan.textContent = item.qty;
+
+            const incBtn = document.createElement('button');
+            incBtn.onclick = () => app.updateCartQty(itemKey, 1);
+            incBtn.className = "w-7 h-7 bg-gray-200 dark:bg-gray-600 dark:text-white rounded flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-bold";
+            incBtn.textContent = "+";
+
+            const removeBtn = document.createElement('button');
+            removeBtn.onclick = () => app.removeFromCart(itemKey);
+            removeBtn.className = "w-7 h-7 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-800 ml-1 flex-shrink-0";
+            removeBtn.title = "Remove";
+            removeBtn.innerHTML = "&times;";
+
+            actions.appendChild(decBtn);
+            actions.appendChild(qtySpan);
+            actions.appendChild(incBtn);
+            actions.appendChild(removeBtn);
+
+            row.appendChild(actions);
+            div.appendChild(row);
             container.appendChild(div);
         });
 
@@ -686,80 +790,161 @@ window.POS = {
         if (subtotalEl) {
             const parent = subtotalEl.parentElement.parentElement;
 
-            let digitalReceiptHtml = '';
-            if (this.state.currentCustomer) {
-                const tempDivs = [];
+            parent.replaceChildren();
+
+            const subtotalRow = document.createElement('div');
+            subtotalRow.className = "flex justify-between text-gray-600 dark:text-gray-300";
+            const subtotalLabel = document.createElement('span');
+            subtotalLabel.textContent = "Subtotal:";
+            const subtotalVal = document.createElement('span');
+            subtotalVal.id = DOM.POS.CART_SUBTOTAL;
+            subtotalVal.textContent = Utils.formatCurrency(subtotal, currencySymbol);
+            subtotalRow.appendChild(subtotalLabel);
+            subtotalRow.appendChild(subtotalVal);
+            parent.appendChild(subtotalRow);
+
+            // Modifiers
+            modifiers.forEach(mod => {
+                let modAmount = mod.type === 'percent' ? subtotal * (mod.value / 100) : mod.value;
+                const isSubtract = mod.rate === 'subtract';
+                const modRow = document.createElement('div');
+                modRow.className = `flex justify-between text-sm ${isSubtract ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-300'}`;
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = `${mod.name} (${mod.type === 'percent' ? mod.value + '%' : 'Fixed'}):`;
+                const valSpan = document.createElement('span');
+                valSpan.textContent = `${isSubtract ? '-' : ''}${Utils.formatCurrency(modAmount, currencySymbol)}`;
+                modRow.appendChild(nameSpan);
+                modRow.appendChild(valSpan);
+                parent.appendChild(modRow);
+            });
+
+            // Total row
+            const totalRow = document.createElement('div');
+            totalRow.className = "flex justify-between text-xl font-bold text-gray-800 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-600";
+            const totalLabel = document.createElement('span');
+            totalLabel.textContent = "Total:";
+            const totalVal = document.createElement('span');
+            totalVal.id = DOM.POS.CART_TOTAL;
+            totalVal.textContent = Utils.formatCurrency(runningTotal, currencySymbol);
+            totalRow.appendChild(totalLabel);
+            totalRow.appendChild(totalVal);
+            parent.appendChild(totalRow);
+
+            // Payment method section
+            const paySection = document.createElement('div');
+            paySection.className = "mt-4 mb-2";
+            const payLabel = document.createElement('label');
+            payLabel.className = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2";
+            payLabel.textContent = "Payment Method";
+            paySection.appendChild(payLabel);
+
+            const grid = document.createElement('div');
+            grid.className = "grid grid-cols-3 gap-2";
+
+            const methods = [
+                { id: 'cash', label: 'Cash', svg: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>' },
+                { id: 'card', label: 'Card', svg: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>' },
+                { id: 'online', label: 'Online', svg: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>' }
+            ];
+
+            methods.forEach(m => {
+                const btn = document.createElement('button');
+                btn.onclick = () => app.setPaymentMethod(m.id);
+                btn.className = `flex flex-col items-center justify-center p-2 rounded-lg border ${
+                    this.state.paymentMethod === m.id
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300'
+                        : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                }`;
+                btn.innerHTML = DOMPurify.sanitize(m.svg);
+                const span = document.createElement('span');
+                span.className = "text-xs font-medium";
+                span.textContent = m.label;
+                btn.appendChild(span);
+                grid.appendChild(btn);
+            });
+            paySection.appendChild(grid);
+
+            const splitBtn = document.createElement('button');
+            splitBtn.onclick = () => app.openSplitPaymentModal();
+            splitBtn.className = "w-full mt-2 py-2 border border-blue-500 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors";
+            splitBtn.textContent = this.state.paymentMethod === 'split' ? 'Manage Split Payment' : 'Split Payment / Mixed';
+            paySection.appendChild(splitBtn);
+
+            const splitSummary = document.createElement('div');
+            splitSummary.id = 'split-payment-summary';
+            splitSummary.className = `${this.state.paymentMethod === 'split' ? '' : 'hidden'} mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm`;
+            paySection.appendChild(splitSummary);
+            parent.appendChild(paySection);
+
+            // Digital Receipt Section
+            if (this.state.currentCustomer && (this.state.currentCustomer.phone || this.state.currentCustomer.email)) {
+                const digitalDiv = document.createElement('div');
+                digitalDiv.className = "mt-4 mb-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm";
+
+                const header = document.createElement('div');
+                header.className = "text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide flex justify-between";
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = "Digital Receipt";
+                const optSpan = document.createElement('span');
+                optSpan.className = "bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded dark:bg-blue-900/50 dark:text-blue-200";
+                optSpan.textContent = "Optional";
+                header.appendChild(titleSpan);
+                header.appendChild(optSpan);
+                digitalDiv.appendChild(header);
+
+                const optionsContainer = document.createElement('div');
+                optionsContainer.className = "space-y-2.5";
+
                 if (this.state.currentCustomer.phone) {
-                    tempDivs.push(`
-                        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
-                            <input type="checkbox" id="digital-receipt-whatsapp" class="w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500">
-                            <span>WhatsApp to <strong>${Utils.sanitize(this.state.currentCustomer.phone)}</strong></span>
-                        </label>
-                    `);
+                    const label = document.createElement('label');
+                    label.className = "flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none";
+                    const chk = document.createElement('input');
+                    chk.type = "checkbox";
+                    chk.id = "digital-receipt-whatsapp";
+                    chk.className = "w-4 h-4 text-emerald-500 rounded border-gray-300 focus:ring-emerald-500";
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = "WhatsApp to ";
+                    const strong = document.createElement('strong');
+                    strong.textContent = this.state.currentCustomer.phone;
+                    textSpan.appendChild(strong);
+                    label.appendChild(chk);
+                    label.appendChild(textSpan);
+                    optionsContainer.appendChild(label);
                 }
+
                 if (this.state.currentCustomer.email) {
-                    tempDivs.push(`
-                        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
-                            <input type="checkbox" id="digital-receipt-email" class="w-4 h-4 text-blue-500 rounded border-gray-300 focus:ring-blue-500">
-                            <span>Email to <strong>${Utils.sanitize(this.state.currentCustomer.email)}</strong></span>
-                        </label>
-                    `);
+                    const label = document.createElement('label');
+                    label.className = "flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none";
+                    const chk = document.createElement('input');
+                    chk.type = "checkbox";
+                    chk.id = "digital-receipt-email";
+                    chk.className = "w-4 h-4 text-blue-500 rounded border-gray-300 focus:ring-blue-500";
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = "Email to ";
+                    const strong = document.createElement('strong');
+                    strong.textContent = this.state.currentCustomer.email;
+                    textSpan.appendChild(strong);
+                    label.appendChild(chk);
+                    label.appendChild(textSpan);
+                    optionsContainer.appendChild(label);
                 }
-                if (tempDivs.length > 0) {
-                    digitalReceiptHtml = `
-                        <div class="mt-4 mb-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm">
-                            <div class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide flex justify-between">
-                                <span>Digital Receipt</span>
-                                <span class="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded dark:bg-blue-900/50 dark:text-blue-200">Optional</span>
-                            </div>
-                            <div class="space-y-2.5">
-                                ${tempDivs.join('')}
-                            </div>
-                        </div>
-                    `;
-                }
+
+                digitalDiv.appendChild(optionsContainer);
+                parent.appendChild(digitalDiv);
             }
 
-            parent.innerHTML = `
-                <div class="flex justify-between text-gray-600 dark:text-gray-300"><span>Subtotal:</span> <span id="${DOM.POS.CART_SUBTOTAL}">${Utils.formatCurrency(subtotal, currencySymbol)}</span></div>
-                ${modsHtml}
-                <div class="flex justify-between text-xl font-bold text-gray-800 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-600"><span>Total:</span> <span id="${DOM.POS.CART_TOTAL}">${Utils.formatCurrency(runningTotal, currencySymbol)}</span></div>
-                
-                <div class="mt-4 mb-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="app.setPaymentMethod('cash')" class="flex flex-col items-center justify-center p-2 rounded-lg border ${this.state.paymentMethod === 'cash' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            <span class="text-xs font-medium">Cash</span>
-                        </button>
-                        <button onclick="app.setPaymentMethod('card')" class="flex flex-col items-center justify-center p-2 rounded-lg border ${this.state.paymentMethod === 'card' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                            <span class="text-xs font-medium">Card</span>
-                        </button>
-                        <button onclick="app.setPaymentMethod('online')" class="flex flex-col items-center justify-center p-2 rounded-lg border ${this.state.paymentMethod === 'online' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                            </svg>
-                            <span class="text-xs font-medium">Online</span>
-                        </button>
-                    </div>
-                    <button onclick="app.openSplitPaymentModal()" class="w-full mt-2 py-2 border border-blue-500 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                        ${this.state.paymentMethod === 'split' ? 'Manage Split Payment' : 'Split Payment / Mixed'}
-                    </button>
-                    <div id="split-payment-summary" class="${this.state.paymentMethod === 'split' ? '' : 'hidden'} mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm">
-                        <!-- Summary injected here -->
-                    </div>
-                </div>
-                
-                ${digitalReceiptHtml}
+            // Checkout and Clear buttons
+            const payBtn = document.createElement('button');
+            payBtn.onclick = () => app.checkout();
+            payBtn.className = "w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2 shadow-sm";
+            payBtn.textContent = "Pay Now";
+            parent.appendChild(payBtn);
 
-                <button onclick="app.checkout()" class="w-full bg-emerald-500 text-white py-3 rounded-lg font-bold text-lg hover:bg-emerald-600 transition-colors mt-2 shadow-sm">Pay Now</button>
-                <button onclick="app.clearCart()" class="w-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors mt-2">Clear Cart</button>
-            `;
+            const clearBtn = document.createElement('button');
+            clearBtn.onclick = () => app.clearCart();
+            clearBtn.className = "w-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 py-2 rounded-lg font-medium text-sm hover:bg-red-200 dark:hover:bg-red-800 transition-colors mt-2";
+            clearBtn.textContent = "Clear Cart";
+            parent.appendChild(clearBtn);
         }
     },
 
@@ -868,7 +1053,12 @@ window.POS = {
         // (Browsers block window.open after async/await calls)
         const receiptWindow = window.open('', '', 'width=340,height=600');
         if (receiptWindow) {
-            receiptWindow.document.write('<html><body style="font-family:monospace;text-align:center;padding-top:40px;"><p>Preparing receipt...</p></body></html>');
+            receiptWindow.document.body.style.fontFamily = 'monospace';
+            receiptWindow.document.body.style.textAlign = 'center';
+            receiptWindow.document.body.style.paddingTop = '40px';
+            const p = receiptWindow.document.createElement('p');
+            p.textContent = 'Preparing receipt...';
+            receiptWindow.document.body.replaceChildren(p);
         }
 
         try {
@@ -960,15 +1150,17 @@ window.POS = {
                     settingsWithQr,
                     this.state.settings.storeLogo
                 );
-                receiptWindow.document.open();
-                receiptWindow.document.write(receiptHtml);
+                receiptWindow.document.documentElement.innerHTML = DOMPurify.sanitize(receiptHtml, { WHOLE_DOCUMENT: true });
                 receiptWindow.document.close();
+                setTimeout(() => {
+                    try { receiptWindow.print(); } catch (e) {}
+                }, 500);
 
                 // Digital Receipt Generation
                 if (optWhatsApp || optEmail) {
                     try {
                         const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = receiptHtml;
+                        tempDiv.innerHTML = DOMPurify.sanitize(receiptHtml, { WHOLE_DOCUMENT: true });
                         tempDiv.style.width = '340px';
                         tempDiv.style.padding = '20px';
                         tempDiv.style.background = 'white';
@@ -1096,17 +1288,30 @@ window.POS = {
         remainingObj.innerText = Utils.formatCurrency(remaining > 0 ? remaining : 0, this.state.settings.currencySymbol);
 
         // Render List
-        listObj.innerHTML = '';
+        listObj.replaceChildren();
         this.state.payments.forEach((p, index) => {
             const div = document.createElement('div');
             div.className = "flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded mb-2";
-            div.innerHTML = `
-                <span class="capitalize font-bold text-gray-700 dark:text-gray-300">${p.method}</span>
-                <div class="flex items-center gap-2">
-                    <span class="font-mono text-gray-800 dark:text-gray-200">${Utils.formatCurrency(p.amount, this.state.settings.currencySymbol)}</span>
-                    <button onclick="app.removeSplitPayment(${index}, ${totalDue})" class="text-red-500 hover:text-red-700">&times;</button>
-                </div>
-            `;
+
+            const methodSpan = document.createElement('span');
+            methodSpan.className = "capitalize font-bold text-gray-700 dark:text-gray-300";
+            methodSpan.textContent = p.method;
+
+            const rightDiv = document.createElement('div');
+            rightDiv.className = "flex items-center gap-2";
+            const amtSpan = document.createElement('span');
+            amtSpan.className = "font-mono text-gray-800 dark:text-gray-200";
+            amtSpan.textContent = Utils.formatCurrency(p.amount, this.state.settings.currencySymbol);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.onclick = () => app.removeSplitPayment(index, totalDue);
+            removeBtn.className = "text-red-500 hover:text-red-700";
+            removeBtn.innerHTML = "&times;";
+
+            rightDiv.appendChild(amtSpan);
+            rightDiv.appendChild(removeBtn);
+            div.appendChild(methodSpan);
+            div.appendChild(rightDiv);
             listObj.appendChild(div);
         });
 
@@ -1175,7 +1380,12 @@ window.POS = {
             colorClass = "text-blue-600 dark:text-blue-400";
         }
 
-        summary.innerHTML = `<div class="font-bold cursor-pointer ${colorClass}" onclick="app.openSplitPaymentModal()">${text}</div>`;
+        summary.replaceChildren();
+        const div = document.createElement('div');
+        div.className = `font-bold cursor-pointer ${colorClass}`;
+        div.textContent = text;
+        div.onclick = () => app.openSplitPaymentModal();
+        summary.appendChild(div);
         summary.classList.remove('hidden');
     },
 
@@ -1230,24 +1440,61 @@ window.POS = {
 
                 const card = document.createElement('div');
                 card.className = 'p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-100 dark:border-gray-600 flex flex-col gap-2';
-                card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="font-bold text-gray-800 dark:text-white text-sm">Hold #${index + 1}</div>
-                            <div class="text-xs text-gray-400 dark:text-gray-500">${timeLabel}</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-blue-600 dark:text-blue-400">${Utils.formatCurrency(subtotal, currencySymbol)}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">${itemCount} item${itemCount !== 1 ? 's' : ''}</div>
-                        </div>
-                    </div>
-                    ${held.currentCustomer ? `<div class="text-xs text-blue-700 dark:text-blue-300 font-medium">👤 ${Utils.sanitize(held.currentCustomer.name)}</div>` : ''}
-                    <div class="text-xs text-gray-500 dark:text-gray-400 truncate">${previewNames}${held.cart.length > 3 ? ` +${held.cart.length - 3} more` : ''}</div>
-                    <div class="flex gap-2 mt-1">
-                        <button onclick="app.resumeHeldOrder(${index})" class="flex-1 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-colors">Resume</button>
-                        <button onclick="app.deleteHeldOrder(${index})" class="py-1.5 px-3 bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-800 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg transition-colors">Delete</button>
-                    </div>
-                `;
+
+                const topRow = document.createElement('div');
+                topRow.className = "flex justify-between items-start";
+                const leftTop = document.createElement('div');
+                const titleDiv = document.createElement('div');
+                titleDiv.className = "font-bold text-gray-800 dark:text-white text-sm";
+                titleDiv.textContent = `Hold #${index + 1}`;
+                const timeDiv = document.createElement('div');
+                timeDiv.className = "text-xs text-gray-400 dark:text-gray-500";
+                timeDiv.textContent = timeLabel;
+                leftTop.appendChild(titleDiv);
+                leftTop.appendChild(timeDiv);
+
+                const rightTop = document.createElement('div');
+                rightTop.className = "text-right";
+                const totalDiv = document.createElement('div');
+                totalDiv.className = "font-bold text-blue-600 dark:text-blue-400";
+                totalDiv.textContent = Utils.formatCurrency(subtotal, currencySymbol);
+                const countDiv = document.createElement('div');
+                countDiv.className = "text-xs text-gray-500 dark:text-gray-400";
+                countDiv.textContent = `${itemCount} item${itemCount !== 1 ? 's' : ''}`;
+                rightTop.appendChild(totalDiv);
+                rightTop.appendChild(countDiv);
+
+                topRow.appendChild(leftTop);
+                topRow.appendChild(rightTop);
+                card.appendChild(topRow);
+
+                if (held.currentCustomer) {
+                    const custDiv = document.createElement('div');
+                    custDiv.className = "text-xs text-blue-700 dark:text-blue-300 font-medium";
+                    custDiv.textContent = `👤 ${held.currentCustomer.name}`;
+                    card.appendChild(custDiv);
+                }
+
+                const namesDiv = document.createElement('div');
+                namesDiv.className = "text-xs text-gray-500 dark:text-gray-400 truncate";
+                namesDiv.textContent = `${previewNames}${held.cart.length > 3 ? ` +${held.cart.length - 3} more` : ''}`;
+                card.appendChild(namesDiv);
+
+                const btnRow = document.createElement('div');
+                btnRow.className = "flex gap-2 mt-1";
+                const resumeBtn = document.createElement('button');
+                resumeBtn.onclick = () => app.resumeHeldOrder(index);
+                resumeBtn.className = "flex-1 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-colors";
+                resumeBtn.textContent = "Resume";
+
+                const delBtn = document.createElement('button');
+                delBtn.onclick = () => app.deleteHeldOrder(index);
+                delBtn.className = "py-1.5 px-3 bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-800 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg transition-colors";
+                delBtn.textContent = "Delete";
+
+                btnRow.appendChild(resumeBtn);
+                btnRow.appendChild(delBtn);
+                card.appendChild(btnRow);
                 listEl.appendChild(card);
             });
         }

@@ -65,9 +65,24 @@ window.AI = {
         
         bubble.className = "max-w-[80%] rounded-xl p-3 text-sm " + roleClass;
         
-        // Simple markdown parsing for bold text
-        const formattedText = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-        bubble.innerHTML = formattedText.replace(/\n/g, "<br/>");
+        // Safe markdown parsing for bold text and newlines using DOM API
+        bubble.textContent = '';
+        const lines = text.split('\n');
+        lines.forEach((line, lineIndex) => {
+            if (lineIndex > 0) {
+                bubble.appendChild(document.createElement('br'));
+            }
+            const parts = line.split(/(\*\*.*?\*\*)/g);
+            parts.forEach(part => {
+                if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+                    const strong = document.createElement('strong');
+                    strong.textContent = part.slice(2, -2);
+                    bubble.appendChild(strong);
+                } else if (part) {
+                    bubble.appendChild(document.createTextNode(part));
+                }
+            });
+        });
 
         wrapper.appendChild(bubble);
         container.appendChild(wrapper);

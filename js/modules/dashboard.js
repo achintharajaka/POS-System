@@ -34,12 +34,15 @@ window.Dashboard = {
             const totalPages = Math.ceil(totalItems / perPage);
 
             if (orders.length === 0) {
-                tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="p-8 text-center text-gray-500 dark:text-gray-400">
-                        <p>No recent transactions.</p>
-                    </td>
-                </tr>`;
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 5;
+                td.className = "p-8 text-center text-gray-500 dark:text-gray-400";
+                const p = document.createElement('p');
+                p.textContent = "No recent transactions.";
+                td.appendChild(p);
+                tr.appendChild(td);
+                tbody.appendChild(tr);
                 this.updateDashboardPagination(0, 0, 1);
                 return;
             }
@@ -47,18 +50,46 @@ window.Dashboard = {
             orders.forEach(order => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
-                tr.innerHTML = `
-                    <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">#${order.id}</td>
-                    <td class="p-4 dark:text-gray-300">${Utils.formatDate(order.timestamp)}</td>
-                    <td class="p-4 dark:text-gray-300">${order.items.length} Items</td>
-                    <td class="p-4 font-bold dark:text-white">${Utils.formatCurrency(order.total, currencySymbol)}</td>
-                    <td class="p-4">
-                        <div class="flex gap-2">
-                            <button data-action="view" data-id="${order.id}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer">View</button>
-                            <button data-action="delete" data-id="${order.id}" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 cursor-pointer">Delete</button>
-                        </div>
-                    </td>
-                `;
+
+                const tdId = document.createElement('td');
+                tdId.className = "p-4 font-mono text-sm text-gray-500 dark:text-gray-400";
+                tdId.textContent = `#${order.id}`;
+
+                const tdDate = document.createElement('td');
+                tdDate.className = "p-4 dark:text-gray-300";
+                tdDate.textContent = Utils.formatDate(order.timestamp);
+
+                const tdItems = document.createElement('td');
+                tdItems.className = "p-4 dark:text-gray-300";
+                tdItems.textContent = `${order.items.length} Items`;
+
+                const tdTotal = document.createElement('td');
+                tdTotal.className = "p-4 font-bold dark:text-white";
+                tdTotal.textContent = Utils.formatCurrency(order.total, currencySymbol);
+
+                const tdActions = document.createElement('td');
+                tdActions.className = "p-4";
+                const div = document.createElement('div');
+                div.className = "flex gap-2";
+                const viewBtn = document.createElement('button');
+                viewBtn.dataset.action = "view";
+                viewBtn.dataset.id = order.id;
+                viewBtn.className = "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer";
+                viewBtn.textContent = "View";
+                const delBtn = document.createElement('button');
+                delBtn.dataset.action = "delete";
+                delBtn.dataset.id = order.id;
+                delBtn.className = "text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 cursor-pointer";
+                delBtn.textContent = "Delete";
+                div.appendChild(viewBtn);
+                div.appendChild(delBtn);
+                tdActions.appendChild(div);
+
+                tr.appendChild(tdId);
+                tr.appendChild(tdDate);
+                tr.appendChild(tdItems);
+                tr.appendChild(tdTotal);
+                tr.appendChild(tdActions);
                 tbody.appendChild(tr);
             });
 
@@ -184,8 +215,11 @@ window.Dashboard = {
                 this.state.settings.storeLogo
             );
 
-            receiptWindow.document.write(receiptHtml);
+            receiptWindow.document.documentElement.innerHTML = DOMPurify.sanitize(receiptHtml, { WHOLE_DOCUMENT: true });
             receiptWindow.document.close();
+            setTimeout(() => {
+                try { receiptWindow.print(); } catch (e) {}
+            }, 500);
         } catch (error) {
             Utils.hideLoading();
             console.error("viewOrder error:", error);
@@ -224,13 +258,18 @@ window.Dashboard = {
         const settingsWithQr = { ...this.state.settings, receiptQrCodeDataUri: qrCodeDataUri };
 
         const receiptWindow = window.open('', '', 'width=340,height=600');
-        receiptWindow.document.write(Utils.generateReceipt(
-            this.state.settings.storeName,
-            this.state.settings.storeAddress,
-            this.state.currentOrder,
-            settingsWithQr,
-            this.state.settings.storeLogo
-        ));
-        receiptWindow.document.close();
+        if (receiptWindow) {
+            receiptWindow.document.documentElement.innerHTML = DOMPurify.sanitize(Utils.generateReceipt(
+                this.state.settings.storeName,
+                this.state.settings.storeAddress,
+                this.state.currentOrder,
+                settingsWithQr,
+                this.state.settings.storeLogo
+            ), { WHOLE_DOCUMENT: true });
+            receiptWindow.document.close();
+            setTimeout(() => {
+                try { receiptWindow.print(); } catch (e) {}
+            }, 500);
+        }
     }
 };

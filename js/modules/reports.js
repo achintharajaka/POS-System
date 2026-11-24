@@ -279,18 +279,23 @@ window.Reports = {
         const { currencySymbol } = this.state.settings;
 
         // Update UI
-        // We show Net quantities, but maybe with a tooltip or smaller text for refunds if we had space.
-        // For now, updating the main numbers to reflect reality.
+        const revEl = document.getElementById(DOM.REPORTS.REVENUE);
+        revEl.textContent = Utils.formatCurrency(totalNetRevenue, currencySymbol);
+        if (totalRefunds > 0) {
+            const refDiv = document.createElement('div');
+            refDiv.className = "text-xs text-red-400 font-normal";
+            refDiv.textContent = `(-${Utils.formatCurrency(totalRefunds)} refunds)`;
+            revEl.appendChild(refDiv);
+        }
 
-        document.getElementById(DOM.REPORTS.REVENUE).innerHTML = `
-            ${Utils.formatCurrency(totalNetRevenue, currencySymbol)}
-            ${totalRefunds > 0 ? `<div class="text-xs text-red-400 font-normal">(-${Utils.formatCurrency(totalRefunds)} refunds)</div>` : ''}
-        `;
-
-        document.getElementById(DOM.REPORTS.COGS).innerHTML = `
-            ${Utils.formatCurrency(netCogs, currencySymbol)}
-             ${cogsReduction > 0 ? `<div class="text-xs text-green-600 font-normal">(-${Utils.formatCurrency(cogsReduction)} restocked)</div>` : ''}
-        `;
+        const cogsEl = document.getElementById(DOM.REPORTS.COGS);
+        cogsEl.textContent = Utils.formatCurrency(netCogs, currencySymbol);
+        if (cogsReduction > 0) {
+            const restockDiv = document.createElement('div');
+            restockDiv.className = "text-xs text-green-600 font-normal";
+            restockDiv.textContent = `(-${Utils.formatCurrency(cogsReduction)} restocked)`;
+            cogsEl.appendChild(restockDiv);
+        }
 
         document.getElementById(DOM.REPORTS.EXPENSES).innerText = Utils.formatCurrency(totalExpenses, currencySymbol);
 
@@ -309,20 +314,37 @@ window.Reports = {
     renderIncomeList(income) {
         const tbody = document.getElementById(DOM.REPORTS.INCOME_BODY);
         if (!tbody) return;
-        tbody.innerHTML = '';
+        tbody.replaceChildren();
         const { currencySymbol } = this.state.settings;
 
         income.slice(0, 50).forEach(inc => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
-            tr.innerHTML = `
-                <td class="p-4 dark:text-gray-300">${Utils.formatDate(inc.date)}</td>
-                <td class="p-4 font-medium dark:text-white">${Utils.sanitize(inc.description)}</td>
-                <td class="p-4 font-bold text-green-600">${Utils.formatCurrency(inc.amount, currencySymbol)}</td>
-                <td class="p-4">
-                    <button onclick="app.deleteIncome(${inc.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
-                </td>
-            `;
+
+            const tdDate = document.createElement('td');
+            tdDate.className = "p-4 dark:text-gray-300";
+            tdDate.textContent = Utils.formatDate(inc.date);
+
+            const tdDesc = document.createElement('td');
+            tdDesc.className = "p-4 font-medium dark:text-white";
+            tdDesc.textContent = inc.description;
+
+            const tdAmt = document.createElement('td');
+            tdAmt.className = "p-4 font-bold text-green-600";
+            tdAmt.textContent = Utils.formatCurrency(inc.amount, currencySymbol);
+
+            const tdActions = document.createElement('td');
+            tdActions.className = "p-4";
+            const delBtn = document.createElement('button');
+            delBtn.onclick = () => app.deleteIncome(inc.id);
+            delBtn.className = "text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300";
+            delBtn.textContent = "Delete";
+            tdActions.appendChild(delBtn);
+
+            tr.appendChild(tdDate);
+            tr.appendChild(tdDesc);
+            tr.appendChild(tdAmt);
+            tr.appendChild(tdActions);
             tbody.appendChild(tr);
         });
     },
@@ -330,7 +352,7 @@ window.Reports = {
     renderOrderProfits(orders) {
         const tbody = document.getElementById(DOM.REPORTS.PROFITS_BODY);
         if (!tbody) return;
-        tbody.innerHTML = '';
+        tbody.replaceChildren();
         const { currencySymbol } = this.state.settings;
 
         // Sort by id desc (newest first)
@@ -340,24 +362,48 @@ window.Reports = {
             let cogs = 0;
             order.items.forEach(i => cogs += (parseFloat(i.costPrice) || 0) * i.qty);
 
-            // Note: This per-order view doesn't easily show if *this specific order* was returned 
-            // without doing a lookup against the returns table.
-            // For MVP, we leave this as "Original Profit".
-            // If we wanted, we could mark it as "Returned".
-
             const profit = order.total - cogs;
             const margin = order.total > 0 ? ((profit / order.total) * 100).toFixed(1) : 0;
 
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
-            tr.innerHTML = `
-                <td class="p-4 dark:text-gray-300">${Utils.formatDate(order.timestamp)}</td>
-                <td class="p-4 font-mono text-sm dark:text-gray-400">#${order.id} ${order.status === 'refunded' ? '<span class="text-xs text-red-500">(Refunded)</span>' : ''}</td>
-                 <td class="p-4 dark:text-white">${Utils.formatCurrency(order.total, currencySymbol)}</td>
-                <td class="p-4 dark:text-gray-300">${Utils.formatCurrency(cogs, currencySymbol)}</td>
-                <td class="p-4 font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${Utils.formatCurrency(profit, currencySymbol)}</td>
-                <td class="p-4 text-sm dark:text-gray-400">${margin}%</td>
-            `;
+
+            const tdDate = document.createElement('td');
+            tdDate.className = "p-4 dark:text-gray-300";
+            tdDate.textContent = Utils.formatDate(order.timestamp);
+
+            const tdId = document.createElement('td');
+            tdId.className = "p-4 font-mono text-sm dark:text-gray-400";
+            tdId.textContent = `#${order.id} `;
+            if (order.status === 'refunded') {
+                const refSpan = document.createElement('span');
+                refSpan.className = "text-xs text-red-500";
+                refSpan.textContent = "(Refunded)";
+                tdId.appendChild(refSpan);
+            }
+
+            const tdTotal = document.createElement('td');
+            tdTotal.className = "p-4 dark:text-white";
+            tdTotal.textContent = Utils.formatCurrency(order.total, currencySymbol);
+
+            const tdCogs = document.createElement('td');
+            tdCogs.className = "p-4 dark:text-gray-300";
+            tdCogs.textContent = Utils.formatCurrency(cogs, currencySymbol);
+
+            const tdProfit = document.createElement('td');
+            tdProfit.className = `p-4 font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            tdProfit.textContent = Utils.formatCurrency(profit, currencySymbol);
+
+            const tdMargin = document.createElement('td');
+            tdMargin.className = "p-4 text-sm dark:text-gray-400";
+            tdMargin.textContent = `${margin}%`;
+
+            tr.appendChild(tdDate);
+            tr.appendChild(tdId);
+            tr.appendChild(tdTotal);
+            tr.appendChild(tdCogs);
+            tr.appendChild(tdProfit);
+            tr.appendChild(tdMargin);
             tbody.appendChild(tr);
         });
     },
@@ -365,20 +411,37 @@ window.Reports = {
     renderExpensesList(expenses) {
         const tbody = document.getElementById(DOM.REPORTS.EXPENSES_BODY);
         if (!tbody) return;
-        tbody.innerHTML = '';
+        tbody.replaceChildren();
         const { currencySymbol } = this.state.settings;
 
         expenses.slice(0, 50).forEach(exp => {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
-            tr.innerHTML = `
-                <td class="p-4 dark:text-gray-300">${Utils.formatDate(exp.date)}</td>
-                <td class="p-4 font-medium dark:text-white">${Utils.sanitize(exp.description)}</td>
-                <td class="p-4 font-bold text-red-500">-${Utils.formatCurrency(exp.amount, currencySymbol)}</td>
-                <td class="p-4">
-                    <button onclick="app.deleteExpense(${exp.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
-                </td>
-            `;
+
+            const tdDate = document.createElement('td');
+            tdDate.className = "p-4 dark:text-gray-300";
+            tdDate.textContent = Utils.formatDate(exp.date);
+
+            const tdDesc = document.createElement('td');
+            tdDesc.className = "p-4 font-medium dark:text-white";
+            tdDesc.textContent = exp.description;
+
+            const tdAmt = document.createElement('td');
+            tdAmt.className = "p-4 font-bold text-red-500";
+            tdAmt.textContent = `-${Utils.formatCurrency(exp.amount, currencySymbol)}`;
+
+            const tdActions = document.createElement('td');
+            tdActions.className = "p-4";
+            const delBtn = document.createElement('button');
+            delBtn.onclick = () => app.deleteExpense(exp.id);
+            delBtn.className = "text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300";
+            delBtn.textContent = "Delete";
+            tdActions.appendChild(delBtn);
+
+            tr.appendChild(tdDate);
+            tr.appendChild(tdDesc);
+            tr.appendChild(tdAmt);
+            tr.appendChild(tdActions);
             tbody.appendChild(tr);
         });
     },

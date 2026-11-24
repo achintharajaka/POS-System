@@ -13,33 +13,60 @@ window.Suppliers = {
             const suppliers = await DB.getSuppliers();
 
             if (suppliers.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="p-8 text-center text-gray-500 dark:text-gray-400">
-                            <div class="flex flex-col items-center justify-center">
-                                <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                </svg>
-                                <p>No suppliers found.</p>
-                            </div>
-                        </td>
-                    </tr>`;
+                tbody.replaceChildren();
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 5;
+                td.className = "p-8 text-center text-gray-500 dark:text-gray-400";
+                const p = document.createElement('p');
+                p.textContent = "No suppliers found.";
+                td.appendChild(p);
+                tr.appendChild(td);
+                tbody.appendChild(tr);
                 return;
             }
 
+            tbody.replaceChildren();
             suppliers.forEach(supplier => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors";
-                tr.innerHTML = `
-                    <td class="p-4 font-medium dark:text-white">${Utils.sanitize(supplier.name)}</td>
-                    <td class="p-4 text-gray-600 dark:text-gray-300">${Utils.sanitize(supplier.contact || '-')}</td>
-                    <td class="p-4 text-gray-600 dark:text-gray-300">${Utils.sanitize(supplier.phone || '-')}</td>
-                     <td class="p-4 text-gray-600 dark:text-gray-300">${Utils.sanitize(supplier.email || '-')}</td>
-                    <td class="p-4 flex gap-2">
-                        <button onclick="Suppliers.openSupplierModal(${supplier.id})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">Edit</button>
-                        <button onclick="Suppliers.deleteSupplier(${supplier.id})" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</button>
-                    </td>
-                `;
+
+                const tdName = document.createElement('td');
+                tdName.className = "p-4 font-medium dark:text-white";
+                tdName.textContent = supplier.name;
+
+                const tdContact = document.createElement('td');
+                tdContact.className = "p-4 text-gray-600 dark:text-gray-300";
+                tdContact.textContent = supplier.contact || '-';
+
+                const tdPhone = document.createElement('td');
+                tdPhone.className = "p-4 text-gray-600 dark:text-gray-300";
+                tdPhone.textContent = supplier.phone || '-';
+
+                const tdEmail = document.createElement('td');
+                tdEmail.className = "p-4 text-gray-600 dark:text-gray-300";
+                tdEmail.textContent = supplier.email || '-';
+
+                const tdActions = document.createElement('td');
+                tdActions.className = "p-4 flex gap-2";
+                const editBtn = document.createElement('button');
+                editBtn.onclick = () => Suppliers.openSupplierModal(supplier.id);
+                editBtn.className = "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300";
+                editBtn.textContent = "Edit";
+
+                const delBtn = document.createElement('button');
+                delBtn.onclick = () => Suppliers.deleteSupplier(supplier.id);
+                delBtn.className = "text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300";
+                delBtn.textContent = "Delete";
+
+                tdActions.appendChild(editBtn);
+                tdActions.appendChild(delBtn);
+
+                tr.appendChild(tdName);
+                tr.appendChild(tdContact);
+                tr.appendChild(tdPhone);
+                tr.appendChild(tdEmail);
+                tr.appendChild(tdActions);
                 tbody.appendChild(tr);
             });
 

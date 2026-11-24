@@ -298,35 +298,84 @@ window.Auth = {
         if (!tbody) return;
 
         const users = await DB.getUsers();
-        tbody.innerHTML = users.map(u => `
-            <tr class="border-b dark:border-gray-700">
-                <td class="p-3">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${u.role === 'admin' ? 'bg-purple-500' : u.role === 'manager' ? 'bg-blue-500' : 'bg-green-500'
-            }">${u.name.charAt(0).toUpperCase()}</div>
-                        <span>${Utils.sanitize(u.name)}</span>
-                    </div>
-                </td>
-                <td class="p-3">
-                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${this._getRoleBadgeClass(u.role)}">
-                        ${(window.I18n && window.I18n.t('role_' + u.role)) || u.role.charAt(0).toUpperCase() + u.role.slice(1)}
-                    </span>
-                </td>
-                <td class="p-3">
-                    <span class="inline-flex items-center gap-1 text-xs font-medium ${u.active ? 'text-green-600' : 'text-red-500'}">
-                        <span class="w-2 h-2 rounded-full ${u.active ? 'bg-green-500' : 'bg-red-500'}"></span>
-                        ${u.active ? (window.I18n ? window.I18n.t('status_active') : 'Active') : (window.I18n ? window.I18n.t('status_inactive') : 'Inactive')}
-                    </span>
-                </td>
-                <td class="p-3">
-                    <div class="flex gap-1">
-                        <button onclick="app.editUser(${u.id})" class="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30" title="Edit">✏️</button>
-                        <button onclick="app.resetUserPin(${u.id})" class="text-yellow-600 hover:text-yellow-800 text-sm px-2 py-1 rounded hover:bg-yellow-50 dark:hover:bg-yellow-900/30" title="Reset PIN">🔑</button>
-                        ${u.id !== this.state.currentUser.id ? `<button onclick="app.removeUser(${u.id})" class="text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30" title="Delete">🗑️</button>` : ''}
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+        tbody.textContent = '';
+        users.forEach(u => {
+            const tr = document.createElement('tr');
+            tr.className = "border-b dark:border-gray-700";
+
+            // Avatar & Name
+            const tdName = document.createElement('td');
+            tdName.className = "p-3";
+            const divName = document.createElement('div');
+            divName.className = "flex items-center gap-2";
+            const avatar = document.createElement('div');
+            avatar.className = `w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                u.role === 'admin' ? 'bg-purple-500' : u.role === 'manager' ? 'bg-blue-500' : 'bg-green-500'
+            }`;
+            avatar.textContent = (u.name || '').charAt(0).toUpperCase();
+            const spanName = document.createElement('span');
+            spanName.textContent = u.name;
+            divName.appendChild(avatar);
+            divName.appendChild(spanName);
+            tdName.appendChild(divName);
+
+            // Role
+            const tdRole = document.createElement('td');
+            tdRole.className = "p-3";
+            const roleBadge = document.createElement('span');
+            roleBadge.className = `text-xs px-2 py-0.5 rounded-full font-semibold ${this._getRoleBadgeClass(u.role)}`;
+            roleBadge.textContent = (window.I18n && window.I18n.t('role_' + u.role)) || u.role.charAt(0).toUpperCase() + u.role.slice(1);
+            tdRole.appendChild(roleBadge);
+
+            // Status
+            const tdStatus = document.createElement('td');
+            tdStatus.className = "p-3";
+            const statusBadge = document.createElement('span');
+            statusBadge.className = `inline-flex items-center gap-1 text-xs font-medium ${u.active ? 'text-green-600' : 'text-red-500'}`;
+            const dot = document.createElement('span');
+            dot.className = `w-2 h-2 rounded-full ${u.active ? 'bg-green-500' : 'bg-red-500'}`;
+            statusBadge.appendChild(dot);
+            statusBadge.appendChild(document.createTextNode(
+                u.active ? (window.I18n ? window.I18n.t('status_active') : 'Active') : (window.I18n ? window.I18n.t('status_inactive') : 'Inactive')
+            ));
+            tdStatus.appendChild(statusBadge);
+
+            // Actions
+            const tdActions = document.createElement('td');
+            tdActions.className = "p-3";
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = "flex gap-1";
+
+            const editBtn = document.createElement('button');
+            editBtn.className = "text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30";
+            editBtn.title = "Edit";
+            editBtn.textContent = "✏️";
+            editBtn.onclick = () => app.editUser(u.id);
+            actionsDiv.appendChild(editBtn);
+
+            const resetBtn = document.createElement('button');
+            resetBtn.className = "text-yellow-600 hover:text-yellow-800 text-sm px-2 py-1 rounded hover:bg-yellow-50 dark:hover:bg-yellow-900/30";
+            resetBtn.title = "Reset PIN";
+            resetBtn.textContent = "🔑";
+            resetBtn.onclick = () => app.resetUserPin(u.id);
+            actionsDiv.appendChild(resetBtn);
+
+            if (u.id !== this.state.currentUser.id) {
+                const delBtn = document.createElement('button');
+                delBtn.className = "text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30";
+                delBtn.title = "Delete";
+                delBtn.textContent = "🗑️";
+                delBtn.onclick = () => app.removeUser(u.id);
+                actionsDiv.appendChild(delBtn);
+            }
+            tdActions.appendChild(actionsDiv);
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdRole);
+            tr.appendChild(tdStatus);
+            tr.appendChild(tdActions);
+            tbody.appendChild(tr);
+        });
     },
 
     async addNewUser() {
@@ -493,7 +542,20 @@ window.Auth = {
         const userMap = {};
         users.forEach(u => userMap[u.id] = u.name);
 
-        tbody.innerHTML = shifts.slice(0, 20).map(s => {
+        tbody.textContent = '';
+
+        if (shifts.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 5;
+            td.className = "p-4 text-center text-gray-400";
+            td.textContent = window.I18n ? window.I18n.t('msg_no_shifts') : 'No shift records yet';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            return;
+        }
+
+        shifts.slice(0, 20).forEach(s => {
             const clockIn = new Date(s.clockIn);
             const clockOut = s.clockOut ? new Date(s.clockOut) : null;
             let duration = '—';
@@ -503,24 +565,47 @@ window.Auth = {
                 const m = Math.floor((diff % 3600000) / 60000);
                 duration = `${h}h ${m}m`;
             }
-            return `
-                <tr class="border-b dark:border-gray-700">
-                    <td class="p-3">${userMap[s.userId] || (window.I18n ? window.I18n.t('status_unknown') : 'Unknown')}</td>
-                    <td class="p-3 text-sm">${clockIn.toLocaleDateString()} ${clockIn.toLocaleTimeString()}</td>
-                    <td class="p-3 text-sm">${clockOut ? clockOut.toLocaleDateString() + ' ' + clockOut.toLocaleTimeString() : '<span class="text-green-500 font-medium">' + (window.I18n ? window.I18n.t('status_active') : 'Active') + '</span>'}</td>
-                    <td class="p-3 text-sm">${duration}</td>
-                    <td class="p-3">
-                        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${s.status === 'open' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}">
-                            ${s.status === 'open' ? (window.I18n ? window.I18n.t('status_open') : 'Open') : (window.I18n ? window.I18n.t('status_closed') : 'Closed')}
-                        </span>
-                    </td>
-                </tr>
-            `;
-        }).join('');
 
-        if (shifts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">' + (window.I18n ? window.I18n.t('msg_no_shifts') : 'No shift records yet') + '</td></tr>';
-        }
+            const tr = document.createElement('tr');
+            tr.className = "border-b dark:border-gray-700";
+
+            const tdUser = document.createElement('td');
+            tdUser.className = "p-3";
+            tdUser.textContent = userMap[s.userId] || (window.I18n ? window.I18n.t('status_unknown') : 'Unknown');
+
+            const tdIn = document.createElement('td');
+            tdIn.className = "p-3 text-sm";
+            tdIn.textContent = `${clockIn.toLocaleDateString()} ${clockIn.toLocaleTimeString()}`;
+
+            const tdOut = document.createElement('td');
+            tdOut.className = "p-3 text-sm";
+            if (clockOut) {
+                tdOut.textContent = `${clockOut.toLocaleDateString()} ${clockOut.toLocaleTimeString()}`;
+            } else {
+                const activeSpan = document.createElement('span');
+                activeSpan.className = "text-green-500 font-medium";
+                activeSpan.textContent = window.I18n ? window.I18n.t('status_active') : 'Active';
+                tdOut.appendChild(activeSpan);
+            }
+
+            const tdDur = document.createElement('td');
+            tdDur.className = "p-3 text-sm";
+            tdDur.textContent = duration;
+
+            const tdStatus = document.createElement('td');
+            tdStatus.className = "p-3";
+            const statusBadge = document.createElement('span');
+            statusBadge.className = `text-xs px-2 py-0.5 rounded-full font-medium ${s.status === 'open' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`;
+            statusBadge.textContent = s.status === 'open' ? (window.I18n ? window.I18n.t('status_open') : 'Open') : (window.I18n ? window.I18n.t('status_closed') : 'Closed');
+            tdStatus.appendChild(statusBadge);
+
+            tr.appendChild(tdUser);
+            tr.appendChild(tdIn);
+            tr.appendChild(tdOut);
+            tr.appendChild(tdDur);
+            tr.appendChild(tdStatus);
+            tbody.appendChild(tr);
+        });
     },
 
     // --- Setup Event Listeners ---

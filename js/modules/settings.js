@@ -96,14 +96,19 @@ window.Settings = {
         }
 
         const win = window.open('', '', 'width=340,height=600');
-        win.document.write(Utils.generateReceipt(
-            currentFormSettings.storeName,
-            currentFormSettings.storeAddress,
-            dummyOrder,
-            currentFormSettings,
-            currentFormSettings.storeLogo
-        ));
-        win.document.close();
+        if (win) {
+            win.document.documentElement.innerHTML = DOMPurify.sanitize(Utils.generateReceipt(
+                currentFormSettings.storeName,
+                currentFormSettings.storeAddress,
+                dummyOrder,
+                currentFormSettings,
+                currentFormSettings.storeLogo
+            ), { WHOLE_DOCUMENT: true });
+            win.document.close();
+            setTimeout(() => {
+                try { win.print(); } catch (e) {}
+            }, 500);
+        }
     },
 
     // Category Management
@@ -130,17 +135,21 @@ window.Settings = {
         const list = document.getElementById(DOM.SETTINGS.CATEGORY_LIST);
         if (!list) return;
 
-        list.innerHTML = '';
+        list.replaceChildren();
         this.state.categories.forEach(cat => {
             const li = document.createElement('li');
             li.className = "flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded";
-            li.innerHTML = `
-                <span class="dark:text-white">${Utils.sanitize(cat.name)}</span>
-                <button onclick="app.deleteCategory(${cat.id})" class="text-red-500 hover:text-red-700">&times;</button>
-            `;
+            const span = document.createElement('span');
+            span.className = "dark:text-white";
+            span.textContent = cat.name;
+            const delBtn = document.createElement('button');
+            delBtn.onclick = () => app.deleteCategory(cat.id);
+            delBtn.className = "text-red-500 hover:text-red-700";
+            delBtn.innerHTML = "&times;";
+            li.appendChild(span);
+            li.appendChild(delBtn);
             list.appendChild(li);
         });
-
 
         this.populateCategoryFilter();
     },
@@ -149,19 +158,34 @@ window.Settings = {
     renderModifiersList() {
         const tbody = document.getElementById(DOM.SETTINGS.MODIFIERS_LIST);
         if (!tbody) return;
-        tbody.innerHTML = '';
+        tbody.replaceChildren();
         const { currencySymbol } = this.state.settings;
 
         this.state.modifiers.forEach(mod => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${Utils.sanitize(mod.name)}</td>
-                <td class="capitalize">${mod.type}</td>
-                <td>${mod.type === 'percent' ? mod.value + '%' : Utils.formatCurrency(mod.value, currencySymbol)} (${mod.rate})</td>
-                <td class="text-right">
-                    <button onclick="app.deleteModifier(${mod.id})" class="text-red-500 hover:text-red-700">&times;</button>
-                </td>
-            `;
+
+            const tdName = document.createElement('td');
+            tdName.textContent = mod.name;
+
+            const tdType = document.createElement('td');
+            tdType.className = "capitalize";
+            tdType.textContent = mod.type;
+
+            const tdVal = document.createElement('td');
+            tdVal.textContent = `${mod.type === 'percent' ? mod.value + '%' : Utils.formatCurrency(mod.value, currencySymbol)} (${mod.rate})`;
+
+            const tdActions = document.createElement('td');
+            tdActions.className = "text-right";
+            const delBtn = document.createElement('button');
+            delBtn.onclick = () => app.deleteModifier(mod.id);
+            delBtn.className = "text-red-500 hover:text-red-700";
+            delBtn.innerHTML = "&times;";
+            tdActions.appendChild(delBtn);
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdType);
+            tr.appendChild(tdVal);
+            tr.appendChild(tdActions);
             tbody.appendChild(tr);
         });
     },

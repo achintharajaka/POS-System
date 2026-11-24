@@ -405,42 +405,47 @@ const App = {
             return;
         }
 
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>Print Barcode - ${name}</title>
-                    <style>
-                        body { text-align: center; font-family: sans-serif; padding-top: 20px; }
-                        svg { max-width: 100%; height: auto; }
-                    </style>
-                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-                </head>
-                <body>
-                    <h4>${name}</h4>
-                    <svg id="barcode"></svg>
-                    <script>
-                        window.onload = function() {
-                            if (window.JsBarcode) {
-                                JsBarcode("#barcode", "${barcode}", {
-                                    format: "CODE128",
-                                    lineColor: "#000",
-                                    width: 2,
-                                    height: 50,
-                                    displayValue: true
-                                });
-                                setTimeout(() => {
-                                    window.print();
-                                    window.close();
-                                }, 500);
-                            } else {
-                                document.body.innerHTML = "Error loading barcode library.";
-                            }
-                        };
-                    </script>
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
+        const doc = printWindow.document;
+        doc.title = `Print Barcode - ${name}`;
+
+        const style = doc.createElement('style');
+        style.textContent = `
+            body { text-align: center; font-family: sans-serif; padding-top: 20px; }
+            svg { max-width: 100%; height: auto; }
+        `;
+        doc.head.appendChild(style);
+
+        const h4 = doc.createElement('h4');
+        h4.textContent = name;
+        doc.body.appendChild(h4);
+
+        const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.id = 'barcode';
+        doc.body.appendChild(svg);
+
+        const script = doc.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js';
+        script.onload = () => {
+            if (printWindow.JsBarcode) {
+                printWindow.JsBarcode(svg, barcode, {
+                    format: "CODE128",
+                    lineColor: "#000",
+                    width: 2,
+                    height: 50,
+                    displayValue: true
+                });
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 500);
+            } else {
+                doc.body.textContent = "Error loading barcode library.";
+            }
+        };
+        script.onerror = () => {
+            doc.body.textContent = "Error loading barcode library.";
+        };
+        doc.head.appendChild(script);
     }
 };
 

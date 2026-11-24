@@ -73,38 +73,68 @@ window.Returns = {
         const meta = document.getElementById('return-order-meta');
         
         container.classList.remove('hidden');
-        list.innerHTML = '';
+        list.replaceChildren();
+        meta.replaceChildren();
         
-        meta.innerHTML = `
-            <div class="flex justify-between items-center mb-2">
-                <span class="font-bold">Order #${order.id}</span>
-                <span class="text-sm text-gray-500">${new Date(order.timestamp).toLocaleString()}</span>
-            </div>
-            <div class="text-sm">Customer: ${order.customerName || 'Walk-in'}</div>
-            <div class="text-sm">Total: ${Utils.formatCurrency(order.total)}</div>
-             <div class="text-sm">Status: <span class="font-bold border px-1 rounded ${order.status === 'refunded' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">${order.status || 'Completed'}</span></div>
-        `;
+        const row1 = document.createElement('div');
+        row1.className = "flex justify-between items-center mb-2";
+        const orderIdSpan = document.createElement('span');
+        orderIdSpan.className = "font-bold";
+        orderIdSpan.textContent = `Order #${order.id}`;
+        const dateSpan = document.createElement('span');
+        dateSpan.className = "text-sm text-gray-500";
+        dateSpan.textContent = new Date(order.timestamp).toLocaleString();
+        row1.appendChild(orderIdSpan);
+        row1.appendChild(dateSpan);
+        meta.appendChild(row1);
+
+        const custDiv = document.createElement('div');
+        custDiv.className = "text-sm";
+        custDiv.textContent = `Customer: ${order.customerName || 'Walk-in'}`;
+        meta.appendChild(custDiv);
+
+        const totalDiv = document.createElement('div');
+        totalDiv.className = "text-sm";
+        totalDiv.textContent = `Total: ${Utils.formatCurrency(order.total)}`;
+        meta.appendChild(totalDiv);
+
+        const statusDiv = document.createElement('div');
+        statusDiv.className = "text-sm";
+        statusDiv.textContent = "Status: ";
+        const statusSpan = document.createElement('span');
+        statusSpan.className = `font-bold border px-1 rounded ${order.status === 'refunded' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`;
+        statusSpan.textContent = order.status || 'Completed';
+        statusDiv.appendChild(statusSpan);
+        meta.appendChild(statusDiv);
 
         order.items.forEach(item => {
-            // Calculate max returnable 
-            // If we tracked previous returns, we'd subtract them here.
-            // For now, assuming Version 5 starts fresh or we check `returnedQty` on items if we add that.
-            // Let's assume we can calculate it from previous return records if we wanted to be strict.
-            // For MVP, we just show original qty. 
-            // TODO: In a real system, we must query DB.returns where orderId matches and sum up returned items.
-            
             const li = document.createElement('div');
             li.className = "flex justify-between items-center p-2 border-b dark:border-gray-700";
-            li.innerHTML = `
-                <div class="flex-1">
-                    <div class="font-medium">${item.name}</div>
-                    <div class="text-xs text-gray-500">Sold: ${item.qty} x ${Utils.formatCurrency(item.price)}</div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" min="0" max="${item.qty}" class="w-16 p-1 border rounded text-center dark:bg-gray-700 dark:text-white" 
-                        onchange="Returns.updateReturnQty(${item.id}, this.value, ${item.qty}, ${item.price})" placeholder="0">
-                </div>
-            `;
+
+            const info = document.createElement('div');
+            info.className = "flex-1";
+            const nameEl = document.createElement('div');
+            nameEl.className = "font-medium";
+            nameEl.textContent = item.name;
+            const priceEl = document.createElement('div');
+            priceEl.className = "text-xs text-gray-500";
+            priceEl.textContent = `Sold: ${item.qty} x ${Utils.formatCurrency(item.price)}`;
+            info.appendChild(nameEl);
+            info.appendChild(priceEl);
+
+            const actions = document.createElement('div');
+            actions.className = "flex items-center gap-2";
+            const input = document.createElement('input');
+            input.type = "number";
+            input.min = "0";
+            input.max = String(item.qty);
+            input.placeholder = "0";
+            input.className = "w-16 p-1 border rounded text-center dark:bg-gray-700 dark:text-white";
+            input.onchange = (e) => Returns.updateReturnQty(item.id, e.target.value, item.qty, item.price);
+            actions.appendChild(input);
+
+            li.appendChild(info);
+            li.appendChild(actions);
             list.appendChild(li);
         });
         
